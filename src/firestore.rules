@@ -1,0 +1,202 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Defines if the user is signed in
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    /**
+     * @description Checks if the UID in the request matches the provided userId.
+     */
+    function isUser(userId) {
+      return request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if a user has a given role by reading their user document.
+     */
+    function hasRole(role) {
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles.hasAny([role]);
+    }
+
+    /**
+     * @description Defines if the user is the owner of the resource OR an admin.
+     */
+    function isOwner(userId) {
+      return isUser(userId) || hasRole('ADMIN');
+    }
+    
+    /**
+     * @description Defines if the user is the owner of the existing resource
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Rules for the 'orders' collection group.
+     * Allows admins and staff to list all orders across all users for the dashboard.
+     * This also requires a collection group index.
+     */
+    match /{path=**}/orders/{orderId} {
+      allow read: if hasRole('ADMIN') || hasRole('STAFF');
+      // This rule grants admins full write access to any order document in any user's subcollection.
+      // This is necessary for deletion and status updates from the admin panel.
+      allow write, update, delete: if hasRole('ADMIN');
+    }
+
+    /**
+     * @description Rules for the /users/{userId} collection.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if hasRole('ADMIN');
+      allow create: if isUser(userId) || (hasRole('ADMIN') && request.resource.data.customerType == 'LOCAL');
+      allow update: if isOwner(userId);
+      allow delete: if hasRole('ADMIN');
+
+      /**
+       * @description Rules for the /users/{userId}/orders/{orderId} subcollection.
+       */
+      match /orders/{orderId} {
+        allow get: if isUser(userId);
+        allow read: if isOwner(userId);
+        // Allow client-side creation for logged-in users and staff.
+        // Allow server-side (unauthenticated) creation as well.
+        allow create: if isUser(userId) || hasRole('STAFF') || hasRole('ADMIN') || request.auth == null;
+        allow update: if isOwner(userId);
+        // Explicitly allow ADMIN to delete orders from the subcollection path as well.
+        allow delete: if hasRole('ADMIN');
+      }
+
+      /**
+       * @description Rules for the /users/{userId}/addresses/{addressId} subcollection.
+       */
+      match /addresses/{addressId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isUser(userId) && request.resource.data.userId == userId;
+        allow update: if (isOwner(userId) && request.resource.data.userId == resource.data.userId);
+        allow delete: if isOwner(userId);
+      }
+    }
+    
+    match /groups/{groupId} {
+      allow read: if isSignedIn();
+      allow write: if hasRole('ADMIN');
+    }
+    
+    match /orders_items/{orderItemId} {
+      // This rule is critical. It allows a user to create order items when placing an order.
+      // Allow server-side creation (unauthenticated) as well.
+      allow create: if isSignedIn() || request.auth == null;
+      // This rule allows an admin to delete order items,
+      // which is necessary when deleting an order that contains them.
+      allow delete: if hasRole('ADMIN');
+    }
+
+    /**
+     * @description Rules for the /products/{productId} collection.
+     */
+    match /products/{productId} {
+      allow get, list: if true;
+      allow create, update, delete: if hasRole('ADMIN') || hasRole('CONTENT_MANAGER');
+    }
+    
+    /**
+     * @description Rules for the /inventoryLots/{lotId} collection.
+     */
+    match /inventoryLots/{lotId} {
+        allow read, list: if true;
+        allow create, update, delete: if hasRole('ADMIN');
+    }
+
+    /**
+     * @description Rules for public settings like branding.
+     */
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if hasRole('ADMIN');
+    }
+
+    /**
+     * @description Rules for dropdown option collections.
+     */
+    match /categories/{categoryId} {
+      allow get, list: if true;
+      allow create, update, delete: if hasRole('ADMIN') || hasRole('CONTENT_MANAGER');
+    }
+    match /cutTypes/{cutTypeId} {
+      allow get, list: if true;
+      allow create, update, delete: if hasRole('ADMIN') || hasRole('CONTENT_MANAGER');
+    }
+    match /grades/{gradeId} {
+      allow get, list: if true;
+      allow create, update, delete: if hasRole('ADMIN') || hasRole('CONTENT_MANAGER');
+    }
+    match /countries/{countryId} {
+      allow get, list: if true;
+      allow create, update, delete: if hasRole('ADMIN') || hasRole('CONTENT_MANAGER');
+    }
+     match /currencies/{currencyId} {
+      allow get, list: if true;
+      allow create, update, delete: if hasRole('ADMIN');
+    }
+    match /languages/{languageId} {
+      allow get, list: if true;
+      allow create, update, delete: if hasRole('ADMIN');
+    }
+     match /measurementUnits/{measurementUnitId} {
+      allow get, list: if true;
+      allow create, update, delete: if hasRole('ADMIN');
+    }
+     match /styles/{styleId} {
+      allow get, list: if true;
+      allow create, update, delete: if hasRole('ADMIN') || hasRole('CONTENT_MANAGER');
+    }
+     match /rubs/{rubId} {
+      allow get, list: if true;
+      allow create, update, delete: if hasRole('ADMIN') || hasRole('CONTENT_MANAGER');
+    }
+    match /temperatures/{temperatureId} {
+      allow get, list: if true;
+      allow create, update, delete: if hasRole('ADMIN') || hasRole('CONTENT_MANAGER');
+    }
+    match /vendors/{vendorId} {
+      allow get, list: if hasRole('ADMIN') || hasRole('STAFF');
+      allow create, update, delete: if hasRole('ADMIN');
+    }
+    match /deliveries/{deliveryId} {
+      allow read, list, create, update, delete: if hasRole('ADMIN') || hasRole('STAFF');
+    }
+    match /invoices/{invoiceId} {
+      allow read, list, create, update, delete: if hasRole('ADMIN') || hasRole('ACCOUNTANT');
+    }
+    match /payments/{paymentId} {
+      allow read, list, create, update, delete: if hasRole('ADMIN') || hasRole('ACCOUNTANT');
+    }
+    match /creditNotes/{creditNoteId} {
+      allow read, list, create, update, delete: if hasRole('ADMIN') || hasRole('ACCOUNTANT');
+    }
+    match /debitNotes/{debitNoteId} {
+      allow read, list, create, update, delete: if hasRole('ADMIN') || hasRole('ACCOUNTANT');
+    }
+     match /categoryBanners/{bannerId} {
+      allow get, list: if true;
+      allow write: if hasRole('ADMIN') || hasRole('CONTENT_MANAGER');
+    }
+    match /boxOptions/{boxId} {
+      allow get, list: if true;
+      allow write: if hasRole('ADMIN') || hasRole('CONTENT_MANAGER');
+    }
+
+    match /socialPosts/{postId} {
+      allow read, list: if true;
+      allow create, update, delete: if hasRole('ADMIN') || hasRole('CONTENT_MANAGER');
+    }
+  }
+}

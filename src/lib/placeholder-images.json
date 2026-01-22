@@ -1,0 +1,131 @@
+{[
+  {
+    "id": "hero-1",
+    "description": "A beautiful spread of various raw meat cuts on a wooden board.",
+    "imageUrl": "https://primemeeat.s3.us-east-1.amazonaws.com/hero-1.jpg",
+    "imageHint": "raw meat"
+  },
+  {
+    "id": "ribeye-1",
+    "description": "A thick, well-marbled raw ribeye steak.",
+    "imageUrl": "https://primemeeat.s3.us-east-1.amazonaws.com/ribeye-1.jpg",
+    "imageHint": "ribeye steak"
+  },
+  {
+    "id": "sirloin-1",
+    "description": "A lean raw sirloin steak.",
+    "imageUrl": "https://primemeeat.s3.us-east-1.amazonaws.com/sirloin-1.jpg",
+    "imageHint": "sirloin steak"
+  },
+  {
+    "id": "chuck-roast-1",
+    "description": "A large raw chuck roast, tied with string.",
+    "imageUrl": "https://primemeeat.s3.us-east-1.amazonaws.com/chuck-roast-1.jpg",
+    "imageHint": "chuck roast"
+  },
+  {
+    "id": "ground-beef-1",
+    "description": "Freshly ground beef in a package.",
+    "imageUrl": "https://primemeeat.s3.us-east-1.amazonaws.com/ground-beef-1.jpg",
+    "imageHint": "ground beef"
+  },
+  {
+    "id": "wagyu-1",
+    "description": "An exceptionally marbled raw Wagyu steak.",
+    "imageUrl": "https://primemeeat.s3.us-east-1.amazonaws.com/wagyu-1.jpg",
+    "imageHint": "wagyu steak"
+  },
+  {
+    "id": "lamb-chop-1",
+    "description": "Several raw lamb chops arranged neatly.",
+    "imageUrl": "https://primemeeat.s3.us-east-1.amazonaws.com/lamb-chop-1.jpg",
+    "imageHint": "lamb chops"
+  },
+  {
+    "id": "leg-of-lamb-1",
+    "description": "A whole raw leg of lamb.",
+    "imageUrl": "https://primemeeat.s3.us-east-1.amazonaws.com/leg-of-lamb-1.jpg",
+    "imageHint": "leg lamb"
+  },
+  {
+    "id": "ground-lamb-1",
+    "description": "Freshly ground lamb.",
+    "imageUrl": "https://primemeeat.s3.us-east-1.amazonaws.com/ground-lamb-1.jpg",
+    "imageHint": "ground lamb"
+  },
+  {
+    "id": "organic-beef-1",
+    "description": "Steak with an organic label",
+    "imageUrl": "https://primemeeat.s3.us-east-1.amazonaws.com/organic-beef-1.jpg",
+    "imageHint": "organic beef"
+  },
+  {
+    "id": "about-us-1",
+    "description": "A scenic view of a farm with cattle grazing.",
+    "imageUrl": "https://primemeeat.s3.us-east-1.amazonaws.com/about-us-1.jpg",
+    "imageHint": "cattle farm"
+  },
+  {
+    "id": "block-to-box-1",
+    "description": "A large cut of raw meat with a butcher knife.",
+    "imageUrl": "https://primemeeat.s3.us-east-1.amazonaws.com/block-to-box-1.png",
+    "imageHint": "raw meat"
+  },
+  {
+    "id": "block-to-box-2",
+    "description": "A box filled with packaged meat products.",
+    "imageUrl": "https://primemeeat.s3.us-east-1.amazonaws.com/block-to-box-2.png",
+    "imageHint": "meat packaging"
+  },
+  {
+    "id": "block-to-box-3",
+    "description": "Sliced raw steak on a wooden cutting board.",
+    "imageUrl": "https://primemeeat.s3.us-east-1.amazonaws.com/block-to-box-3.png",
+    "imageHint": "sliced steak"
+  },
+  {
+    "id": "cut-steaks",
+    "imageUrl": "https://picsum.photos/seed/steaks/200/200",
+    "imageHint": "raw steak"
+  },
+  {
+    "id": "cut-mince",
+    "imageUrl": "https://picsum.photos/seed/mince/200/200",
+    "imageHint": "ground beef"
+  },
+  {
+    "id": "cut-boneincubes",
+    "imageUrl": "https://picsum.photos/seed/boneincubes/200/200",
+    "imageHint": "beef cubes"
+  },
+  {
+    "id": "cut-wholecuts",
+    "imageUrl": "https://picsum.photos/seed/wholecuts/200/200",
+    "imageHint": "beef roast"
+  },
+  {
+    "id": "cut-mishkakbarbecuecubes",
+    "imageUrl": "https://picsum.photos/seed/mishkak/200/200",
+    "imageHint": "beef skewers"
+  },
+  {
+    "id": "cut-bonelesscubes",
+    "imageUrl": "https://picsum.photos/seed/bonelesscubes/200/200",
+    "imageHint": "beef cubes"
+  },
+  {
+    "id": "box-regular",
+    "imageUrl": "https://primemeeat.s3.us-east-1.amazonaws.com/box-regular.png",
+    "imageHint": "meat box"
+  },
+  {
+    "id": "box-large",
+    "imageUrl": "https://primemeeat.s3.us-east-1.amazonaws.com/box-large.png",
+    "imageHint": "meat box"
+  },
+  {
+    "id": "box-premium",
+    "imageUrl": "https://primemeeat.s3.us-east-1.amazonaws.com/box-premium.png",
+    "imageHint": "meat box"
+  }
+]

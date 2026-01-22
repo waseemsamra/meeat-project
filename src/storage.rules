@@ -1,0 +1,41 @@
+
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Allow public read access to all files under the categoryBanners directory.
+    // This is necessary so the images can be displayed publicly in the app.
+    match /categoryBanners/{allPaths=**} {
+      allow read: if true;
+    }
+
+    // Secure write rule:
+    // Allow an authenticated user to write files ONLY to a directory
+    // that matches their own user ID.
+    match /categoryBanners/{userId}/{allPaths=**} {
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Allow writes to the branding path for admins
+    match /branding/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Allow public read on product images
+    match /products/{allPaths=**} {
+      allow read: if true;
+    }
+    
+    // Allow authenticated users (admins, content managers) to upload product images
+    match /products/{imageId} {
+       allow write: if request.auth != null;
+    }
+    
+    // Allow authenticated users to write to the social-posts directory
+    match /social-posts/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}

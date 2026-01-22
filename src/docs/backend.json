@@ -1,0 +1,1081 @@
+
+
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the PrimeCuts Hub application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "name": {
+          "type": "string",
+          "description": "Full name of the user."
+        },
+        "groupIds": {
+          "type": "array",
+          "description": "An array of Group IDs this user belongs to.",
+          "items": { "type": "string" }
+        },
+        "roles": {
+            "type": "array",
+            "description": "An array of role strings that this user has.",
+            "items": { "type": "string", "enum": ["ADMIN", "STAFF", "CONTENT_MANAGER", "ACCOUNTANT", "CUSTOMER"] }
+        },
+        "customerType": {
+          "type": "string",
+          "description": "Type of customer (e.g., ONLINE, LOCAL).",
+          "enum": ["ONLINE", "LOCAL"]
+        },
+        "accountStatus": {
+          "type": "string",
+          "description": "The status of the user's account.",
+          "enum": ["active", "blocked"]
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was last updated.",
+          "format": "date-time"
+        },
+        "addressIds": {
+          "type": "array",
+          "description": "References to Addresses. (Relationship: User 1:N Address)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "orderIds": {
+          "type": "array",
+          "description": "References to Orders. (Relationship: User 1:N Order)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "accountsReceivable": {
+          "type": "number",
+          "description": "Total amount owed by the customer."
+        },
+        "availableCredit": {
+          "type": "number",
+          "description": "The amount of credit available to the customer."
+        },
+        "code": {
+          "type": "string",
+          "description": "Optional code for the customer."
+        },
+        "creditLimit": {
+          "type": "number",
+          "description": "The total credit limit for the customer."
+        },
+        "currency": {
+          "type": "string",
+          "description": "The currency for the customer's transactions."
+        },
+        "billingAddress": {
+          "type": "string",
+          "description": "The billing address for the customer."
+        },
+        "deliveryAddress": {
+          "type": "string",
+          "description": "The delivery address for the customer."
+        },
+        "telephone": {
+          "type": "string",
+          "description": "The telephone number for the customer."
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "customerType"
+      ]
+    },
+    "Group": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Group",
+      "type": "object",
+      "description": "Represents a user group with a set of roles/permissions.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the group."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the group (e.g., Administrators, Sales Staff)."
+        },
+        "roles": {
+          "type": "array",
+          "description": "An array of role strings that this group grants.",
+          "items": { "type": "string", "enum": ["ADMIN", "STAFF", "CONTENT_MANAGER", "ACCOUNTANT", "CUSTOMER"] }
+        }
+      },
+      "required": ["id", "name", "roles"]
+    },
+    "LocalizedString": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "LocalizedString",
+      "type": "object",
+      "description": "A string that can be localized into multiple languages.",
+      "properties": {
+        "en": { "type": "string" },
+        "es": { "type": "string" },
+        "fr": { "type": "string" },
+        "ar": { "type": "string" },
+        "ur": { "type": "string" }
+      }
+    },
+    "Product": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Product",
+      "type": "object",
+      "description": "Represents a product (cut of meat) available for sale.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the product entity."
+        },
+        "name": {
+          "$ref": "#/entities/LocalizedString"
+        },
+        "slug": {
+          "type": "string",
+          "description": "URL-friendly slug for the product."
+        },
+        "description": {
+          "$ref": "#/entities/LocalizedString"
+        },
+        "images": {
+          "type": "array",
+          "description": "URLs of the product images stored in file storage.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of the product (e.g., Beef, Lamb)."
+        },
+        "cutType": {
+          "type": "string",
+          "description": "Specific cut type (e.g., Ribeye, Sirloin)."
+        },
+        "cutTypeId": {
+          "type": "string",
+          "description": "Reference to the CutType this product belongs to."
+        },
+        "price": {
+          "type": "number",
+          "description": "The selling price of the product per base unit (e.g., per pound)."
+        },
+        "perKgPrice": {
+          "type": "number",
+          "description": "The selling price of the product per kilogram."
+        },
+        "cutWeight": {
+          "type": "string",
+          "description": "The weight of the cut (e.g., '250g', '1kg')."
+        },
+        "styles": {
+          "type": "array",
+          "description": "Available preparation styles for the meat.",
+          "items": { "type": "string" }
+        },
+        "rubs": {
+          "type": "array",
+          "description": "Available seasoning rubs for the meat.",
+          "items": { "type": "string" }
+        },
+        "featured": {
+          "type": "boolean",
+          "description": "Indicates whether the product is featured on the homepage."
+        },
+        "deal": {
+          "type": "boolean",
+          "description": "Indicates whether the product is part of a special deal."
+        },
+        "bestseller": {
+          "type": "boolean",
+          "description": "Indicates if the product is a bestseller."
+        },
+        "discount": {
+          "type": "number",
+          "description": "The discount percentage for the product."
+        },
+        "gradeQuality": {
+          "type": "string",
+          "description": "The grade or quality of the meat."
+        },
+        "countryOfOrigin": {
+          "type": "string",
+          "description": "The country where the meat originated from."
+        },
+        "temperature": {
+            "type": "string",
+            "description": "The temperature state of the product (e.g., Fresh, Frozen).",
+            "enum": ["Fresh", "Frozen"]
+        },
+        "points": {
+          "type": "number",
+          "description": "The point value of the product for the box builder."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the product was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the product was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "slug",
+        "category",
+        "cutType",
+        "cutTypeId",
+        "price",
+        "countryOfOrigin",
+        "temperature"
+      ]
+    },
+    "InventoryLot": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "InventoryLot",
+      "type": "object",
+      "description": "Represents a specific batch or lot of inventory for a product.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the inventory lot." },
+        "productId": { "type": "string", "description": "Reference to the Product this lot belongs to." },
+        "vendorId": { "type": "string", "description": "Reference to the Vendor for this lot." },
+        "unit": { "type": "string", "description": "The unit of measurement for this lot (e.g., '12oz', 'Full Carcass')." },
+        "quantity": { "type": "number", "description": "The number of units available in this lot." },
+        "purchasePrice": { "type": "number", "description": "The cost price per unit for this lot." },
+        "shipmentId": { "type": "string", "description": "Identifier for the shipment this lot arrived in." },
+        "purchaseDate": { "type": "string", "format": "date-time", "description": "The date this lot was purchased." },
+        "shipmentDate": { "type": "string", "format": "date-time", "description": "The date this lot was received." }
+      },
+      "required": ["id", "productId", "vendorId", "unit", "quantity", "purchasePrice", "shipmentId", "purchaseDate", "shipmentDate"]
+    },
+    "Order": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Order",
+      "type": "object",
+      "description": "Represents a customer order.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the order entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Order)"
+        },
+        "orderType": {
+            "type": "string",
+            "description": "Type of order (e.g., ONLINE, LOCAL).",
+            "enum": ["ONLINE", "LOCAL"]
+        },
+        "total": {
+          "type": "number",
+          "description": "Total amount of the order."
+        },
+        "addressId": {
+          "type": "string",
+          "description": "Reference to Address. (Relationship: Order 1:1 Address)"
+        },
+        "paymentStatus": {
+          "type": "string",
+          "description": "Status of the payment (e.g., pending, paid, failed, unpaid).",
+          "enum": ["pending", "paid", "failed", "unpaid"]
+        },
+        "fulfillmentStatus": {
+          "type": "string",
+          "description": "Status of the order fulfillment (e.g., processing, shipped, delivered)."
+        },
+        "stripePaymentIntentId": {
+          "type": "string",
+          "description": "Stripe Payment Intent ID associated with the order."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the order was placed.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the order was last updated.",
+          "format": "date-time"
+        },
+        "orderItemIds": {
+          "type": "array",
+          "description": "References to OrderItems. (Relationship: Order 1:N OrderItem)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "qtyToDeliver": {
+          "type": "number",
+          "description": "The total quantity of items to be delivered for this order."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "total",
+        "orderType"
+      ]
+    },
+    "OrderItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "OrderItem",
+      "type": "object",
+      "description": "Represents an item within an order.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the order item entity."
+        },
+        "orderId": {
+          "type": "string",
+          "description": "Reference to Order. (Relationship: Order 1:N OrderItem)"
+        },
+        "productId": {
+          "type": "string",
+          "description": "Reference to Product. (Relationship: Product 1:N OrderItem)"
+        },
+        "quantity": {
+          "type": "number",
+          "description": "Quantity of the product in the order item."
+        },
+        "price": {
+          "type": "number",
+          "description": "Price of the product at the time of the order."
+        },
+        "selectedWeight": {
+          "type": "string",
+          "description": "Selected weight option for the product."
+        }
+      },
+      "required": [
+        "id",
+        "orderId",
+        "productId",
+        "quantity",
+        "price"
+      ]
+    },
+    "Address": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Address",
+      "type": "object",
+      "description": "Represents a customer's address.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the address entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Address)"
+        },
+        "fullName": {
+          "type": "string",
+          "description": "Full name of the address recipient."
+        },
+        "street": {
+          "type": "string",
+          "description": "Street address."
+        },
+        "city": {
+          "type": "string",
+          "description": "City."
+        },
+        "state": {
+          "type": "string",
+          "description": "State."
+        },
+        "zipCode": {
+          "type": "string",
+          "description": "Zip code."
+        },
+        "country": {
+          "type": "string",
+          "description": "Country."
+        },
+        "isDefault": {
+          "type": "boolean",
+          "description": "Indicates whether this is the user's default address."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "fullName",
+        "street",
+        "city",
+        "state",
+        "zipCode",
+        "country"
+      ]
+    },
+    "Category": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Category",
+      "type": "object",
+      "description": "Represents a product category.",
+      "properties": {
+        "name": {
+          "$ref": "#/entities/LocalizedString"
+        },
+        "description": {
+          "type": "string",
+          "description": "A short description of the primal cut."
+        }
+      }
+    },
+    "CutType": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CutType",
+      "type": "object",
+      "description": "Represents a type of meat cut.",
+      "properties": {
+        "name": {
+          "$ref": "#/entities/LocalizedString"
+        },
+        "slug": {
+          "type": "string",
+          "description": "URL-friendly slug for the cut type page."
+        },
+        "categoryId": {
+            "type": "string",
+            "description": "The ID of the category this cut type belongs to."
+        },
+        "imageUrl": {
+            "type": "string",
+            "description": "URL of an image representing the cut type.",
+            "format": "uri"
+        },
+        "description": {
+          "$ref": "#/entities/LocalizedString"
+        }
+      },
+      "required": ["name", "slug", "categoryId"]
+    },
+    "Grade": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Grade",
+      "type": "object",
+      "description": "Represents a quality grade of meat.",
+      "properties": {
+        "name": {
+          "$ref": "#/entities/LocalizedString"
+        }
+      }
+    },
+    "Country": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Country",
+      "type": "object",
+      "description": "Represents a country of origin.",
+      "properties": {
+        "name": {
+          "$ref": "#/entities/LocalizedString"
+        },
+        "code": {
+          "type": "string",
+          "description": "Two-letter ISO country code (e.g., us)."
+        }
+      }
+    },
+     "Currency": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Currency",
+      "type": "object",
+      "description": "Represents a currency.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the currency (e.g., United States Dollar)."
+        },
+        "code": {
+          "type": "string",
+          "description": "Three-letter ISO currency code (e.g., USD)."
+        },
+        "symbol": {
+          "type": "string",
+          "description": "Currency symbol (e.g., $)."
+        },
+        "isDefault": {
+            "type": "boolean",
+            "description": "Indicates if this is the default currency for the store."
+        },
+        "conversionRate": {
+            "type": "number",
+            "description": "The conversion rate against the default currency."
+        }
+      }
+    },
+    "Language": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "Language",
+        "type": "object",
+        "description": "Represents a supported language.",
+        "properties": {
+            "name": {
+                "type": "string",
+                "description": "Name of the language (e.g., English)."
+            },
+            "code": {
+                "type": "string",
+                "description": "Two-letter ISO language code (e.g., en)."
+            }
+        }
+    },
+    "MeasurementUnit": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MeasurementUnit",
+      "type": "object",
+      "description": "Represents a unit of measurement for weight.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the unit (e.g., Pound)."
+        },
+        "symbol": {
+          "type": "string",
+          "description": "Symbol for the unit (e.g., lb)."
+        }
+      }
+    },
+    "Style": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Style",
+      "type": "object",
+      "description": "Represents a preparation style for meat.",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the style (e.g., Lean Edges)." }
+      }
+    },
+    "Rub": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Rub",
+      "type": "object",
+      "description": "Represents a seasoning rub for meat.",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the rub (e.g., Coffee Rub)." }
+      }
+    },
+     "Vendor": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Vendor",
+      "description": "Represents a supplier or vendor.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the vendor."
+        },
+        "contactPerson": {
+          "type": "string",
+          "description": "Name of the primary contact person for the vendor."
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "Phone number for the vendor."
+        },
+        "address": {
+          "type": "string",
+          "description": "Physical address of the vendor."
+        },
+        "country": {
+          "type": "string",
+          "description": "The country where the vendor is located."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of the vendor.",
+          "enum": ["Local Supplier", "Foreign Supplier"]
+        }
+      },
+      "required": ["name", "country", "type"]
+    },
+    "DeliveryChallan": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DeliveryChallan",
+      "description": "Represents a delivery challan for an order.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the delivery challan." },
+        "orderId": { "type": "string", "description": "Reference to the Order." },
+        "challanDate": { "type": "string", "format": "date-time", "description": "Date of the challan." },
+        "dispatchedBy": { "type": "string", "description": "Name of the person who dispatched the order." },
+        "vehicleNumber": { "type": "string", "description": "Vehicle number used for delivery." },
+        "description": { "type": "string", "description": "Notes or description for the delivery." },
+        "status": {
+          "type": "string",
+          "description": "Status of the delivery.",
+          "enum": ["dispatched", "in_transit", "delivered"]
+        }
+      },
+      "required": ["id", "orderId", "challanDate", "dispatchedBy", "status"]
+    },
+    "Invoice": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Invoice",
+      "description": "Represents an invoice for an order.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the invoice." },
+        "orderId": { "type": "string", "description": "Reference to the Order." },
+        "invoiceDate": { "type": "string", "format": "date-time", "description": "Date the invoice was issued." },
+        "dueDate": { "type": "string", "format": "date-time", "description": "Date the invoice payment is due." },
+        "totalAmount": { "type": "number", "description": "Total amount of the invoice." },
+        "status": {
+          "type": "string",
+          "description": "Status of the invoice.",
+          "enum": ["draft", "sent", "paid", "overdue", "unpaid"]
+        }
+      },
+      "required": ["id", "orderId", "invoiceDate", "dueDate", "totalAmount", "status"]
+    },
+    "Payment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Payment",
+      "description": "Represents a payment received from a customer.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the payment." },
+        "userId": { "type": "string", "description": "Reference to the User." },
+        "invoiceId": { "type": "string", "description": "Reference to the Invoice." },
+        "amount": { "type": "number", "description": "The amount paid." },
+        "paymentDate": { "type": "string", "format": "date-time", "description": "Date of the payment." },
+        "paymentType": {
+          "type": "string",
+          "description": "The method of payment.",
+          "enum": ["Cash", "Cheque"]
+        },
+        "payeeName": { "type": "string", "description": "Name of the person who paid, for cash transactions." },
+        "bankName": { "type": "string", "description": "Name of the bank for cheque payments." },
+        "chequeNumber": { "type": "string", "description": "Cheque number for cheque payments." }
+      },
+      "required": ["id", "userId", "invoiceId", "amount", "paymentDate", "paymentType"]
+    },
+    "CreditNote": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CreditNote",
+      "description": "Represents a credit note issued to a customer.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the credit note." },
+        "userId": { "type": "string", "description": "Reference to the User." },
+        "amount": { "type": "number", "description": "The credit amount." },
+        "reason": { "type": "string", "description": "Reason for issuing the credit note." },
+        "issueDate": { "type": "string", "format": "date-time", "description": "Date the credit note was issued." }
+      },
+      "required": ["id", "userId", "amount", "issueDate"]
+    },
+    "DebitNote": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DebitNote",
+      "description": "Represents a debit note issued to a vendor.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the debit note." },
+        "vendorId": { "type": "string", "description": "Reference to the Vendor." },
+        "amount": { "type": "number", "description": "The debit amount." },
+        "reason": { "type": "string", "description": "Reason for issuing the debit note." },
+        "issueDate": { "type": "string", "format": "date-time", "description": "Date the debit note was issued." }
+      },
+      "required": ["id", "vendorId", "amount", "issueDate"]
+    },
+    "CategoryBanner": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CategoryBanner",
+      "description": "Represents a promotional banner for a product category on the homepage.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the banner." },
+        "title": { "type": "string", "description": "The main text displayed on the banner (e.g., 'Beef')." },
+        "imageUrl": { "type": "string", "format": "uri", "description": "URL of the uploaded banner image." },
+        "link": { "type": "string", "format": "uri", "description": "The URL the banner links to (e.g., '/products?category=Beef')." },
+        "order": { "type": "number", "description": "The display order of the banner." },
+        "category": { "type": "string", "description": "The product category to feature." },
+        "countryOfOrigin": { "type": "string", "description": "The country of origin to filter by." }
+      },
+      "required": ["id", "title", "link", "order", "category"]
+    },
+    "HeroSettings": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "HeroSettings",
+      "description": "Settings for the homepage hero section.",
+      "type": "object",
+      "properties": {
+        "imageUrl": { "type": "string", "description": "Path to the hero background image." },
+        "title": { "$ref": "#/entities/LocalizedString" },
+        "subtitle": { "$ref": "#/entities/LocalizedString" },
+        "buttonText": { "$ref": "#/entities/LocalizedString" },
+        "buttonLink": { "type": "string", "description": "URL for the call-to-action button." }
+      }
+    },
+    "Temperature": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Temperature",
+      "type": "object",
+      "description": "Represents the temperature state of a product.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the temperature state (e.g., Fresh, Frozen)."
+        }
+      }
+    },
+    "BoxOption": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "BoxOption",
+      "description": "Represents a subscription box option for the Get Started page.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the box option." },
+        "name": { "type": "string", "description": "Name of the box (e.g., Regular Box)." },
+        "people": { "type": "string", "description": "How many people the box is ideal for." },
+        "weight": { "type": "string", "description": "The approximate weight of meat in the box." },
+        "price": { "type": "number", "description": "The price per meal for this box." },
+        "imageId": { "type": "string", "description": "The ID of the image from the placeholder library." },
+        "description": { "type": "string", "description": "A short description of the box option." },
+        "order": { "type": "number", "description": "The display order of the box." },
+        "points": { "type": "number", "description": "The total point value for this box." }
+      },
+      "required": ["id", "name", "people", "weight", "price", "imageId", "description", "order", "points"]
+    },
+    "SocialPost": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SocialPost",
+      "description": "Represents an AI-generated social media post.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the post." },
+        "productId": { "type": "string", "description": "Reference to the Product this post is about." },
+        "productName": { "type": "string", "description": "The name of the product at the time of generation." },
+        "postText": { "type": "string", "description": "The generated text content for the social media post." },
+        "imageUrl": { "type": "string", "format": "uri", "description": "The URL of the main product image used." },
+        "platform": { "type": "string", "enum": ["Facebook", "Instagram"], "description": "The social media platform the post was generated for." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp indicating when the post was generated." }
+      },
+      "required": ["id", "productId", "productName", "postText", "imageUrl", "createdAt", "platform"]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. Uses path-based ownership for private user data. Includes standard user information and role.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user.  This is the Firebase Auth UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/groups/{groupId}",
+        "definition": {
+          "entityName": "Group",
+          "schema": { "$ref": "#/backend/entities/Group" },
+          "description": "Stores user groups and their associated roles.",
+          "params": [{ "name": "groupId", "description": "The unique identifier for the group." }]
+        }
+      },
+      {
+        "path": "/products/{productId}",
+        "definition": {
+          "entityName": "Product",
+          "schema": {
+            "$ref": "#/backend/entities/Product"
+          },
+          "description": "Stores product information. Accessible for listing to all users, but create/update/delete restricted to admins.",
+          "params": [
+            {
+              "name": "productId",
+              "description": "The unique identifier for the product."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/inventoryLots/{lotId}",
+        "definition": {
+          "entityName": "InventoryLot",
+          "schema": { "$ref": "#/backend/entities/InventoryLot" },
+          "description": "Stores individual inventory lots for all products. Write access restricted to admins.",
+          "params": [
+            { "name": "lotId", "description": "The unique identifier for the inventory lot." }
+          ]
+        }
+      },
+      {
+        "path": "/orders/{orderId}",
+        "definition": {
+          "entityName": "Order",
+          "schema": {
+            "$ref": "#/backend/entities/Order"
+          },
+          "description": "Stores all order information (both online and sales). Access is restricted to the user who placed the order or an admin.",
+          "params": [
+            {
+              "name": "orderId",
+              "description": "The unique identifier for the order."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/orders_items/{orderItemId}",
+        "definition": {
+          "entityName": "OrderItem",
+          "schema": {
+            "$ref": "#/backend/entities/OrderItem"
+          },
+          "description": "Stores order items, related to orders and products.  This could be nested under the order, but kept at the top level for scalability, given the potential number of order items per order.",
+          "params": [
+            {
+              "name": "orderItemId",
+              "description": "The unique identifier for the order item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/addresses/{addressId}",
+        "definition": {
+          "entityName": "Address",
+          "schema": {
+            "$ref": "#/backend/entities/Address"
+          },
+          "description": "Stores address information for each user. Uses path-based ownership to restrict access to the user who owns the address. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user who owns the address."
+            },
+            {
+              "name": "addressId",
+              "description": "The unique identifier for the address."
+            }
+          ]
+        }
+      },
+       {
+        "path": "/categories/{categoryId}",
+        "definition": {
+          "entityName": "Category",
+          "schema": { "$ref": "#/backend/entities/Category" },
+          "description": "Stores product categories.",
+          "params": [{ "name": "categoryId", "description": "The unique identifier for the category." }]
+        }
+      },
+      {
+        "path": "/cutTypes/{cutTypeId}",
+        "definition": {
+          "entityName": "CutType",
+          "schema": { "$ref": "#/backend/entities/CutType" },
+          "description": "Stores different types of meat cuts.",
+          "params": [{ "name": "cutTypeId", "description": "The unique identifier for the cut type." }]
+        }
+      },
+      {
+        "path": "/grades/{gradeId}",
+        "definition": {
+          "entityName": "Grade",
+          "schema": { "$ref": "#/backend/entities/Grade" },
+          "description": "Stores different quality grades for meat.",
+          "params": [{ "name": "gradeId", "description": "The unique identifier for the grade." }]
+        }
+      },
+      {
+        "path": "/countries/{countryId}",
+        "definition": {
+          "entityName": "Country",
+          "schema": { "$ref": "#/backend/entities/Country" },
+          "description": "Stores countries of origin.",
+          "params": [{ "name": "countryId", "description": "The unique identifier for the country." }]
+        }
+      },
+      {
+        "path": "/currencies/{currencyId}",
+        "definition": {
+          "entityName": "Currency",
+          "schema": { "$ref": "#/backend/entities/Currency" },
+          "description": "Stores available currencies.",
+          "params": [{ "name": "currencyId", "description": "The unique identifier for the currency." }]
+        }
+      },
+      {
+        "path": "/languages/{languageId}",
+        "definition": {
+          "entityName": "Language",
+          "schema": { "$ref": "#/backend/entities/Language" },
+          "description": "Stores available languages.",
+          "params": [{ "name": "languageId", "description": "The unique identifier for the language." }]
+        }
+      },
+      {
+        "path": "/measurementUnits/{measurementUnitId}",
+        "definition": {
+          "entityName": "MeasurementUnit",
+          "schema": { "$ref": "#/backend/entities/MeasurementUnit" },
+          "description": "Stores available units of measurement.",
+          "params": [{ "name": "measurementUnitId", "description": "The unique identifier for the measurement unit." }]
+        }
+      },
+      {
+        "path": "/styles/{styleId}",
+        "definition": {
+          "entityName": "Style",
+          "schema": { "$ref": "#/backend/entities/Style" },
+          "description": "Stores available preparation styles.",
+          "params": [{ "name": "styleId", "description": "The unique identifier for the style." }]
+        }
+      },
+      {
+        "path": "/rubs/{rubId}",
+        "definition": {
+          "entityName": "Rub",
+          "schema": { "$ref": "#/backend/entities/Rub" },
+          "description": "Stores available seasoning rubs.",
+          "params": [{ "name": "rubId", "description": "The unique identifier for the rub." }]
+        }
+      },
+      {
+        "path": "/temperatures/{temperatureId}",
+        "definition": {
+          "entityName": "Temperature",
+          "schema": { "$ref": "#/backend/entities/Temperature" },
+          "description": "Stores product temperature states (e.g., Fresh, Frozen).",
+          "params": [{ "name": "temperatureId", "description": "The unique identifier for the temperature state." }]
+        }
+      },
+      {
+        "path": "/vendors/{vendorId}",
+        "definition": {
+          "entityName": "Vendor",
+          "schema": { "$ref": "#/backend/entities/Vendor" },
+          "description": "Stores supplier and vendor information. Write access restricted to admins.",
+          "params": [{ "name": "vendorId", "description": "The unique identifier for the vendor." }]
+        }
+      },
+      {
+        "path": "/deliveries/{deliveryId}",
+        "definition": {
+          "entityName": "DeliveryChallan",
+          "schema": { "$ref": "#/backend/entities/DeliveryChallan" },
+          "description": "Stores delivery challans for orders. Write access restricted to admins.",
+          "params": [{ "name": "deliveryId", "description": "The unique identifier for the delivery challan." }]
+        }
+      },
+      {
+        "path": "/invoices/{invoiceId}",
+        "definition": {
+          "entityName": "Invoice",
+          "schema": { "$ref": "#/backend/entities/Invoice" },
+          "description": "Stores invoices for orders. Write access restricted to admins.",
+          "params": [{ "name": "invoiceId", "description": "The unique identifier for the invoice." }]
+        }
+      },
+      {
+        "path": "/payments/{paymentId}",
+        "definition": {
+          "entityName": "Payment",
+          "schema": { "$ref": "#/backend/entities/Payment" },
+          "description": "Stores payment records. Write access restricted to admins.",
+          "params": [{ "name": "paymentId", "description": "The unique identifier for the payment." }]
+        }
+      },
+      {
+        "path": "/creditNotes/{creditNoteId}",
+        "definition": {
+          "entityName": "CreditNote",
+          "schema": { "$ref": "#/backend/entities/CreditNote" },
+          "description": "Stores credit notes. Write access restricted to admins.",
+          "params": [{ "name": "creditNoteId", "description": "The unique identifier for the credit note." }]
+        }
+      },
+      {
+        "path": "/debitNotes/{debitNoteId}",
+        "definition": {
+          "entityName": "DebitNote",
+          "schema": { "$ref": "#/backend/entities/DebitNote" },
+          "description": "Stores debit notes issued to vendors. Write access restricted to admins.",
+          "params": [{ "name": "debitNoteId", "description": "The unique identifier for the debit note." }]
+        }
+      },
+      {
+        "path": "/categoryBanners/{bannerId}",
+        "definition": {
+          "entityName": "CategoryBanner",
+          "schema": { "$ref": "#/backend/entities/CategoryBanner" },
+          "description": "Stores category banners for the homepage. Publicly readable.",
+          "params": [{ "name": "bannerId", "description": "The unique identifier for the banner." }]
+        }
+      },
+      {
+        "path": "/settings/hero",
+        "definition": {
+          "entityName": "HeroSettings",
+          "schema": { "$ref": "#/backend/entities/HeroSettings" },
+          "description": "Stores settings for the homepage hero section.",
+          "params": []
+        }
+      },
+      {
+        "path": "/boxOptions/{boxId}",
+        "definition": {
+          "entityName": "BoxOption",
+          "schema": { "$ref": "#/backend/entities/BoxOption" },
+          "description": "Stores subscription box options for the Get Started page. Publicly readable.",
+          "params": [{ "name": "boxId", "description": "The unique identifier for the box option." }]
+        }
+      },
+      {
+        "path": "/socialPosts/{postId}",
+        "definition": {
+          "entityName": "SocialPost",
+          "schema": { "$ref": "#/backend/entities/SocialPost" },
+          "description": "Stores AI-generated social media posts for products.",
+          "params": [{ "name": "postId", "description": "The unique identifier for the social post." }]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support the PrimeCuts Hub e-commerce application, focusing on secure user authentication, product catalog management, order processing, and role-based access control (RBAC). The structure prioritizes authorization independence to ensure scalable and maintainable security rules. Private user data is stored in hierarchical paths under `/users/{userId}`, and collaborative data patterns, like membership maps, are employed where appropriate.\\n\\nAuthorization Independence is achieved through denormalization. For instance, the `userId` field in the `/orders` and `/addresses` collections duplicates data, but this allows security rules to validate ownership without complex `get()` calls.  User roles are also stored directly on the User document.\\n\\nQAPs (Rules are not Filters) are supported through structural segregation and path-based ownership. For example, user profiles are stored under `/users/{userId}`, ensuring that listing users does not expose private data to unauthorized users.  Products are in a top-level `/products` collection. Order data is similarly segregated under `/users/{userId}/orders/{orderId}` to ensure that only the user or an admin can access order details."
+  }
+}
+
