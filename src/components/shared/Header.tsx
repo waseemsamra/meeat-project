@@ -13,7 +13,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogClose, DialogTrigger } from '../ui/dialog';
+import { Dialog, DialogContent, DialogClose, DialogTrigger, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useUser, useAuth, useDoc, useFirestore, useCollection } from '@/firebase';
@@ -394,6 +394,9 @@ export function Header() {
         <DialogContent className="sm:max-w-md">
             <DialogHeader>
                 <DialogTitle>Update your settings</DialogTitle>
+                <DialogDescription>
+                    Select your preferred language and currency.
+                </DialogDescription>
             </DialogHeader>
             <div className="space-y-6 py-4">
                 <div className="space-y-2">
@@ -439,3 +442,4 @@ export function Header() {
     </>
   );
 }
+    
