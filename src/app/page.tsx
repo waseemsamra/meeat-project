@@ -17,6 +17,7 @@ import { CleaverIcon, CowIcon, LeafIcon, TruckIcon } from '@/components/icons';
 import { ChefHat, Package } from 'lucide-react';
 import { DynamicProductSection } from '@/components/shared/DynamicProductSection';
 import { useTranslation } from '@/hooks/useTranslation';
+import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 
 export default function Home() {
   const firestore = useFirestore();
@@ -94,7 +95,42 @@ export default function Home() {
         {/* Features Section */}
         <section className="py-8 bg-card border-b">
             <div className="container mx-auto px-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                <div className="md:hidden">
+                    <Carousel
+                        opts={{
+                            align: "start",
+                        }}
+                        className="w-full"
+                    >
+                        <CarouselContent>
+                            <CarouselItem className="basis-3/4">
+                                <div className="flex items-center justify-center gap-3 h-full p-2">
+                                    <LeafIcon className="h-8 w-8 text-primary flex-shrink-0"/>
+                                    <span className="text-sm font-medium text-left">{t('grass_fed')}</span>
+                                </div>
+                            </CarouselItem>
+                            <CarouselItem className="basis-3/4">
+                                <div className="flex items-center justify-center gap-3 h-full p-2">
+                                    <TruckIcon className="h-8 w-8 text-primary flex-shrink-0"/>
+                                    <span className="text-sm font-medium text-left">{t('delivery_wide')}</span>
+                                </div>
+                            </CarouselItem>
+                            <CarouselItem className="basis-3/4">
+                                <div className="flex items-center justify-center gap-3 h-full p-2">
+                                    <CleaverIcon className="h-8 w-8 text-primary flex-shrink-0"/>
+                                    <span className="text-sm font-medium text-left">{t('cut_fresh')}</span>
+                                </div>
+                            </CarouselItem>
+                            <CarouselItem className="basis-3/4">
+                                <div className="flex items-center justify-center gap-3 h-full p-2">
+                                    <CowIcon className="h-8 w-8 text-primary flex-shrink-0"/>
+                                    <span className="text-sm font-medium text-left">{t('family_owned')}</span>
+                                </div>
+                            </CarouselItem>
+                        </CarouselContent>
+                    </Carousel>
+                </div>
+                <div className="hidden md:grid md:grid-cols-4 gap-8 text-center">
                     <div className="flex items-center justify-center gap-3">
                         <LeafIcon className="h-8 w-8 text-primary"/>
                         <span className="text-sm font-medium">{t('grass_fed')}</span>
