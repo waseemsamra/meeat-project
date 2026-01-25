@@ -22,13 +22,15 @@ import { getPlaceholderImage } from '@/lib/utils';
 import { Info } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
 import { useTranslation } from '@/hooks/useTranslation';
+import { cn } from '@/lib/utils';
 
 const ProductCard = ({ product, countries }: { product: Product; countries: Country[] | null }) => {
     const { defaultCurrency } = useSettings();
     const { t } = useTranslation();
     const country = countries?.find(c => c.name.en === product.countryOfOrigin);
     const imageUrl = getPlaceholderImage(product.images?.[0]);
-    
+    const hoverImageUrl = product.images?.[1] ? getPlaceholderImage(product.images[1]) : null;
+
     if (!imageUrl) {
         return null; // Or a default placeholder
     }
@@ -37,27 +39,38 @@ const ProductCard = ({ product, countries }: { product: Product; countries: Coun
         <Card className="overflow-hidden transition-shadow hover:shadow-lg group">
             <Link href={`/products/${product.slug}`} className="block">
                 <CardHeader className="p-0 relative">
-                    <div className="aspect-[4/3] w-full bg-muted p-4">
+                    <div className="aspect-[4/3] w-full bg-muted relative">
                         <Image
                             src={imageUrl}
                             alt={t(product.name)}
-                            width={600}
-                            height={450}
-                            className="w-full h-full object-contain transition-transform group-hover:scale-105"
+                            fill
+                            className={cn(
+                                "p-4 object-contain transition-all duration-300",
+                                hoverImageUrl ? "opacity-100 group-hover:opacity-0" : "group-hover:scale-105"
+                            )}
                             data-ai-hint={`${product.category.toLowerCase()} ${product.cutType.toLowerCase()}`}
                         />
+                        {hoverImageUrl && (
+                            <Image
+                                src={hoverImageUrl}
+                                alt={t(product.name)}
+                                fill
+                                className="p-4 object-contain opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:scale-105"
+                                data-ai-hint={`${product.category.toLowerCase()} ${product.cutType.toLowerCase()}`}
+                            />
+                        )}
                     </div>
                     {product.discount && product.discount > 0 ? (
-                        <div className="absolute top-2 left-2 bg-destructive text-destructive-foreground text-xs font-bold px-3 py-1 rounded-full">
+                        <div className="absolute top-2 left-2 bg-destructive text-destructive-foreground text-xs font-bold px-3 py-1 rounded-full z-10">
                             {product.discount}% off
                         </div>
                     ) : product.bestseller && (
-                        <div className="absolute top-2 left-2 bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+                        <div className="absolute top-2 left-2 bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full z-10">
                             {t('bestseller')}
                         </div>
                     )}
                     {country && (
-                        <div className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm rounded-full p-1 shadow-md">
+                        <div className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm rounded-full p-1 shadow-md z-10">
                             <Image
                                 src={`https://flagcdn.com/w40/${country.code}.png`}
                                 alt={`${t(country.name)} flag`}
