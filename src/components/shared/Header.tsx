@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogClose, DialogTrigger, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useUser, useAuth, useDoc, useFirestore, useCollection } from '@/firebase';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Avatar, AvatarFallback } from '../ui/avatar';
@@ -34,6 +34,8 @@ import Image from 'next/image';
 import { getPlaceholderImage } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
 import { useSettings } from '@/hooks/useSettings';
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 
 const mainNav = [
@@ -62,7 +64,7 @@ export function Header() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
+  const [searchQuery, setSearchQuery] = useState('');
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   
@@ -221,29 +223,60 @@ export function Header() {
                             </div>
                         ) : filteredProducts.length > 0 ? (
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-                                {filteredProducts.map(product => (
-                                    <Link 
-                                        href={`/products/${product.slug}`} 
-                                        key={product.id}
-                                        className="group"
-                                        onClick={handleProductSuggestionClick}
-                                    >
-                                        <Card className="overflow-hidden h-full">
-                                            <div className="aspect-[4/3] w-full bg-muted relative">
-                                                <Image
-                                                    src={getPlaceholderImage(product.images?.[0])}
-                                                    alt={t(product.name)}
-                                                    fill
-                                                    className="p-2 object-contain transition-transform group-hover:scale-105"
-                                                />
-                                            </div>
-                                            <CardContent className="p-3">
-                                                <h3 className="font-semibold text-sm line-clamp-2">{t(product.name)}</h3>
-                                                <p className="text-sm text-muted-foreground mt-1">{defaultCurrency?.symbol || '$'} {product.price.toFixed(2)}</p>
-                                            </CardContent>
+                                {filteredProducts.map(product => {
+                                    const imageUrl = getPlaceholderImage(product.images?.[0]);
+                                    const hoverImageUrl = product.images?.[1] ? getPlaceholderImage(product.images[1]) : null;
+                                    
+                                    return (
+                                        <Card key={product.id} className="overflow-hidden transition-shadow hover:shadow-lg group flex flex-col h-full">
+                                            <Link 
+                                                href={`/products/${product.slug}`} 
+                                                className="block flex flex-col flex-grow"
+                                                onClick={handleProductSuggestionClick}
+                                            >
+                                                <div className="relative">
+                                                    <div className="aspect-[4/3] w-full bg-muted">
+                                                        {imageUrl && (
+                                                            <Image
+                                                                src={imageUrl}
+                                                                alt={t(product.name)}
+                                                                fill
+                                                                className={cn(
+                                                                    "object-cover transition-all duration-300",
+                                                                    hoverImageUrl ? "opacity-100 group-hover:opacity-0" : "group-hover:scale-105"
+                                                                )}
+                                                                data-ai-hint={`${product.category.toLowerCase()} ${product.cutType.toLowerCase()}`}
+                                                            />
+                                                        )}
+                                                        {hoverImageUrl && (
+                                                            <Image
+                                                                src={hoverImageUrl}
+                                                                alt={t(product.name)}
+                                                                fill
+                                                                className="object-cover opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:scale-105"
+                                                                data-ai-hint={`${product.category.toLowerCase()} ${product.cutType.toLowerCase()}`}
+                                                            />
+                                                        )}
+                                                    </div>
+                                                    {product.bestseller && (
+                                                        <div className="absolute top-3 right-3 z-10">
+                                                            <Badge variant="default" className="bg-white text-black hover:bg-white/90 shadow-md">
+                                                                {t('bestseller')}
+                                                            </Badge>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="p-4 flex flex-col flex-grow">
+                                                    {product.cutWeight && <p className="text-sm text-muted-foreground">{t(product.cutWeight)}</p>}
+                                                    <h3 className="text-xl font-bold font-headline mt-1">{t(product.name)}</h3>
+                                                    <p className="mt-auto pt-2 text-base text-muted-foreground">
+                                                        from <span className="font-bold text-foreground text-lg">{defaultCurrency?.symbol || '$'}{product.price.toFixed(2)}</span> per unit
+                                                    </p>
+                                                </div>
+                                            </Link>
                                         </Card>
-                                    </Link>
-                                ))}
+                                    );
+                                })}
                             </div>
                         ) : (
                             <div className="text-center text-muted-foreground pt-16">
@@ -438,4 +471,3 @@ export function Header() {
     </>
   );
 }
-    
