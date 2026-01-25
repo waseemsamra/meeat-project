@@ -3,8 +3,7 @@
 import { useLanguage } from './useLanguage';
 import translations from '@/lib/translations.json';
 import { LocalizedString } from '@/lib/types';
-import { useState, useEffect } from 'react';
-import { translateProduct } from '@/ai/flows/translate-product';
+import { useCallback } from 'react';
 
 type Translations = typeof translations;
 type LanguageCode = keyof Translations;
@@ -14,7 +13,7 @@ export const useTranslation = () => {
   const { language } = useLanguage();
   const langCode = (language?.code?.toLowerCase() as LanguageCode) || 'en';
 
-  const t = (keyOrObject: TranslationKey | LocalizedString | string | null | undefined): string => {
+  const t = useCallback((keyOrObject: TranslationKey | LocalizedString | string | null | undefined): string => {
     if (!keyOrObject) {
       return '';
     }
@@ -41,7 +40,7 @@ export const useTranslation = () => {
 
 
     return '';
-  };
+  }, [langCode]);
 
   return { t, lang: langCode };
 };
