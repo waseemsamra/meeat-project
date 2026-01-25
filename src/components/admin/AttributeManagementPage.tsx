@@ -388,74 +388,72 @@ export function AttributeManagementPage<T extends Attribute>({
 
       {/* Form Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{selectedItem ? 'Edit' : 'Add'} {title.slice(0, -1)}</DialogTitle>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              {formFields.length > 0
-                ? formFields.map((field) => {
-                    if (renderCustomFormField) {
-                      const customElement = renderCustomFormField({ field, form });
-                      if (customElement) {
-                        return customElement;
-                      }
+              {formFields.map((field) => {
+                if (renderCustomFormField) {
+                    const customElement = renderCustomFormField({ field, form });
+                    if (customElement) {
+                        return <React.Fragment key={String(field.name)}>{customElement}</React.Fragment>;
                     }
+                }
 
-                    if (field.type === 'hidden') return null;
+                if (field.type === 'hidden') return null;
 
-                    return (
-                      <FormField
-                        key={String(field.name)}
-                        control={form.control}
-                        name={field.name}
-                        render={({ field: formField }) => (
-                          <FormItem>
-                            <FormLabel>{field.label}</FormLabel>
-                            {field.type === 'select' ? (
-                              <Select onValueChange={formField.onChange} value={formField.value || ''} disabled={field.isLoading}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder={field.placeholder} />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {field.options?.map(option => (
-                                    <SelectItem key={option.value} value={option.value}>{t(option.label)}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            ) : field.type === 'date' ? (
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <FormControl>
-                                    <Button
-                                      variant={"outline"}
-                                      className={cn("w-full pl-3 text-left font-normal", !formField.value && "text-muted-foreground")}
-                                    >
-                                      {formField.value ? format(formField.value, "PPP") : <span>{field.placeholder}</span>}
-                                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                  </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                  <Calendar mode="single" selected={formField.value} onSelect={formField.onChange} initialFocus />
-                                </PopoverContent>
-                              </Popover>
-                            ) : (
+                return (
+                  <FormField
+                    key={String(field.name)}
+                    control={form.control}
+                    name={field.name}
+                    render={({ field: formField }) => (
+                      <FormItem>
+                        <FormLabel>{field.label}</FormLabel>
+                        {field.type === 'select' ? (
+                          <Select onValueChange={formField.onChange} value={formField.value || ''} disabled={field.isLoading}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder={field.placeholder} />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {field.options?.map(option => (
+                                <SelectItem key={option.value} value={option.value}>{t(option.label)}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : field.type === 'date' ? (
+                          <Popover>
+                            <PopoverTrigger asChild>
                               <FormControl>
-                                <Input placeholder={field.placeholder} {...formField} value={formField.value || ''} type={field.type} />
+                                <Button
+                                  variant={"outline"}
+                                  className={cn("w-full pl-3 text-left font-normal", !formField.value && "text-muted-foreground")}
+                                >
+                                  {formField.value ? format(formField.value, "PPP") : <span>{field.placeholder}</span>}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
                               </FormControl>
-                            )}
-                            {field.description && <FormDescription>{field.description}</FormDescription>}
-                            <FormMessage />
-                          </FormItem>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar mode="single" selected={formField.value} onSelect={formField.onChange} initialFocus />
+                            </PopoverContent>
+                          </Popover>
+                        ) : (
+                          <FormControl>
+                            <Input placeholder={field.placeholder} {...formField} value={formField.value || ''} type={field.type} />
+                          </FormControl>
                         )}
-                      />
-                    );
-                  })
-                : renderCustomFormField && renderCustomFormField({ form } as any)}
+                        {field.description && <FormDescription>{field.description}</FormDescription>}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                );
+              })}
               <DialogFooter>
                 <DialogClose asChild>
                   <Button type="button" variant="outline" disabled={isSaving}>
