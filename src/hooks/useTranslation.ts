@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useLanguage } from './useLanguage';
@@ -13,22 +14,24 @@ export const useTranslation = () => {
   const { language } = useLanguage();
   const langCode = (language?.code?.toLowerCase() as LanguageCode) || 'en';
 
-  const t = useCallback((keyOrObject: TranslationKey | LocalizedString | string | null | undefined): string => {
+  const t = useCallback((keyOrObject: TranslationKey | LocalizedString | string | null | undefined, langOverride?: LanguageCode): string => {
+    const effectiveLangCode = langOverride || langCode;
+    
     if (!keyOrObject) {
       return '';
     }
 
     // If it's a LocalizedString object
-    if (typeof keyOrObject === 'object' && ('en' in keyOrObject || langCode in keyOrObject)) {
+    if (typeof keyOrObject === 'object' && ('en' in keyOrObject || effectiveLangCode in keyOrObject)) {
         const localized = keyOrObject as LocalizedString;
-        return localized[langCode] || localized.en || '';
+        return localized[effectiveLangCode] || localized.en || '';
     }
     
     // If it's a simple string key for the JSON file
     if (typeof keyOrObject === 'string' && keyOrObject in translations.en) {
       const key = keyOrObject as TranslationKey;
-      if (translations[langCode] && key in translations[langCode]) {
-        return translations[langCode][key];
+      if (translations[effectiveLangCode] && key in translations[effectiveLangCode]) {
+        return translations[effectiveLangCode][key];
       }
       return translations.en[key] || key;
     }

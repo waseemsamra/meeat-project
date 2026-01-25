@@ -14,7 +14,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogClose, DialogTrigger, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
+import { Dialog, DialogContent, DialogClose, DialogTrigger, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useUser, useAuth, useDoc, useFirestore, useCollection } from '@/firebase';
@@ -72,7 +72,7 @@ export function Header() {
   const [tempCurrency, setTempCurrency] = useState(currency);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const { toast } = useToast();
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const { defaultCurrency } = useSettings();
 
   const firestore = useFirestore();
@@ -93,13 +93,6 @@ export function Header() {
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
   
-  useEffect(() => {
-    const currentSearch = searchParams.get('search') || '';
-    if (searchQuery !== currentSearch) {
-      setSearchQuery(currentSearch);
-    }
-  }, [searchParams]);
-
   useEffect(() => {
     if (searchQuery.length >= 1 && products) {
       const lowercasedQuery = searchQuery.toLowerCase();
@@ -197,11 +190,13 @@ export function Header() {
                 </Button>
             </DialogTrigger>
             <DialogContent className="h-dvh w-screen max-w-full bg-background p-0 gap-0 flex flex-col sm:rounded-none">
-                <div className="p-4 border-b">
+                 <DialogHeader className="p-4 border-b">
+                    <DialogTitle className="sr-only">Search Products</DialogTitle>
+                    <DialogDescription className="sr-only">Start typing to see product suggestions.</DialogDescription>
                     <form onSubmit={handleSearchSubmit} className="relative w-full max-w-2xl mx-auto">
                         <Input
                         type="search"
-                        placeholder="Start typing"
+                        placeholder="Start typing..."
                         className="w-full rounded-full pl-10 pr-4 h-12 bg-muted text-foreground"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -216,7 +211,7 @@ export function Header() {
                         <Button variant="ghost" size="sm" onClick={() => { setSearchQuery("Mince"); }}>Mince</Button>
                         <Button variant="ghost" size="sm" onClick={() => { setSearchQuery("Sausages"); }}>Sausages</Button>
                     </div>
-                </div>
+                </DialogHeader>
                 
                 <ScrollArea className="flex-grow">
                     <div className="p-8 max-w-7xl mx-auto">
