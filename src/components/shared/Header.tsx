@@ -101,8 +101,12 @@ export function Header() {
 
   useEffect(() => {
     if (searchQuery.length >= 2 && products) {
+      const lowercasedQuery = searchQuery.toLowerCase();
       const filtered = products.filter(product => 
-        t(product.name).toLowerCase().includes(searchQuery.toLowerCase())
+        t(product.name).toLowerCase().includes(lowercasedQuery) ||
+        (product.description && t(product.description).toLowerCase().includes(lowercasedQuery)) ||
+        product.category.toLowerCase().includes(lowercasedQuery) ||
+        product.cutType.toLowerCase().includes(lowercasedQuery)
       );
       setFilteredProducts(filtered);
     } else {
