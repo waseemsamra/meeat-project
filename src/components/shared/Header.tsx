@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -192,7 +191,7 @@ export function Header() {
                 </Button>
             </DialogTrigger>
             <DialogContent className="h-dvh w-screen max-w-full bg-background p-0 gap-0 flex flex-col sm:rounded-none">
-                 <DialogHeader className="p-4 border-b">
+                <DialogHeader className="p-4 border-b">
                     <DialogTitle className="sr-only">Search Products</DialogTitle>
                     <DialogDescription className="sr-only">Start typing to see product suggestions.</DialogDescription>
                     <form onSubmit={handleSearchSubmit} className="relative w-full max-w-2xl mx-auto">
@@ -216,7 +215,7 @@ export function Header() {
                 </DialogHeader>
                 
                 <ScrollArea className="flex-grow">
-                    <div className="p-8 max-w-7xl mx-auto">
+                    <div className="p-8">
                         {searchQuery.length < 1 ? (
                             <div className="text-center text-muted-foreground pt-16">
                                 <p>Start typing to see products.</p>
