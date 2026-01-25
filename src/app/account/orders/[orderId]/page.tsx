@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Printer } from 'lucide-react';
 import printJS from 'print-js';
 import { useSettings } from '@/hooks/useSettings';
+import { useTranslation } from '@/hooks/useTranslation';
 
 function OrderDetailsSkeleton() {
   return (
@@ -50,6 +51,7 @@ export default function OrderDetailsPage() {
   const firestore = useFirestore();
   const { defaultCurrency } = useSettings();
   const currencySymbol = defaultCurrency?.symbol || '$';
+  const { t } = useTranslation();
 
   const orderRef = useMemo(
     () => (firestore && user?.id && orderId ? doc(firestore, `users/${user.id}/orders`, orderId) : null),
@@ -162,7 +164,7 @@ export default function OrderDetailsPage() {
                                         {item.product && item.product.images?.[0] ? (
                                             <Image
                                                 src={getPlaceholderImage(item.product.images[0])}
-                                                alt={item.product.name || 'Product Image'}
+                                                alt={t(item.product.name) || 'Product Image'}
                                                 fill
                                                 className="object-contain"
                                                 data-ai-hint={`${item.product.category?.toLowerCase() || ''} ${item.product.cutType?.toLowerCase() || ''}`}
@@ -172,7 +174,7 @@ export default function OrderDetailsPage() {
                                 <div>
                                     <p className="font-medium">
                                         {item.product ? (
-                                            <Link href={`/products/${item.product.slug}`} className="hover:underline">{item.product.name}</Link>
+                                            <Link href={`/products/${item.product.slug}`} className="hover:underline">{t(item.product.name)}</Link>
                                         ) : 'Product information unavailable'}
                                     </p>
                                     <div className="text-sm text-muted-foreground">

@@ -12,11 +12,13 @@ import { Input } from '@/components/ui/input';
 import { getPlaceholderImage } from '@/lib/utils';
 import type { CartItem, AnyCartItem } from '@/lib/types';
 import { useSettings } from '@/hooks/useSettings';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart, clearCartAndNotify, cartTotal, cartCount } = useCart();
   const { defaultCurrency } = useSettings();
   const currencySymbol = defaultCurrency?.symbol || '$';
+  const { t } = useTranslation();
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -44,7 +46,7 @@ export default function CartPage() {
                                     <div key={index} className="relative w-full h-full bg-muted rounded-sm">
                                     <Image
                                       src={getPlaceholderImage(subItem.images[0])}
-                                      alt={subItem.name}
+                                      alt={t(subItem.name)}
                                       fill
                                       className="object-contain"
                                     />
@@ -76,7 +78,7 @@ export default function CartPage() {
                       <div className="relative w-[150px] h-[100px] aspect-[3/2] rounded-md bg-muted flex-shrink-0">
                       <Image
                         src={getPlaceholderImage(regularItem.product.images[0])}
-                        alt={regularItem.product.name}
+                        alt={t(regularItem.product.name)}
                         fill
                         className="object-contain"
                         data-ai-hint={`${regularItem.product.category.toLowerCase()} ${regularItem.product.cutType.toLowerCase()}`}
@@ -84,7 +86,7 @@ export default function CartPage() {
                       </div>
                       <div className="flex-grow flex flex-col sm:flex-row justify-between gap-4">
                         <div className="flex-grow">
-                          <h3 className="font-headline text-lg">{regularItem.product.name}</h3>
+                          <h3 className="font-headline text-lg">{t(regularItem.product.name)}</h3>
                           <p className="text-sm text-muted-foreground">{regularItem.selectedUnit}</p>
                           <p className="text-sm text-muted-foreground">{regularItem.selectedStyle} / {regularItem.selectedRub}</p>
                           <p className="text-sm font-semibold">{currencySymbol}{regularItem.price.toFixed(2)}</p>

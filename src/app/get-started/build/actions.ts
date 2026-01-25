@@ -40,7 +40,7 @@ export async function getAiCuratedBox(input: z.infer<typeof ActionInputSchema>) 
             prompt: validatedInput.prompt,
             availableProducts: availableProducts.map(p => ({
                 id: p.id,
-                name: p.name,
+                name: p.name.en || '', // Use English name for the AI
                 category: p.category,
                 cutType: p.cutType,
                 price: p.price,

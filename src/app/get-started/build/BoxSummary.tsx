@@ -13,12 +13,14 @@ import { Box, X, ShoppingBag } from 'lucide-react';
 import { useBoxBuilder } from '@/hooks/useBoxBuilder';
 import { useCart } from '@/hooks/useCart';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export function BoxSummary() {
   const [subscription, setSubscription] = useState('every-3-weeks');
   const { boxItems, removeFromBox, totalPoints, currentPoints, boxTotalPrice, clearBox, boxName } = useBoxBuilder();
   const { addBoxToCart } = useCart();
   const router = useRouter();
+  const { t } = useTranslation();
 
   const isBoxFull = currentPoints >= totalPoints;
 
@@ -71,13 +73,13 @@ export function BoxSummary() {
                 boxItems.map((item, index) => (
                     <div key={`${item.id}-${index}`} className="flex items-center gap-4 py-2 border-b last:border-b-0">
                         <div className="relative bg-muted rounded-md w-16 h-16 flex-shrink-0">
-                            <Image src={getPlaceholderImage(item.images[0])} alt={item.name} fill className="object-contain" />
+                            <Image src={getPlaceholderImage(item.images[0])} alt={t(item.name)} fill className="object-contain" />
                             <div className="absolute -top-2 -left-2 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-full">
                                 {item.points}pts
                             </div>
                         </div>
                         <div className="flex-grow">
-                            <p className="font-semibold">{item.name}</p>
+                            <p className="font-semibold">{t(item.name)}</p>
                             <p className="text-sm text-muted-foreground">x 1</p>
                         </div>
                         <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive h-8 w-8" onClick={() => removeFromBox(item.id, index)}>

@@ -31,9 +31,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useCart } from '@/hooks/useCart';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const ProductCard = ({ product }: { product: Product }) => {
     const { addToBox, totalPoints, currentPoints } = useBoxBuilder();
+    const { t } = useTranslation();
     const imageUrl = getPlaceholderImage(product.images?.[0]);
     const pointsAvailable = totalPoints - currentPoints;
     const canAdd = product.points ? product.points <= pointsAvailable : false;
@@ -48,7 +50,7 @@ const ProductCard = ({ product }: { product: Product }) => {
                 <div className="relative mb-4">
                     <Image
                         src={imageUrl}
-                        alt={product.name}
+                        alt={t(product.name)}
                         width={600}
                         height={400}
                         className="aspect-[4/3] w-full object-cover rounded-md"
@@ -60,9 +62,9 @@ const ProductCard = ({ product }: { product: Product }) => {
                         </div>
                     )}
                 </div>
-                <h3 className="text-md font-semibold mb-1 group-hover:text-primary">{product.name}</h3>
+                <h3 className="text-md font-semibold mb-1 group-hover:text-primary">{t(product.name)}</h3>
                  <div className="flex justify-between items-center mt-auto pt-2">
-                    <p className="text-sm text-muted-foreground">{product.cutType}</p>
+                    <p className="text-sm text-muted-foreground">{t(product.cutType)}</p>
                     <p className="font-bold text-lg text-destructive">
                         ${product.price.toFixed(2)}
                     </p>
@@ -128,6 +130,7 @@ function BuildBoxPageContent() {
   const { addToBox, clearBox, boxItems, boxTotalPrice, totalPoints, boxName } = useBoxBuilder();
   const { addBoxToCart } = useCart();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const [isCurating, setIsCurating] = useState(false);
   const [curatorPrompt, setCuratorPrompt] = useState('');
@@ -155,7 +158,7 @@ function BuildBoxPageContent() {
     return products.filter(product => {
       const categoryMatch = selectedCategory === 'All' || product.category === selectedCategory;
       const searchMatch = searchQuery === '' || 
-                          product.name.toLowerCase().includes(searchQuery.toLowerCase());
+                          product.name.en?.toLowerCase().includes(searchQuery.toLowerCase());
       return categoryMatch && searchMatch;
     });
   }, [products, selectedCategory, searchQuery]);
@@ -253,7 +256,7 @@ function BuildBoxPageContent() {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="All">All Types</SelectItem>
-                            {categories?.map(cat => <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>)}
+                            {categories?.map(cat => <SelectItem key={cat.id} value={cat.name.en || ''}>{t(cat.name)}</SelectItem>)}
                         </SelectContent>
                     </Select>
                      <Select>

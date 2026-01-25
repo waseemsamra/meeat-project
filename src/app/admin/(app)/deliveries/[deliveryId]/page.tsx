@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useEffect, useState } from 'react';
@@ -14,6 +13,7 @@ import { Printer } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import printJS from 'print-js';
+import { useTranslation } from '@/hooks/useTranslation';
 
 
 function DeliveryNoteSkeleton() {
@@ -51,6 +51,7 @@ export default function DeliveryNotePage() {
   const params = useParams();
   const deliveryId = params.deliveryId as string;
   const firestore = useFirestore();
+  const { t } = useTranslation();
 
   const deliveryRef = useMemo(() => (firestore && deliveryId ? doc(firestore, 'deliveries', deliveryId) : null), [firestore, deliveryId]);
   const { data: delivery, isLoading: isLoadingDelivery } = useDoc<DeliveryChallan>(deliveryRef);
@@ -169,7 +170,7 @@ export default function DeliveryNotePage() {
                             {order.orderItemIds.map((item) => (
                                 <TableRow key={item.id}>
                                     <TableCell>
-                                        <div className="font-medium">{item.product?.name || 'Item'}</div>
+                                        <div className="font-medium">{item.product?.name ? t(item.product.name) : 'Item'}</div>
                                         <div className="text-xs text-muted-foreground">{item.selectedUnit}</div>
                                     </TableCell>
                                     <TableCell className="text-right font-medium">{item.quantity}</TableCell>
