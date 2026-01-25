@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -128,15 +129,6 @@ export function MasterButchers() {
             {activeTabData && (
               <div className="bg-primary text-primary-foreground rounded-lg overflow-hidden p-8 lg:p-12">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                      <div className="relative aspect-square w-full">
-                           <Image 
-                              src={getPlaceholderImage(activeTabData.content.image)}
-                              alt={activeTabData.content.title}
-                              fill
-                              className="object-cover rounded-lg shadow-lg"
-                              data-ai-hint={activeTabData.content.imageHint}
-                          />
-                      </div>
                       <div>
                           <h2 className="text-3xl font-bold font-headline">{activeTabData.content.title}</h2>
                           <div className="mt-4 max-w-none space-y-4">
@@ -145,6 +137,15 @@ export function MasterButchers() {
                            <Button asChild variant="secondary" size="lg" className="mt-6">
                               <Link href={activeTabData.content.buttonLink || '#'}>{activeTabData.content.buttonText}</Link>
                           </Button>
+                      </div>
+                      <div className="relative aspect-square w-full">
+                           <Image 
+                              src={getPlaceholderImage(activeTabData.content.image)}
+                              alt={activeTabData.content.title}
+                              fill
+                              className="object-cover rounded-lg shadow-lg"
+                              data-ai-hint={activeTabData.content.imageHint}
+                          />
                       </div>
                   </div>
               </div>
