@@ -328,3 +328,19 @@ export interface SocialPost {
     platform: SocialPostPlatform;
     createdAt: string;
 }
+
+export interface ButcherTab {
+  id: string;
+  order: number;
+  title: LocalizedString;
+  icon: string;
+  contentTitle: LocalizedString;
+  contentDescription: LocalizedString;
+  contentImage: string;
+  contentImageHint?: string;
+  contentButtonText: LocalizedString;
+  contentButtonLink: string;
+  name: string; // for compatibility
+}
+
+  

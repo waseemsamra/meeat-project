@@ -780,6 +780,25 @@
         "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp indicating when the post was generated." }
       },
       "required": ["id", "productId", "productName", "postText", "imageUrl", "createdAt", "platform"]
+    },
+    "ButcherTab": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ButcherTab",
+      "description": "Represents a tab in the 'Master Butchers' section on the homepage.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "order": { "type": "number", "description": "The display order of the tab." },
+        "title": { "$ref": "#/entities/LocalizedString" },
+        "icon": { "type": "string", "description": "The name of the lucide-react icon (e.g., 'CleaverIcon')." },
+        "contentTitle": { "$ref": "#/entities/LocalizedString" },
+        "contentDescription": { "$ref": "#/entities/LocalizedString" },
+        "contentImage": { "type": "string", "description": "The image path for the content." },
+        "contentImageHint": { "type": "string", "description": "Hint for AI image search." },
+        "contentButtonText": { "$ref": "#/entities/LocalizedString" },
+        "contentButtonLink": { "type": "string", "description": "The link for the button." }
+      },
+      "required": ["id", "order", "title", "icon", "contentTitle", "contentDescription", "contentImage", "contentButtonText", "contentButtonLink"]
     }
   },
   "auth": {
@@ -1073,9 +1092,21 @@
           "description": "Stores AI-generated social media posts for products.",
           "params": [{ "name": "postId", "description": "The unique identifier for the social post." }]
         }
+      },
+      {
+        "path": "/butcherTabs/{tabId}",
+        "definition": {
+          "entityName": "ButcherTab",
+          "schema": { "$ref": "#/backend/entities/ButcherTab" },
+          "description": "Stores content for the 'Master Butchers' section tabs.",
+          "params": [{ "name": "tabId", "description": "The unique identifier for the tab." }]
+        }
       }
     ],
     "reasoning": "The Firestore structure is designed to support the PrimeCuts Hub e-commerce application, focusing on secure user authentication, product catalog management, order processing, and role-based access control (RBAC). The structure prioritizes authorization independence to ensure scalable and maintainable security rules. Private user data is stored in hierarchical paths under `/users/{userId}`, and collaborative data patterns, like membership maps, are employed where appropriate.\\n\\nAuthorization Independence is achieved through denormalization. For instance, the `userId` field in the `/orders` and `/addresses` collections duplicates data, but this allows security rules to validate ownership without complex `get()` calls.  User roles are also stored directly on the User document.\\n\\nQAPs (Rules are not Filters) are supported through structural segregation and path-based ownership. For example, user profiles are stored under `/users/{userId}`, ensuring that listing users does not expose private data to unauthorized users.  Products are in a top-level `/products` collection. Order data is similarly segregated under `/users/{userId}/orders/{orderId}` to ensure that only the user or an admin can access order details."
   }
 }
 
+
+
+  

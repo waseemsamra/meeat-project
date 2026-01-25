@@ -127,6 +127,7 @@ const navLinks = [
       { href: '/admin/settings/branding', label: 'Branding' },
       { href: '/admin/settings/homepage-sections', label: 'Homepage Sections' },
       { href: '/admin/settings/box-management', label: 'Box Management' },
+      { href: '/admin/settings/master-butchers', label: 'Master Butchers' },
       { href: '/admin/image-generation-test', label: 'Image Generation', icon: Sparkles },
       { href: '/admin/ai-video-generation', label: 'Video Generation', icon: Clapperboard },
     ],
@@ -321,3 +322,5 @@ export default function AdminLayout({
     </div>
   );
 }
+
+  
