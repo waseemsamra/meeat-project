@@ -1,11 +1,10 @@
-
 'use client';
 
 import { useState, useMemo, useEffect, Suspense } from 'react';
 import { useCollection, useFirestore } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { Product, Attribute, Country, Grade, CutType, LocalizedString, Category } from '@/lib/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -23,6 +22,7 @@ import { Info } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
 import { useTranslation } from '@/hooks/useTranslation';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 const ProductCard = ({ product, countries }: { product: Product; countries: Country[] | null }) => {
     const { defaultCurrency } = useSettings();
@@ -32,20 +32,20 @@ const ProductCard = ({ product, countries }: { product: Product; countries: Coun
     const hoverImageUrl = product.images?.[1] ? getPlaceholderImage(product.images[1]) : null;
 
     if (!imageUrl) {
-        return null; // Or a default placeholder
+        return null;
     }
 
     return (
-        <Card className="overflow-hidden transition-shadow hover:shadow-lg group">
-            <Link href={`/products/${product.slug}`} className="block">
-                <CardHeader className="p-0 relative">
-                    <div className="aspect-[4/3] w-full bg-muted relative">
+        <Card className="overflow-hidden transition-shadow hover:shadow-lg group flex flex-col h-full">
+            <Link href={`/products/${product.slug}`} className="block flex flex-col flex-grow">
+                <div className="relative">
+                    <div className="aspect-[4/3] w-full bg-muted">
                         <Image
                             src={imageUrl}
                             alt={t(product.name)}
                             fill
                             className={cn(
-                                "p-4 object-contain transition-all duration-300",
+                                "object-cover transition-all duration-300",
                                 hoverImageUrl ? "opacity-100 group-hover:opacity-0" : "group-hover:scale-105"
                             )}
                             data-ai-hint={`${product.category.toLowerCase()} ${product.cutType.toLowerCase()}`}
@@ -55,40 +55,26 @@ const ProductCard = ({ product, countries }: { product: Product; countries: Coun
                                 src={hoverImageUrl}
                                 alt={t(product.name)}
                                 fill
-                                className="p-4 object-contain opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:scale-105"
+                                className="object-cover opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:scale-105"
                                 data-ai-hint={`${product.category.toLowerCase()} ${product.cutType.toLowerCase()}`}
                             />
                         )}
                     </div>
-                    {product.discount && product.discount > 0 ? (
-                        <div className="absolute top-2 left-2 bg-destructive text-destructive-foreground text-xs font-bold px-3 py-1 rounded-full z-10">
-                            {product.discount}% off
-                        </div>
-                    ) : product.bestseller && (
-                        <div className="absolute top-2 left-2 bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full z-10">
-                            {t('bestseller')}
+                    {product.bestseller && (
+                        <div className="absolute top-3 right-3 z-10">
+                            <Badge variant="default" className="bg-white text-black hover:bg-white/90 shadow-md">
+                                {t('bestseller')}
+                            </Badge>
                         </div>
                     )}
-                    {country && (
-                        <div className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm rounded-full p-1 shadow-md z-10">
-                            <Image
-                                src={`https://flagcdn.com/w40/${country.code}.png`}
-                                alt={`${t(country.name)} flag`}
-                                width={24}
-                                height={18}
-                                className="rounded-sm"
-                                title={t(country.name)}
-                            />
-                        </div>
-                    )}
-                </CardHeader>
-                <CardContent className="p-4">
-                    <CardTitle className="text-base font-headline mb-1">{t(product.name)}</CardTitle>
+                </div>
+                <div className="p-4 flex flex-col flex-grow">
                     {product.cutWeight && <p className="text-sm text-muted-foreground">{t(product.cutWeight)}</p>}
-                    <p className="mt-2 font-semibold">
-                        {defaultCurrency?.symbol || '$'} {product.price.toFixed(2)}
+                    <h3 className="text-xl font-bold font-headline mt-1">{t(product.name)}</h3>
+                    <p className="mt-auto pt-2 text-base text-muted-foreground">
+                        from <span className="font-bold text-foreground text-lg">{defaultCurrency?.symbol || '$'}{product.price.toFixed(2)}</span> per unit
                     </p>
-                </CardContent>
+                </div>
             </Link>
         </Card>
     );

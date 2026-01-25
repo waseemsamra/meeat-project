@@ -7,13 +7,14 @@ import type { Product, Country, HomepageSection } from '@/lib/types';
 import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import { getPlaceholderImage } from '@/lib/utils';
 import { useSettings } from '@/hooks/useSettings';
 import { useTranslation } from '@/hooks/useTranslation';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 const ProductCard = ({ product, countries }: { product: Product, countries: Country[] | null }) => {
     const { defaultCurrency } = useSettings();
@@ -25,59 +26,46 @@ const ProductCard = ({ product, countries }: { product: Product, countries: Coun
     return (
         <Card className="overflow-hidden transition-shadow hover:shadow-lg group h-full">
             <Link href={`/products/${product.slug}`} className="block h-full flex flex-col">
-            <CardHeader className="p-0 relative">
-                <div className="aspect-[4/3] w-full bg-muted relative">
-                    {imageUrl && (
-                        <Image
-                            src={imageUrl}
-                            alt={t(product.name)}
-                            fill
-                            className={cn(
-                                "p-4 object-contain transition-all duration-300",
-                                hoverImageUrl ? "opacity-100 group-hover:opacity-0" : "group-hover:scale-105"
-                            )}
-                            data-ai-hint={`${product.category.toLowerCase()} ${product.cutType.toLowerCase()}`}
-                        />
-                    )}
-                    {hoverImageUrl && (
-                        <Image
-                            src={hoverImageUrl}
-                            alt={t(product.name)}
-                            fill
-                            className="p-4 object-contain opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:scale-105"
-                            data-ai-hint={`${product.category.toLowerCase()} ${product.cutType.toLowerCase()}`}
-                        />
+                <div className="relative">
+                    <div className="aspect-[4/3] w-full bg-muted">
+                        {imageUrl && (
+                            <Image
+                                src={imageUrl}
+                                alt={t(product.name)}
+                                fill
+                                className={cn(
+                                    "object-cover transition-all duration-300",
+                                    hoverImageUrl ? "opacity-100 group-hover:opacity-0" : "group-hover:scale-105"
+                                )}
+                                data-ai-hint={`${product.category.toLowerCase()} ${product.cutType.toLowerCase()}`}
+                            />
+                        )}
+                        {hoverImageUrl && (
+                            <Image
+                                src={hoverImageUrl}
+                                alt={t(product.name)}
+                                fill
+                                className="object-cover opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:scale-105"
+                                data-ai-hint={`${product.category.toLowerCase()} ${product.cutType.toLowerCase()}`}
+                            />
+                        )}
+                    </div>
+                    {product.bestseller && (
+                        <div className="absolute top-3 right-3 z-10">
+                            <Badge variant="default" className="bg-white text-black hover:bg-white/90 shadow-md">
+                                {t('bestseller')}
+                            </Badge>
+                        </div>
                     )}
                 </div>
-                 {product.discount && product.discount > 0 ? (
-                    <div className="absolute top-2 left-2 bg-destructive text-destructive-foreground text-xs font-bold px-3 py-1 rounded-full z-10">
-                        {product.discount}% off
-                    </div>
-                ) : product.bestseller && (
-                    <div className="absolute top-2 left-2 bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full z-10">
-                        {t('bestseller')}
-                    </div>
-                )}
-                {country && (
-                    <div className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm rounded-full p-1 shadow-md z-10">
-                        <Image
-                            src={`https://flagcdn.com/w40/${country.code}.png`}
-                            alt={`${t(country.name)} flag`}
-                            width={24}
-                            height={18}
-                            className="rounded-sm"
-                            title={t(country.name)}
-                        />
-                    </div>
-                )}
-            </CardHeader>
-            <CardContent className="p-4 flex-grow flex flex-col">
-                <CardTitle className="text-sm font-headline mb-1">{t(product.name)}</CardTitle>
-                {product.cutWeight && <p className="text-sm text-muted-foreground">{t(product.cutWeight)}</p>}
-                <p className="mt-auto pt-2 font-semibold">
-                {defaultCurrency?.symbol || '$'} {product.price.toFixed(2)}
-                </p>
-            </CardContent>
+
+                <CardContent className="p-4 flex-grow flex flex-col">
+                    {product.cutWeight && <p className="text-sm text-muted-foreground">{t(product.cutWeight)}</p>}
+                    <h3 className="text-xl font-bold font-headline mt-1">{t(product.name)}</h3>
+                    <p className="mt-auto pt-2 text-base text-muted-foreground">
+                        from <span className="font-bold text-foreground text-lg">{defaultCurrency?.symbol || '$'}{product.price.toFixed(2)}</span> per unit
+                    </p>
+                </CardContent>
             </Link>
         </Card>
     )
@@ -203,13 +191,13 @@ export function DynamicProductSection({ section, type, title }: DynamicProductSe
                     <CarouselContent>
                         {isLoading ? (
                             Array.from({ length: 4 }).map((_, i) => (
-                                <CarouselItem key={i} className="basis-full md:basis-1/2 lg:basis-1/4">
+                                <CarouselItem key={i} className="basis-full md:basis-1/2 lg:basis-1/3">
                                     <div className="p-1 h-full"><ProductCardSkeleton /></div>
                                 </CarouselItem>
                             ))
                         ) : filteredProducts && filteredProducts.length > 0 ? (
                             filteredProducts.map((product) => (
-                                <CarouselItem key={product.id} className="basis-full md:basis-1/2 lg:basis-1/4">
+                                <CarouselItem key={product.id} className="basis-full md:basis-1/2 lg:basis-1/3">
                                     <div className="p-1 h-full">
                                         <ProductCard product={product} countries={countries} />
                                     </div>
@@ -223,7 +211,7 @@ export function DynamicProductSection({ section, type, title }: DynamicProductSe
                             </CarouselItem>
                         )}
                     </CarouselContent>
-                     {filteredProducts && filteredProducts.length > 4 && (
+                     {filteredProducts && filteredProducts.length > 3 && (
                         <>
                             <CarouselPrevious className="hidden sm:flex" />
                             <CarouselNext className="hidden sm:flex" />
