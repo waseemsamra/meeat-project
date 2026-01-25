@@ -128,9 +128,9 @@ export function MasterButchers() {
           <div className="md:col-span-2 lg:col-span-3">
             {activeTabData && (
               <div
-                className="bg-primary text-primary-foreground rounded-lg overflow-hidden flex flex-col md:flex-row min-h-[500px]"
+                className="bg-primary text-primary-foreground rounded-lg overflow-hidden flex flex-col min-h-[500px]"
               >
-                <div className="relative w-full md:w-1/2 h-64 md:h-auto flex-shrink-0">
+                <div className="relative w-full h-80 flex-shrink-0">
                     <Image 
                         src={getPlaceholderImage(activeTabData.content.image)}
                         alt={activeTabData.content.title}
