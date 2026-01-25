@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -189,7 +190,7 @@ export function DynamicProductSection({ section, type, title }: DynamicProductSe
                 >
                     <CarouselContent>
                         {isLoading ? (
-                            Array.from({ length: 4 }).map((_, i) => (
+                            Array.from({ length: 3 }).map((_, i) => (
                                 <CarouselItem key={i} className="basis-full md:basis-1/2 lg:basis-1/3">
                                     <div className="p-1 h-full"><ProductCardSkeleton /></div>
                                 </CarouselItem>
