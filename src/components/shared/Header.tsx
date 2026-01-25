@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -100,7 +101,7 @@ export function Header() {
   }, [searchParams, searchQuery]);
 
   useEffect(() => {
-    if (searchQuery.length >= 2 && products) {
+    if (searchQuery.length >= 1 && products) {
       const lowercasedQuery = searchQuery.toLowerCase();
       const filtered = products.filter(product => 
         t(product.name).toLowerCase().includes(lowercasedQuery) ||
@@ -346,7 +347,7 @@ export function Header() {
             
             <ScrollArea className="flex-grow">
                 <div className="p-8 max-w-7xl mx-auto">
-                    {searchQuery.length < 2 ? (
+                    {searchQuery.length < 1 ? (
                         <div className="text-center text-muted-foreground pt-16">
                             <p>Start typing to see products.</p>
                         </div>
