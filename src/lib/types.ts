@@ -342,5 +342,3 @@ export interface ButcherTab {
   contentButtonLink: string;
   name: string; // for compatibility
 }
-
-  

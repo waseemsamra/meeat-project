@@ -86,7 +86,7 @@ export default function AdminBoxManagementPage() {
       data={existingBoxes}
       isLoading={isLoading}
       renderCustomFormField={({ field, form }) => {
-        if (field.name === 'imageId') {
+        if (field?.name === 'imageId') {
           const imageIdValue = form.watch('imageId');
           return (
             <FormField
@@ -127,7 +127,7 @@ export default function AdminBoxManagementPage() {
             />
           );
         }
-         if (field.type === 'number') {
+         if (field?.type === 'number') {
             return (
                 <FormField
                     key={String(field.name)}
