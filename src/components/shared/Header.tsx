@@ -222,7 +222,7 @@ export function Header() {
                                 <p>Start typing to see products.</p>
                             </div>
                         ) : filteredProducts.length > 0 ? (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                                 {filteredProducts.map(product => {
                                     const imageUrl = getPlaceholderImage(product.images?.[0]);
                                     const hoverImageUrl = product.images?.[1] ? getPlaceholderImage(product.images[1]) : null;
