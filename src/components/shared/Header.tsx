@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -97,13 +98,21 @@ export function Header() {
   useEffect(() => {
     if (searchQuery.length >= 1 && products) {
       const lowercasedQuery = searchQuery.toLowerCase();
-      const filtered = products.filter(product => 
-        t(product.name).toLowerCase().includes(lowercasedQuery) ||
-        (product.description && t(product.description).toLowerCase().includes(lowercasedQuery)) ||
-        product.category.toLowerCase().includes(lowercasedQuery) ||
-        product.cutType.toLowerCase().includes(lowercasedQuery)
+      // Prioritize name matches
+      const nameMatches = products.filter(product => 
+        t(product.name).toLowerCase().includes(lowercasedQuery)
       );
-      setFilteredProducts(filtered);
+
+      // Find other matches that are not already in nameMatches
+      const otherMatches = products.filter(product => 
+        !nameMatches.some(nm => nm.id === product.id) && (
+          (product.description && t(product.description).toLowerCase().includes(lowercasedQuery)) ||
+          product.category.toLowerCase().includes(lowercasedQuery) ||
+          product.cutType.toLowerCase().includes(lowercasedQuery)
+        )
+      );
+
+      setFilteredProducts([...nameMatches, ...otherMatches]);
     } else {
       setFilteredProducts([]);
     }
@@ -192,8 +201,8 @@ export function Header() {
             </DialogTrigger>
             <DialogContent className="h-dvh w-screen max-w-full bg-background p-0 gap-0 flex flex-col sm:rounded-none">
                 <DialogHeader className="p-4 border-b">
-                    <DialogTitle className="sr-only">Search Products</DialogTitle>
-                    <DialogDescription className="sr-only">Start typing to see product suggestions.</DialogDescription>
+                  <DialogTitle className="sr-only">Search Products</DialogTitle>
+                  <DialogDescription className="sr-only">Start typing to see product suggestions.</DialogDescription>
                     <form onSubmit={handleSearchSubmit} className="relative w-full max-w-2xl mx-auto">
                         <Input
                         type="search"
@@ -221,7 +230,7 @@ export function Header() {
                                 <p>Start typing to see products.</p>
                             </div>
                         ) : filteredProducts.length > 0 ? (
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                                 {filteredProducts.map(product => {
                                     const imageUrl = getPlaceholderImage(product.images?.[0]);
                                     const hoverImageUrl = product.images?.[1] ? getPlaceholderImage(product.images[1]) : null;
