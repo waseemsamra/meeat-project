@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -14,7 +13,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogClose } from '../ui/dialog';
+import { Dialog, DialogContent, DialogClose, DialogTrigger } from '../ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useUser, useAuth, useDoc, useFirestore, useCollection } from '@/firebase';
@@ -186,14 +185,83 @@ export function Header() {
 
         {/* Search Bar Trigger */}
         <div className="hidden md:flex flex-grow max-w-xl">
-           <Button
-              variant="outline"
-              className="w-full justify-start text-muted-foreground bg-white h-12 rounded-full pl-10 pr-4"
-              onClick={() => setIsSearchModalOpen(true)}
-           >
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5" />
-              {t('search_placeholder')}
-           </Button>
+           <Dialog open={isSearchModalOpen} onOpenChange={setIsSearchModalOpen}>
+            <DialogTrigger asChild>
+                <Button
+                    variant="outline"
+                    className="w-full justify-start text-muted-foreground bg-white h-12 rounded-full pl-10 pr-4"
+                >
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5" />
+                    {t('search_placeholder')}
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="h-dvh w-screen max-w-full bg-background p-0 gap-0 flex flex-col sm:rounded-none">
+                <div className="p-4 border-b">
+                    <form onSubmit={handleSearchSubmit} className="relative w-full max-w-2xl mx-auto">
+                        <Input
+                        type="search"
+                        placeholder="Start typing"
+                        className="w-full rounded-full pl-10 pr-4 h-12 bg-muted text-foreground"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        autoFocus
+                        />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    </form>
+                    <div className="flex gap-2 mt-4 justify-center">
+                        <Button variant="ghost" size="sm" onClick={() => { setSearchQuery("Steak"); }}>Steak</Button>
+                        <Button variant="ghost" size="sm" onClick={() => { setSearchQuery("Brisket"); }}>Brisket</Button>
+                        <Button variant="ghost" size="sm" onClick={() => { setSearchQuery("Wagyu"); }}>Wagyu</Button>
+                        <Button variant="ghost" size="sm" onClick={() => { setSearchQuery("Mince"); }}>Mince</Button>
+                        <Button variant="ghost" size="sm" onClick={() => { setSearchQuery("Sausages"); }}>Sausages</Button>
+                    </div>
+                </div>
+                
+                <ScrollArea className="flex-grow">
+                    <div className="p-8 max-w-7xl mx-auto">
+                        {searchQuery.length < 1 ? (
+                            <div className="text-center text-muted-foreground pt-16">
+                                <p>Start typing to see products.</p>
+                            </div>
+                        ) : filteredProducts.length > 0 ? (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                                {filteredProducts.map(product => (
+                                    <Link 
+                                        href={`/products/${product.slug}`} 
+                                        key={product.id}
+                                        className="group"
+                                        onClick={handleProductSuggestionClick}
+                                    >
+                                        <Card className="overflow-hidden h-full">
+                                            <div className="aspect-[4/3] w-full bg-muted relative">
+                                                <Image
+                                                    src={getPlaceholderImage(product.images?.[0])}
+                                                    alt={t(product.name)}
+                                                    fill
+                                                    className="p-2 object-contain transition-transform group-hover:scale-105"
+                                                />
+                                            </div>
+                                            <CardContent className="p-3">
+                                                <h3 className="font-semibold text-sm line-clamp-2">{t(product.name)}</h3>
+                                                <p className="text-sm text-muted-foreground mt-1">{defaultCurrency?.symbol || '$'} {product.price.toFixed(2)}</p>
+                                            </CardContent>
+                                        </Card>
+                                    </Link>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center text-muted-foreground pt-16">
+                                <p>No products found for &quot;{searchQuery}&quot;.</p>
+                            </div>
+                        )}
+                    </div>
+                </ScrollArea>
+                <DialogClose className="absolute right-6 top-6 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+                    <X className="h-6 w-6" />
+                    <span className="sr-only">Close</span>
+                </DialogClose>
+            </DialogContent>
+           </Dialog>
         </div>
 
         {/* Desktop Icons */}
@@ -262,7 +330,7 @@ export function Header() {
                     </span>
                   )}
                 </div>
-                <span className="text-xs">Cart: ${cartTotal.toFixed(2)}</span>
+                <span className="text-xs">Cart: {defaultCurrency?.symbol || '$'}{cartTotal.toFixed(2)}</span>
               </Link>
             </Button>
         </nav>
@@ -321,75 +389,6 @@ export function Header() {
         </div>
       </div>
     </header>
-
-    <Dialog open={isSearchModalOpen} onOpenChange={setIsSearchModalOpen}>
-        <DialogContent className="h-dvh w-screen max-w-full bg-background p-0 gap-0 flex flex-col sm:rounded-none">
-            <div className="p-4 border-b">
-                <form onSubmit={handleSearchSubmit} className="relative w-full max-w-2xl mx-auto">
-                    <Input
-                      type="search"
-                      placeholder="Start typing"
-                      className="w-full rounded-full pl-10 pr-4 h-12 bg-muted text-foreground"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      autoFocus
-                    />
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                 </form>
-                 <div className="flex gap-2 mt-4 justify-center">
-                    <Button variant="ghost" size="sm" onClick={() => { setSearchQuery("Steak"); }}>Steak</Button>
-                    <Button variant="ghost" size="sm" onClick={() => { setSearchQuery("Brisket"); }}>Brisket</Button>
-                    <Button variant="ghost" size="sm" onClick={() => { setSearchQuery("Wagyu"); }}>Wagyu</Button>
-                    <Button variant="ghost" size="sm" onClick={() => { setSearchQuery("Mince"); }}>Mince</Button>
-                    <Button variant="ghost" size="sm" onClick={() => { setSearchQuery("Sausages"); }}>Sausages</Button>
-                 </div>
-            </div>
-            
-            <ScrollArea className="flex-grow">
-                <div className="p-8 max-w-7xl mx-auto">
-                    {searchQuery.length < 1 ? (
-                        <div className="text-center text-muted-foreground pt-16">
-                            <p>Start typing to see products.</p>
-                        </div>
-                    ) : filteredProducts.length > 0 ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-                            {filteredProducts.map(product => (
-                                <Link 
-                                    href={`/products/${product.slug}`} 
-                                    key={product.id}
-                                    className="group"
-                                    onClick={handleProductSuggestionClick}
-                                >
-                                    <Card className="overflow-hidden h-full">
-                                        <div className="aspect-[4/3] w-full bg-muted relative">
-                                            <Image
-                                                src={getPlaceholderImage(product.images?.[0])}
-                                                alt={t(product.name)}
-                                                fill
-                                                className="p-2 object-contain transition-transform group-hover:scale-105"
-                                            />
-                                        </div>
-                                        <CardContent className="p-3">
-                                            <h3 className="font-semibold text-sm line-clamp-2">{t(product.name)}</h3>
-                                            <p className="text-sm text-muted-foreground mt-1">{defaultCurrency?.symbol || '$'} {product.price.toFixed(2)}</p>
-                                        </CardContent>
-                                    </Card>
-                                </Link>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="text-center text-muted-foreground pt-16">
-                            <p>No products found for &quot;{searchQuery}&quot;.</p>
-                        </div>
-                    )}
-                </div>
-            </ScrollArea>
-            <DialogClose className="absolute right-6 top-6 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
-                <X className="h-6 w-6" />
-                <span className="sr-only">Close</span>
-            </DialogClose>
-        </DialogContent>
-    </Dialog>
 
      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
         <DialogContent className="sm:max-w-md">
