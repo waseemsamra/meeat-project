@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -128,31 +127,25 @@ export function MasterButchers() {
           <div className="md:col-span-2 lg:col-span-3">
             {activeTabData && (
               <div className="bg-primary text-primary-foreground rounded-lg overflow-hidden p-8 lg:p-12">
-                  <div className="flex flex-col md:flex-row gap-8 items-start">
-                      {/* Image on the left */}
-                      <div className="flex-shrink-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                      <div className="relative aspect-square w-full">
                            <Image 
                               src={getPlaceholderImage(activeTabData.content.image)}
                               alt={activeTabData.content.title}
-                              width={150}
-                              height={150}
+                              fill
                               className="object-cover rounded-lg shadow-lg"
                               data-ai-hint={activeTabData.content.imageHint}
                           />
                       </div>
-
-                      {/* Title and Button on the right of the image */}
-                      <div className="flex-grow">
+                      <div>
                           <h2 className="text-3xl font-bold font-headline">{activeTabData.content.title}</h2>
+                          <div className="mt-4 max-w-none space-y-4">
+                              {activeTabData.content.description.map((p, i) => <p key={i}>{p}</p>)}
+                          </div>
                            <Button asChild variant="secondary" size="lg" className="mt-6">
                               <Link href={activeTabData.content.buttonLink || '#'}>{activeTabData.content.buttonText}</Link>
                           </Button>
                       </div>
-                  </div>
-
-                  {/* Description text below */}
-                  <div className="mt-8 max-w-none space-y-4">
-                      {activeTabData.content.description.map((p, i) => <p key={i}>{p}</p>)}
                   </div>
               </div>
             )}
