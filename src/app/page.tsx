@@ -54,7 +54,7 @@ export default function Home() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative w-full bg-black">
-           <div className="relative w-full h-[60vh] md:h-[84vh]">
+           <div className="relative w-full h-[48vh] md:h-[67vh]">
                 {isLoadingHero ? (
                     <Skeleton className="h-full w-full" />
                 ) : (

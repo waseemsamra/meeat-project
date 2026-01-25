@@ -106,7 +106,6 @@ export function Header() {
       // Find other matches that are not already in nameMatches
       const otherMatches = products.filter(product => 
         !nameMatches.some(nm => nm.id === product.id) && (
-          (product.description && t(product.description).toLowerCase().includes(lowercasedQuery)) ||
           product.category.toLowerCase().includes(lowercasedQuery) ||
           product.cutType.toLowerCase().includes(lowercasedQuery)
         )
@@ -224,7 +223,7 @@ export function Header() {
                 </DialogHeader>
                 
                 <ScrollArea className="flex-grow">
-                    <div className="p-8">
+                    <div className="p-8 w-full">
                         {searchQuery.length < 1 ? (
                             <div className="text-center text-muted-foreground pt-16">
                                 <p>Start typing to see products.</p>
