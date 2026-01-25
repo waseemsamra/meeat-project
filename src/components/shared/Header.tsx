@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -97,7 +98,7 @@ export function Header() {
     if (searchQuery !== currentSearch) {
       setSearchQuery(currentSearch);
     }
-  }, [searchParams, searchQuery]);
+  }, [searchParams]);
 
   useEffect(() => {
     if (searchQuery.length >= 1 && products) {
