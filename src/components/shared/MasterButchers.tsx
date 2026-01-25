@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -128,9 +127,9 @@ export function MasterButchers() {
           <div className="md:col-span-2 lg:col-span-3">
             {activeTabData && (
               <div
-                className="bg-primary text-primary-foreground rounded-lg overflow-hidden flex flex-col min-h-[500px]"
+                className="bg-primary text-primary-foreground rounded-lg overflow-hidden grid md:grid-cols-5 min-h-[500px]"
               >
-                <div className="relative w-full h-80 flex-shrink-0">
+                <div className="relative w-full min-h-[250px] md:h-full md:col-span-2">
                     <Image 
                         src={getPlaceholderImage(activeTabData.content.image)}
                         alt={activeTabData.content.title}
@@ -139,7 +138,7 @@ export function MasterButchers() {
                         data-ai-hint={activeTabData.content.imageHint}
                     />
                 </div>
-                <div className="flex flex-col justify-center p-8 lg:p-12">
+                <div className="flex flex-col justify-center p-8 lg:p-12 md:col-span-3">
                     <div className="max-w-xl space-y-4">
                         <h2 className="text-3xl font-bold font-headline">{activeTabData.content.title}</h2>
                         {activeTabData.content.description.map((p, i) => <p key={i}>{p}</p>)}
