@@ -128,18 +128,18 @@ export function MasterButchers() {
           <div className="md:col-span-2 lg:col-span-3">
             {activeTabData && (
               <div
-                className="relative bg-primary text-primary-foreground rounded-lg overflow-hidden p-8 lg:p-12 min-h-[500px] flex items-center"
+                className="bg-primary text-primary-foreground rounded-lg overflow-hidden flex flex-col md:flex-row min-h-[500px]"
               >
-                <div className="absolute inset-0">
+                <div className="relative w-full md:w-1/2 h-64 md:h-auto flex-shrink-0">
                     <Image 
                         src={getPlaceholderImage(activeTabData.content.image)}
                         alt={activeTabData.content.title}
                         fill
-                        className="object-cover opacity-20"
+                        className="object-cover"
                         data-ai-hint={activeTabData.content.imageHint}
                     />
                 </div>
-                <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div className="flex flex-col justify-center p-8 lg:p-12">
                     <div className="max-w-xl space-y-4">
                         <h2 className="text-3xl font-bold font-headline">{activeTabData.content.title}</h2>
                         {activeTabData.content.description.map((p, i) => <p key={i}>{p}</p>)}
@@ -156,5 +156,3 @@ export function MasterButchers() {
     </section>
   );
 }
-
-    
