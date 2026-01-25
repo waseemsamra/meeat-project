@@ -1,3 +1,4 @@
+
 {[
   {
     "id": "hero-1",
@@ -127,5 +128,37 @@
     "id": "box-premium",
     "imageUrl": "https://primemeeat.s3.us-east-1.amazonaws.com/box-premium.png",
     "imageHint": "meat box"
+  },
+  {
+    "id": "master-butcher-1",
+    "description": "A portrait of a smiling butcher.",
+    "imageUrl": "https://picsum.photos/seed/butcher/600/400",
+    "imageHint": "butcher portrait"
+  },
+  {
+    "id": "packaging-1",
+    "description": "Eco-friendly meat packaging.",
+    "imageUrl": "https://picsum.photos/seed/packaging/600/400",
+    "imageHint": "meat packaging"
+  },
+  {
+    "id": "delivery-van-1",
+    "description": "A branded delivery van.",
+    "imageUrl": "https://picsum.photos/seed/van/600/400",
+    "imageHint": "delivery van"
+  },
+  {
+    "id": "online-ordering-1",
+    "description": "A person ordering on a laptop.",
+    "imageUrl": "https://picsum.photos/seed/laptop/600/400",
+    "imageHint": "online shopping"
+  },
+  {
+    "id": "subscription-box-1",
+    "description": "An open box full of meat products.",
+    "imageUrl": "https://picsum.photos/seed/subscription/600/400",
+    "imageHint": "meat box"
   }
 ]
+
+    

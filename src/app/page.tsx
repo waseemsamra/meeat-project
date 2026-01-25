@@ -18,6 +18,7 @@ import { ChefHat, Package } from 'lucide-react';
 import { DynamicProductSection } from '@/components/shared/DynamicProductSection';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
+import { MasterButchers } from '@/components/shared/MasterButchers';
 
 export default function Home() {
   const firestore = useFirestore();
@@ -54,7 +55,7 @@ export default function Home() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative w-full bg-black">
-           <div className="relative w-full h-[48vh] md:h-[67vh]">
+           <div className="relative w-full h-[28vh] md:h-[47vh]">
                 {isLoadingHero ? (
                     <Skeleton className="h-full w-full" />
                 ) : (
@@ -225,6 +226,9 @@ export default function Home() {
             </div>
         </section>
 
+        {/* Master Butchers Section */}
+        <MasterButchers />
+
         {/* How It Works Section */}
         <section className="py-8 bg-card">
           <div className="container mx-auto px-4">
@@ -300,3 +304,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
