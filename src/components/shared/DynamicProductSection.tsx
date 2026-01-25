@@ -189,14 +189,14 @@ export function DynamicProductSection({ section, type, title }: DynamicProductSe
                 >
                     <CarouselContent>
                         {isLoading ? (
-                            Array.from({ length: 3 }).map((_, i) => (
-                                <CarouselItem key={i} className="basis-4/5 sm:basis-1/2 md:basis-1/3">
+                            Array.from({ length: 4 }).map((_, i) => (
+                                <CarouselItem key={i} className="basis-full md:basis-1/2 lg:basis-1/3">
                                     <div className="p-1 h-full"><ProductCardSkeleton /></div>
                                 </CarouselItem>
                             ))
                         ) : filteredProducts && filteredProducts.length > 0 ? (
                             filteredProducts.map((product) => (
-                                <CarouselItem key={product.id} className="basis-4/5 sm:basis-1/2 md:basis-1/3">
+                                <CarouselItem key={product.id} className="basis-full md:basis-1/2 lg:basis-1/3">
                                     <div className="p-1 h-full">
                                         <ProductCard product={product} countries={countries} />
                                     </div>
