@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useEffect, useState } from 'react';
@@ -90,6 +89,7 @@ export default function AdminBoxManagementPage() {
           const imageIdValue = form.watch('imageId');
           return (
             <FormField
+              key={field.name}
               control={form.control}
               name="imageId"
               render={({ field: formField }) => (
