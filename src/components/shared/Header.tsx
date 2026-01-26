@@ -183,7 +183,7 @@ export function Header() {
         {/* Logo */}
         <div className="flex items-center flex-shrink-0">
           <Link href="/" className="flex items-center space-x-2">
-             {brandingSettings?.logoUrl ? (
+             {isClient && brandingSettings?.logoUrl ? (
               <Image src={getPlaceholderImage(brandingSettings.logoUrl)} alt="Me'eat Logo" width={150} height={64} className="h-16 w-auto" unoptimized />
             ) : (
               <MeeatLogo className="h-16 w-auto" />

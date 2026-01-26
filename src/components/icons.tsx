@@ -1,4 +1,3 @@
-
 'use client';
 
 import { SVGProps } from 'react';
@@ -8,8 +7,6 @@ export function MeeatLogo(props: SVGProps<SVGSVGElement>) {
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 160 160"
-      width="100"
-      height="100"
       {...props}
     >
       <rect width="150" height="150" fill="#a03c31" rx="10" ry="10" />
