@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -56,7 +57,7 @@ export default function Home() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative w-full bg-black">
-           <div className="relative w-full h-[28vh] md:h-[47vh]">
+           <div className="relative w-full h-[60vh] md:h-[47vh]">
                 {isLoadingHero ? (
                     <Skeleton className="h-full w-full" />
                 ) : (
@@ -70,8 +71,8 @@ export default function Home() {
                     />
                 )}
                  <div className="absolute inset-0 bg-black/40" />
-                 <div className="relative z-10 h-full flex flex-col justify-end container mx-auto">
-                    <div className={cn("flex flex-col w-full pb-12", getAlignmentClasses(heroSettings?.titleAlignment))}>
+                 <div className="relative z-10 h-full flex flex-col justify-center container mx-auto">
+                    <div className={cn("flex flex-col w-full", getAlignmentClasses(heroSettings?.titleAlignment))}>
                         {heroTitle && (
                         <h1 className="text-4xl lg:text-6xl font-bold font-headline leading-tight drop-shadow-lg max-w-4xl text-white">
                             {t(heroTitle)}

@@ -182,8 +182,52 @@ export function Header() {
       <header className="sticky top-0 z-40 w-full bg-black text-primary-foreground">
         <div className="container mx-auto flex h-20 items-center justify-between px-4">
           
-          {/* Left Section: Logo */}
-          <div className="flex-shrink-0">
+          {/* Left Section */}
+          <div className="flex items-center gap-2 md:flex-1 md:justify-start">
+            <div className="md:hidden">
+                <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                    <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                        <Menu className="h-6 w-6" />
+                        <span className="sr-only">Toggle Menu</span>
+                    </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left">
+                    <SheetHeader>
+                        <SheetTitle className='flex items-center gap-2'>
+                        <MeeatLogo className="h-12 w-auto" />
+                        </SheetTitle>
+                    </SheetHeader>
+                    <div className="mt-4 flex flex-col space-y-2">
+                        <Button variant="outline" className="w-full justify-start" onClick={() => { closeMobileMenu(); setIsSettingsOpen(true);}}>
+                            <Globe className="mr-2 h-4 w-4" /> {language.code} / {currency}
+                        </Button>
+                        <DropdownMenuSeparator className="my-4" />
+
+                        {mainNav.map((item) => (
+                            <MobileNavLink key={item.label} href={item.href || '#'} onNavigate={closeMobileMenu}>
+                            {item.label}
+                            </MobileNavLink>
+                        ))}
+                        <div className="border-t pt-4 space-y-2">
+                            {isUserLoading ? (
+                            <div className="space-y-2">
+                                <Skeleton className="h-9 w-full" />
+                            </div>
+                            ) : user ? (
+                                <>
+                                    <MobileNavLink href="/account" onNavigate={closeMobileMenu}>My Account</MobileNavLink>
+                                    {userIsAdmin && <MobileNavLink href="/admin/dashboard" onNavigate={closeMobileMenu}>Admin</MobileNavLink>}
+                                    <Button variant="ghost" className="w-full justify-start" onClick={() => { handleLogout(); closeMobileMenu(); }}>Logout</Button>
+                                </>
+                            ) : (
+                                <MobileNavLink href="/login" onNavigate={closeMobileMenu}>Login</MobileNavLink>
+                            )}
+                        </div>
+                    </div>
+                    </SheetContent>
+                </Sheet>
+            </div>
             <Link href="/" className="flex items-center space-x-2">
               {isClient && brandingSettings?.logoUrl ? (
                 <Image src={getPlaceholderImage(brandingSettings.logoUrl)} alt="Me'eat Logo" width={188} height={80} className="h-20 w-auto" unoptimized />
@@ -206,7 +250,7 @@ export function Header() {
           </div>
 
           {/* Right Section: Icons */}
-          <div className="flex flex-shrink-0 items-center justify-end gap-1">
+          <div className="flex items-center gap-1 md:flex-1 md:justify-end">
             {/* Desktop Icons */}
             <nav className="hidden md:flex items-center gap-1">
               <Button variant="ghost" className="flex items-center gap-2 text-xs" onClick={() => setIsSettingsOpen(true)}>
@@ -289,7 +333,7 @@ export function Header() {
             </nav>
 
             {/* Mobile Icons */}
-            <div className="flex items-center md:hidden gap-2">
+            <div className="flex items-center md:hidden">
               <Button onClick={() => setIsSearchModalOpen(true)} variant="ghost" size="icon">
                 <Search className="h-5 w-5" />
                 <span className="sr-only">Search</span>
@@ -305,48 +349,6 @@ export function Header() {
                   <span className="sr-only">Shopping Cart</span>
                 </Link>
               </Button>
-              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Menu className="h-6 w-6" />
-                    <span className="sr-only">Toggle Menu</span>
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left">
-                  <SheetHeader>
-                    <SheetTitle className='flex items-center gap-2'>
-                      <MeeatLogo className="h-12 w-auto" />
-                    </SheetTitle>
-                  </SheetHeader>
-                  <div className="mt-4 flex flex-col space-y-2">
-                    <Button variant="outline" className="w-full justify-start" onClick={() => { closeMobileMenu(); setIsSettingsOpen(true);}}>
-                        <Globe className="mr-2 h-4 w-4" /> {language.code} / {currency}
-                    </Button>
-                    <DropdownMenuSeparator className="my-4" />
-
-                    {mainNav.map((item) => (
-                        <MobileNavLink key={item.label} href={item.href || '#'} onNavigate={closeMobileMenu}>
-                          {item.label}
-                        </MobileNavLink>
-                    ))}
-                    <div className="border-t pt-4 space-y-2">
-                        {isUserLoading ? (
-                          <div className="space-y-2">
-                            <Skeleton className="h-9 w-full" />
-                          </div>
-                        ) : user ? (
-                            <>
-                                <MobileNavLink href="/account" onNavigate={closeMobileMenu}>My Account</MobileNavLink>
-                                {userIsAdmin && <MobileNavLink href="/admin/dashboard" onNavigate={closeMobileMenu}>Admin</MobileNavLink>}
-                                <Button variant="ghost" className="w-full justify-start" onClick={() => { handleLogout(); closeMobileMenu(); }}>Logout</Button>
-                            </>
-                        ) : (
-                            <MobileNavLink href="/login" onNavigate={closeMobileMenu}>Login</MobileNavLink>
-                        )}
-                    </div>
-                  </div>
-                </SheetContent>
-              </Sheet>
             </div>
           </div>
         </div>
