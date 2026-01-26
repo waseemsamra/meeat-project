@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -11,7 +10,6 @@ import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { getPlaceholderImage } from '@/lib/utils';
-import { ShopByOrigin } from '@/components/shared/ShopByOrigin';
 import { ShopByCut } from '@/components/shared/ShopByCut';
 import { CleaverIcon, CowIcon, LeafIcon, TruckIcon } from '@/components/icons';
 import { ChefHat, Package } from 'lucide-react';
@@ -123,7 +121,6 @@ export default function Home() {
           </div>
         </section>
 
-        <ShopByOrigin />
         <ShopByCut />
 
         {/* Featured Products */}
@@ -228,5 +225,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
