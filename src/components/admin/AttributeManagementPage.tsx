@@ -172,9 +172,8 @@ export function AttributeManagementPage<T extends Attribute>({
 
   const handleOpenForm = (item: T | null = null) => {
     setSelectedItem(item);
-    let initialValues: { [key: string]: any } = { ...defaultFormValues };
     if (item) {
-        initialValues = { ...initialValues, ...item };
+        let initialValues: { [key: string]: any } = { ...defaultFormValues, ...item };
         formFields.forEach(field => {
             if (field.type === 'date' && item[field.name] && typeof item[field.name] === 'string') {
                 initialValues[field.name as string] = new Date(item[field.name] as string);
@@ -184,8 +183,25 @@ export function AttributeManagementPage<T extends Attribute>({
                  initialValues[field.name as string] = defaultFormValues[field.name as string];
             }
         });
+        form.reset(initialValues);
+    } else {
+      // Adding a new item
+      const nextOrder = data ? Math.max(0, ...data.map(d => (d as any).order || 0)) + 1 : 1;
+
+      if (useCustomFormHook) {
+        form.reset(); // Resets to the default values specified in the custom hook
+        // Now, if there's an 'order' field, update it.
+        if (form.getValues().hasOwnProperty('order')) {
+            form.setValue('order', nextOrder);
+        }
+      } else {
+        const newDefaults = { ...defaultFormValues };
+        if (newDefaults.hasOwnProperty('order')) {
+            (newDefaults as any).order = nextOrder;
+        }
+        form.reset(newDefaults);
+      }
     }
-    form.reset(initialValues);
     setIsFormOpen(true);
   };
 
