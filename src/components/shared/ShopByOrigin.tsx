@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -83,16 +82,8 @@ export function ShopByOrigin() {
                             countries?.map(country => (
                                 <CarouselItem key={country.id} className="basis-1/4 sm:basis-1/6 md:basis-[12.5%] lg:basis-[12.5%]">
                                      <Link href={`/products?category=${selectedCategory}&countryOfOrigin=${country.name.en}`} className="group block">
-                                        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md">
-                                            <Image
-                                                src={`https://flagcdn.com/w160/${country.code}.png`}
-                                                alt={`${t(country.name)} flag`}
-                                                fill
-                                                className="object-cover transition-transform group-hover:scale-105"
-                                            />
-                                            <div className="absolute inset-0 bg-black/40 flex items-end p-1">
-                                                <span className="font-bold text-white text-xs leading-tight">{t(country.name)} {t(selectedCategory)}</span>
-                                            </div>
+                                        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md bg-muted flex items-center justify-center p-2 text-center transition-colors group-hover:bg-primary/10">
+                                            <span className="font-bold text-foreground text-sm leading-tight group-hover:text-primary">{t(country.name)} {t(selectedCategory)}</span>
                                         </div>
                                     </Link>
                                 </CarouselItem>
