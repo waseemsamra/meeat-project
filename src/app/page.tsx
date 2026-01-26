@@ -18,7 +18,6 @@ import { ChefHat, Package } from 'lucide-react';
 import { DynamicProductSection } from '@/components/shared/DynamicProductSection';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
-import { MasterButchers } from '@/components/shared/MasterButchers';
 import { ChooseBoxSteps } from '@/components/shared/ChooseBoxSteps';
 
 export default function Home() {
@@ -182,9 +181,6 @@ export default function Home() {
 
         {/* New "Choose Size of Box" Section */}
         <ChooseBoxSteps />
-
-        {/* Master Butchers Section */}
-        <MasterButchers />
 
         {/* How It Works Section */}
         <section className="py-8 bg-card">
