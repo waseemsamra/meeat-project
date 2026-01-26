@@ -93,18 +93,18 @@ export default function Home() {
         </section>
 
         {/* Our Promise Section */}
-        <section className="bg-background py-12 md:py-16">
-          <div className="container mx-auto px-4 text-center max-w-4xl">
-            <div className="flex flex-wrap justify-center items-center gap-x-4 md:gap-x-8 text-sm md:text-base font-semibold tracking-widest text-muted-foreground uppercase">
+        <section className="bg-primary py-8 text-primary-foreground">
+          <div className="container mx-auto px-4 text-center">
+            <div className="flex flex-wrap justify-center items-center gap-x-4 md:gap-x-8 text-base md:text-lg font-semibold tracking-widest uppercase">
               <span>{t('grass_fed_promise')}</span>
-              <span className="text-muted-foreground/50 hidden md:inline">|</span>
+              <span className="text-primary-foreground/50">|</span>
               <span>{t('free_range_promise')}</span>
-              <span className="text-muted-foreground/50 hidden md:inline">|</span>
+              <span className="text-primary-foreground/50">|</span>
               <span>{t('ethically_reared_promise')}</span>
-              <span className="text-muted-foreground/50 hidden md:inline">|</span>
+              <span className="text-primary-foreground/50">|</span>
               <span>{t('sustainable_farming_promise')}</span>
             </div>
-            <p className="mt-6 text-base md:text-lg text-muted-foreground leading-relaxed">
+            <p className="mt-6 text-base md:text-lg text-primary-foreground/80 leading-relaxed max-w-4xl mx-auto">
               {t('our_promise_desc')}
             </p>
           </div>
@@ -274,5 +274,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
