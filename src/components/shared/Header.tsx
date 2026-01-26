@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -184,9 +185,9 @@ export function Header() {
         <div className="flex items-center flex-shrink-0">
           <Link href="/" className="flex items-center space-x-2">
              {isClient && brandingSettings?.logoUrl ? (
-              <Image src={getPlaceholderImage(brandingSettings.logoUrl)} alt="Me'eat Logo" width={150} height={64} className="h-16 w-auto" unoptimized />
+              <Image src={getPlaceholderImage(brandingSettings.logoUrl)} alt="Me'eat Logo" width={188} height={80} className="h-20 w-auto" unoptimized />
             ) : (
-              <MeeatLogo className="h-16 w-auto" />
+              <MeeatLogo className="h-20 w-auto" />
             )}
           </Link>
         </div>
