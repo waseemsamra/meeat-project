@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo } from 'react';
@@ -40,12 +39,12 @@ export function ExploreTheRange() {
                             <div className="relative mb-4 h-32 w-48">
                                 <Image 
                                     src={getPlaceholderImage(item.imageUrl)} 
-                                    alt={t(item.name)} 
+                                    alt={item.name} 
                                     fill
                                     className="object-contain transition-transform duration-300 group-hover:scale-105"
                                 />
                             </div>
-                            <h3 className="font-headline text-xl font-semibold tracking-wider text-primary group-hover:underline">{t(item.name)}</h3>
+                            <h3 className="font-headline text-xl font-semibold tracking-wider text-primary group-hover:underline">{item.name}</h3>
                         </Link>
                     ))}
                 </div>

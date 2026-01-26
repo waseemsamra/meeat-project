@@ -351,7 +351,7 @@ export interface ChooseBoxStep {
 export interface ExploreRangeItem {
   id: string;
   order: number;
-  name: LocalizedString;
+  name: string;
   imageUrl: string;
   link: string;
 }
