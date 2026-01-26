@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import { MeeatLogo } from "../icons";
+import { useDoc, useFirestore } from "@/firebase";
+import { doc } from "firebase/firestore";
+import Image from 'next/image';
+import { getPlaceholderImage } from '@/lib/utils';
+import { useMemo, useState, useEffect } from "react";
 
 const footerLinks = [
     {
@@ -56,13 +61,26 @@ const footerLinks = [
 ];
 
 export function Footer() {
+    const [isClient, setIsClient] = useState(false);
+    const firestore = useFirestore();
+    const brandingRef = useMemo(() => firestore ? doc(firestore, 'settings', 'branding') : null, [firestore]);
+    const { data: brandingSettings } = useDoc<{ logoUrl: string }>(brandingRef);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
     return (
         <footer className="border-t bg-card">
             <div className="container mx-auto px-4 py-12">
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
                     <div className="col-span-2 lg:col-span-1">
                         <Link href="/" className="flex items-center space-x-2 mb-4">
-                            <MeeatLogo className="h-12 w-auto" />
+                           {isClient && brandingSettings?.logoUrl ? (
+                                <Image src={getPlaceholderImage(brandingSettings.logoUrl)} alt="Me'eat Logo" width={120} height={48} className="h-12 w-auto" unoptimized />
+                            ) : (
+                                <MeeatLogo className="h-12 w-auto" />
+                            )}
                         </Link>
                         <p className="text-sm text-muted-foreground">The finest quality beef and lamb, delivered to your door.</p>
                     </div>
