@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,68 +8,57 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload } from 'lucide-react';
 import Image from 'next/image';
-import { useFirestore, useStorage, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { useFirestore, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
+import { getPlaceholderImage } from '@/lib/utils';
+import { FirebaseError } from 'firebase/app';
 
 
 export default function BrandingPage() {
   const { toast } = useToast();
-  const storage = useStorage();
   const firestore = useFirestore();
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const settingsRef = useMemo(() => firestore ? doc(firestore, 'settings', 'branding') : null, [firestore]);
+  const { data: brandingSettings, isLoading } = useDoc<{ logoUrl: string }>(settingsRef);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setLogoPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+  const [logoPath, setLogoPath] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (brandingSettings?.logoUrl) {
+      setLogoPath(brandingSettings.logoUrl);
     }
-  };
+  }, [brandingSettings]);
 
   const handleSave = async () => {
-    if (!selectedFile || !logoPreview || !storage || !firestore) {
+    if (!logoPath || !firestore || !settingsRef) {
         toast({
             variant: 'destructive',
-            title: 'Upload Failed',
-            description: 'Please select a file to upload.',
+            title: 'Save Failed',
+            description: 'Please enter a valid path for the logo.',
         });
         return;
     }
     setIsSaving(true);
     
     try {
-        // 1. Upload the file to Firebase Storage
-        const storageRef = ref(storage, `branding/logo`);
-        const snapshot = await uploadString(storageRef, logoPreview, 'data_url', { contentType: selectedFile.type });
-        const downloadURL = await getDownloadURL(snapshot.ref);
-
-        // 2. Save the URL to Firestore
-        const settingsRef = doc(firestore, 'settings', 'branding');
-        const dataToSave = { logoUrl: downloadURL };
+        const dataToSave = { logoUrl: logoPath };
         await setDoc(settingsRef, dataToSave, { merge: true }).catch(async (error) => {
-            const contextualError = await FirestorePermissionError.create({ path: settingsRef.path, operation: 'write', requestResourceData: dataToSave });
+            const contextualError = await FirestorePermissionError.create({ path: settingsRef!.path, operation: 'write', requestResourceData: dataToSave });
             errorEmitter.emit('permission-error', contextualError);
             throw error;
         });
 
         toast({
             title: 'Logo Updated',
-            description: 'Your new logo has been saved.',
+            description: 'Your new logo path has been saved.',
         });
 
     } catch (error) {
-       if (!(error instanceof FirestorePermissionError)) {
+       if (!(error instanceof FirestorePermissionError) && !(error instanceof FirebaseError)) {
             toast({
                 variant: 'destructive',
-                title: 'Upload Failed',
-                description: 'There was an error saving your logo. Check permissions and try again.',
+                title: 'Save Failed',
+                description: 'There was an error saving your logo path. Check permissions and try again.',
             });
         }
     } finally {
@@ -89,28 +77,42 @@ export default function BrandingPage() {
         <CardHeader>
           <CardTitle>Company Logo</CardTitle>
           <CardDescription>
-            Upload your company logo. This will be displayed in the site header. Recommended format: SVG or PNG.
+            Enter the path to your logo image in your AWS S3 bucket. For example: `/logos/my-logo.png`.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid w-full max-w-sm items-center gap-1.5">
-            <Label htmlFor="logo-upload">Logo file</Label>
-            <Input id="logo-upload" type="file" accept="image/*" onChange={handleFileChange} />
+            <Label htmlFor="logo-path">Logo S3 Path</Label>
+            <Input 
+                id="logo-path" 
+                type="text" 
+                placeholder="/image.png"
+                value={logoPath}
+                onChange={(e) => setLogoPath(e.target.value)}
+                disabled={isLoading}
+             />
           </div>
 
-          {logoPreview && (
+          {logoPath && (
             <div>
               <Label>Logo Preview</Label>
               <div className="mt-2 w-48 rounded-md border p-4">
-                <Image src={logoPreview} alt="Logo preview" width={192} height={100} className="object-contain" />
+                <Image 
+                    src={getPlaceholderImage(logoPath)} 
+                    alt="Logo preview" 
+                    width={192} 
+                    height={100} 
+                    className="object-contain" 
+                    unoptimized // Important for dynamic S3 URLs
+                />
               </div>
             </div>
           )}
           
           <div>
-            <Button onClick={handleSave} disabled={isSaving || !logoPreview}>
+            <Button onClick={handleSave} disabled={isSaving || isLoading || !logoPath}>
                 {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                Save Logo
+                Save Logo Path
             </Button>
           </div>
         </CardContent>
