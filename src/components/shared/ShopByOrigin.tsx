@@ -90,7 +90,7 @@ export function ShopByOrigin() {
                                                     alt={`${t(country.name)} flag`}
                                                     width={80}
                                                     height={60}
-                                                    className="rounded-full border object-cover h-20 w-20"
+                                                    className="rounded-full border object-contain h-20 w-20"
                                                 />
                                                 <span className="font-semibold text-sm">{t(country.name)} {t(selectedCategory)}</span>
                                             </CardContent>
