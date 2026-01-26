@@ -35,6 +35,7 @@ import { ScrollArea } from '../ui/scroll-area';
 import { useSettings } from '@/hooks/useSettings';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '../ui/skeleton';
 
 
 const mainNav = [
@@ -57,7 +58,8 @@ const MobileNavLink = ({ href, children, onNavigate }: { href: string; children:
 export function Header() {
   const { cartCount, cartTotal } = useCart();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
+  const [isClient, setIsClient] = useState(false);
   const auth = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -91,6 +93,10 @@ export function Header() {
   const { data: languages } = useCollection<Language>(languagesQuery);
 
   const userIsAdmin = user?.roles?.includes('ADMIN');
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
   
@@ -307,7 +313,12 @@ export function Header() {
             
             <div className="h-8 border-l border-primary-foreground/20 mx-2"></div>
 
-            {user ? (
+            {isUserLoading ? (
+                <div className="flex flex-col h-auto px-2 py-1 items-center gap-1">
+                    <Skeleton className="h-7 w-7 rounded-full bg-white/20" />
+                    <Skeleton className="h-3 w-12 bg-white/20" />
+                </div>
+            ) : user ? (
                 <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="flex-col h-auto px-2 py-1">
@@ -359,13 +370,13 @@ export function Header() {
               <Link href="/cart">
                 <div className="relative">
                   <ShoppingCart className="h-6 w-6 mb-1" />
-                  {cartCount > 0 && (
+                  {isClient && cartCount > 0 && (
                     <span className="absolute -top-1 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
                       {cartCount}
                     </span>
                   )}
                 </div>
-                <span className="text-xs">Cart: {defaultCurrency?.symbol || '$'}{cartTotal.toFixed(2)}</span>
+                <span className="text-xs">{isClient ? `Cart: ${defaultCurrency?.symbol || '$'}${cartTotal.toFixed(2)}` : 'Cart'}</span>
               </Link>
             </Button>
         </nav>
@@ -375,7 +386,7 @@ export function Header() {
            <Button asChild variant="ghost" size="icon" className="relative">
                 <Link href="/cart">
                   <ShoppingCart className="h-5 w-5" />
-                  {cartCount > 0 && (
+                  {isClient && cartCount > 0 && (
                     <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
                       {cartCount}
                     </span>
@@ -408,7 +419,11 @@ export function Header() {
                     </MobileNavLink>
                 ))}
                  <div className="border-t pt-4 space-y-2">
-                    {user ? (
+                    {isUserLoading ? (
+                      <div className="space-y-2">
+                        <Skeleton className="h-9 w-full" />
+                      </div>
+                    ) : user ? (
                         <>
                             <MobileNavLink href="/account" onNavigate={closeMobileMenu}>My Account</MobileNavLink>
                             {userIsAdmin && <MobileNavLink href="/admin/dashboard" onNavigate={closeMobileMenu}>Admin</MobileNavLink>}
