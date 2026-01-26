@@ -203,5 +203,10 @@ service cloud.firestore {
       allow read: if true;
       allow write: if hasRole('ADMIN') || hasRole('CONTENT_MANAGER');
     }
+
+    match /realCutPics/{picId} {
+      allow read: if true;
+      allow write: if hasRole('ADMIN') || hasRole('CONTENT_MANAGER');
+    }
   }
 }

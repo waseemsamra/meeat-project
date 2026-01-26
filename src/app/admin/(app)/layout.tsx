@@ -17,6 +17,7 @@ import {
   Megaphone,
   Clapperboard,
   Calculator,
+  Camera,
 } from 'lucide-react';
 
 import {
@@ -129,6 +130,7 @@ const navLinks = [
       { href: '/admin/settings/homepage-sections', label: 'Homepage Sections' },
       { href: '/admin/settings/box-management', label: 'Box Management' },
       { href: '/admin/settings/choose-box-steps', label: 'Choose Box Steps' },
+      { href: '/admin/real-cut-pic', label: 'Real Cut Pictures', icon: Camera },
       { href: '/admin/image-generation-test', label: 'Image Generation', icon: Sparkles },
       { href: '/admin/ai-video-generation', label: 'Video Generation', icon: Clapperboard },
     ],
@@ -324,5 +326,3 @@ export default function AdminLayout({
   );
 }
   
-
-    
