@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -107,11 +106,11 @@ export default function Home() {
                 <>
                     <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 md:gap-x-8 text-base md:text-lg font-semibold tracking-widest uppercase">
                     <span>{t(promiseSettings?.grassFedPromise)}</span>
-                    <span className="text-primary-foreground/50">|</span>
+                    <span className="hidden md:inline text-primary-foreground/50">|</span>
                     <span>{t(promiseSettings?.freeRangePromise)}</span>
-                    <span className="text-primary-foreground/50">|</span>
+                    <span className="hidden md:inline text-primary-foreground/50">|</span>
                     <span>{t(promiseSettings?.ethicallyRearedPromise)}</span>
-                    <span className="text-primary-foreground/50">|</span>
+                    <span className="hidden md:inline text-primary-foreground/50">|</span>
                     <span>{t(promiseSettings?.sustainableFarmingPromise)}</span>
                     </div>
                     <p className="mt-6 text-base md:text-lg text-primary-foreground/80 leading-relaxed max-w-4xl mx-auto">
