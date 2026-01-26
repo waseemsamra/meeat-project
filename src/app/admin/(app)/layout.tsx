@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -123,7 +122,7 @@ const navLinks = [
   },
   {
     icon: FileText,
-    label: 'CMS',
+    label: 'Website Content',
     subLinks: [
       { href: '/admin/settings/home-hero', label: 'Home Hero' },
       { href: '/admin/settings/our-promise', label: 'Our Promise Section' },
