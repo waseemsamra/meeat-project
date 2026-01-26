@@ -175,8 +175,6 @@ export function ProductForm({ product, isCloning = false }: ProductFormProps) {
       images: [],
     },
   });
-
-  const imagePath = form.watch("images.0");
   
   const calculatePrice = useCallback((
     weightStr: string | undefined,
@@ -612,28 +610,52 @@ export function ProductForm({ product, isCloning = false }: ProductFormProps) {
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle>Product Image</CardTitle></CardHeader>
-            <CardContent>
+            <CardHeader><CardTitle>Product Images</CardTitle></CardHeader>
+            <CardContent className="space-y-6">
                 <FormField
                     control={form.control}
                     name="images.0"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Image Path</FormLabel>
+                            <FormLabel>Primary Image Path</FormLabel>
                             <FormControl>
-                              <Input 
+                                <Input 
                                 placeholder="/products/ribeye.jpg" 
                                 {...field}
                                 value={field.value || ''}
                                 disabled={isSaving}
-                              />
+                                />
                             </FormControl>
-                            {imagePath && (
-                                <div className="mt-4 p-2 border rounded-md w-48 h-48 flex items-center justify-center">
-                                    <Image src={getPlaceholderImage(imagePath)} alt="Preview" width={180} height={180} className="object-contain" />
+                            {field.value && (
+                                <div className="mt-4 p-2 border rounded-md w-48 h-48 flex items-center justify-center bg-muted">
+                                    <Image src={getPlaceholderImage(field.value)} alt="Primary image preview" width={180} height={180} className="object-contain" />
                                 </div>
                             )}
-                            <FormDescription>Enter the relative path to the image in your S3 bucket.</FormDescription>
+                            <FormDescription>Path to the main product image (e.g., in your S3 bucket).</FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="images.1"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Hover Image Path (Optional)</FormLabel>
+                            <FormControl>
+                                <Input 
+                                placeholder="/products/ribeye_hover.jpg" 
+                                {...field}
+                                value={field.value || ''}
+                                disabled={isSaving}
+                                />
+                            </FormControl>
+                            {field.value && (
+                                <div className="mt-4 p-2 border rounded-md w-48 h-48 flex items-center justify-center bg-muted">
+                                    <Image src={getPlaceholderImage(field.value)} alt="Hover image preview" width={180} height={180} className="object-contain" />
+                                </div>
+                            )}
+                            <FormDescription>Path to the image that appears on hover.</FormDescription>
                             <FormMessage />
                         </FormItem>
                     )}
