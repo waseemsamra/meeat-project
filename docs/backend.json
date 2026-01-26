@@ -529,6 +529,11 @@
         "conversionRate": {
             "type": "number",
             "description": "The conversion rate against the default currency."
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the currency.",
+          "enum": ["enabled", "disabled"]
         }
       }
     },

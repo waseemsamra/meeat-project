@@ -194,6 +194,7 @@ export interface Currency {
     symbol: string;
     isDefault?: boolean;
     conversionRate?: number;
+    status?: 'enabled' | 'disabled';
 }
 
 export interface MeasurementUnit {

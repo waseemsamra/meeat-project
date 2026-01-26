@@ -17,6 +17,7 @@ const currencySchema = z.object({
   symbol: z.string().min(1, { message: 'Symbol is required.' }),
   isDefault: z.boolean().optional(),
   conversionRate: z.coerce.number().optional(),
+  status: z.enum(['enabled', 'disabled']).default('enabled'),
 });
 
 const columns: ColumnDef<Currency>[] = [
@@ -31,6 +32,15 @@ const columns: ColumnDef<Currency>[] = [
   {
     accessorKey: 'symbol',
     header: 'Symbol',
+  },
+  {
+    accessorKey: 'status',
+    header: 'Status',
+    cell: ({ row }) => (
+      <Badge variant={row.original.status === 'enabled' ? 'default' : 'destructive'}>
+        {row.original.status}
+      </Badge>
+    ),
   },
   {
     accessorKey: 'isDefault',
@@ -62,6 +72,15 @@ const formFields = [
     name: 'symbol' as const,
     label: 'Symbol',
     placeholder: 'e.g., $',
+  },
+  {
+    name: 'status' as const,
+    label: 'Status',
+    type: 'select' as const,
+    options: [
+        { value: 'enabled', label: 'Enabled' },
+        { value: 'disabled', label: 'Disabled' }
+    ]
   },
   {
     name: 'isDefault' as const,
@@ -143,3 +162,5 @@ export default function AdminCurrenciesPage() {
     />
   );
 }
+
+    
