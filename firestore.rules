@@ -209,6 +209,7 @@ service cloud.firestore {
       allow write: if hasRole('ADMIN') || hasRole('CONTENT_MANAGER');
     }
     
+    // Force update by adding a comment
     match /exploreRangeItems/{itemId} {
       allow get, list: if true;
       allow write: if hasRole('ADMIN') || hasRole('CONTENT_MANAGER');
