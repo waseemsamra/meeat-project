@@ -2,6 +2,7 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import Image from 'next/image';
 
 export default function RealCutPicturesPage() {
   return (
@@ -15,15 +16,23 @@ export default function RealCutPicturesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Coming Soon</CardTitle>
+          <CardTitle>Mutton Summary</CardTitle>
           <CardDescription>
-            This section is under construction. Here you will be able to manage a gallery of real product photos.
+            A visual summary of mutton cuts.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p>Let me know what functionality you'd like to see here!</p>
+          <div className="relative w-full aspect-[1.5]">
+            <Image
+              src="https://storage.googleapis.com/proud-diode-429312-r2.appspot.com/meeat/mutton-summary.png"
+              alt="Mutton Summary"
+              fill
+              className="object-contain rounded-md border p-2"
+            />
+          </div>
         </CardContent>
       </Card>
     </div>
   );
 }
+
