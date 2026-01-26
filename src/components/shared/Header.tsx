@@ -184,9 +184,9 @@ export function Header() {
         <div className="flex items-center flex-shrink-0">
           <Link href="/" className="flex items-center space-x-2">
              {brandingSettings?.logoUrl ? (
-              <Image src={getPlaceholderImage(brandingSettings.logoUrl)} alt="Me'eat Logo" width={100} height={48} className="h-12 w-auto" unoptimized />
+              <Image src={getPlaceholderImage(brandingSettings.logoUrl)} alt="Me'eat Logo" width={150} height={64} className="h-16 w-auto" unoptimized />
             ) : (
-              <MeeatLogo className="h-12 w-auto" />
+              <MeeatLogo className="h-16 w-auto" />
             )}
           </Link>
         </div>
