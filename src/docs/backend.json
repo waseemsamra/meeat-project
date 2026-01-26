@@ -838,7 +838,7 @@
       "properties": {
         "id": { "type": "string" },
         "order": { "type": "number" },
-        "name": { "type": "string" },
+        "name": { "$ref": "#/entities/LocalizedString" },
         "imageUrl": { "type": "string", "format": "uri" },
         "link": { "type": "string", "format": "uri" }
       },
