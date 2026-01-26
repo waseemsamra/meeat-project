@@ -180,33 +180,37 @@ export function Header() {
   return (
     <>
       <header className="sticky top-0 z-40 w-full bg-black text-primary-foreground">
-        <div className="container mx-auto flex h-24 items-center justify-between px-4 gap-4">
-          {/* Logo */}
-          <div className="flex items-center flex-shrink-0">
+        <div className="container mx-auto flex h-20 items-center px-4">
+          
+          {/* Left Section: Logo */}
+          <div className="flex-shrink-0">
             <Link href="/" className="flex items-center space-x-2">
               {isClient && brandingSettings?.logoUrl ? (
                 <Image src={getPlaceholderImage(brandingSettings.logoUrl)} alt="Me'eat Logo" width={188} height={80} className="h-20 w-auto" unoptimized />
               ) : (
-                <MeeatLogo className="h-20 w-auto" />
+                <MeeatLogo className="h-16 w-auto" />
               )}
             </Link>
           </div>
 
-          {/* Search Bar Trigger - DESKTOP */}
-          <div className="hidden md:flex flex-grow max-w-xl">
+          {/* Center Section: Desktop Search Bar or Mobile Spacer */}
+          <div className="hidden md:flex flex-1 justify-center px-8">
             <Button
               variant="outline"
               onClick={() => setIsSearchModalOpen(true)}
-              className="w-full justify-start text-muted-foreground bg-white h-12 rounded-full pl-10 pr-4"
+              className="w-full max-w-xl justify-start text-muted-foreground bg-white h-12 rounded-full pl-10 pr-4"
             >
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5" />
               {t('search_placeholder')}
             </Button>
           </div>
-          
-          <div className="flex items-center">
+          <div className="flex-1 md:hidden" />
+
+
+          {/* Right Section: Icons */}
+          <div className="flex flex-shrink-0 items-center justify-end gap-1">
             {/* Desktop Icons */}
-            <nav className="hidden md:flex items-center justify-end gap-1">
+            <nav className="hidden md:flex items-center gap-1">
               <Button variant="ghost" className="flex items-center gap-2 text-xs" onClick={() => setIsSettingsOpen(true)}>
                 <Globe className="h-5 w-5" /> {language.code} / {currency}
               </Button>
@@ -286,8 +290,8 @@ export function Header() {
               </Button>
             </nav>
 
-            {/* Mobile Menu Trigger */}
-            <div className="flex md:hidden items-center gap-2">
+            {/* Mobile Icons */}
+            <div className="flex items-center md:hidden gap-2">
               <Button onClick={() => setIsSearchModalOpen(true)} variant="ghost" size="icon">
                 <Search className="h-5 w-5" />
                 <span className="sr-only">Search</span>
