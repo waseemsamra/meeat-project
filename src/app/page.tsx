@@ -56,7 +56,7 @@ export default function Home() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative w-full bg-black">
-           <div className="relative w-full h-[60vh] md:h-[47vh]">
+           <div className="relative w-full h-[60vh] md:h-[50vh]">
                 {isLoadingHero ? (
                     <Skeleton className="h-full w-full" />
                 ) : (
@@ -104,14 +104,14 @@ export default function Home() {
                 </div>
             ) : (
                 <>
-                    <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 md:gap-x-8 text-base md:text-lg font-semibold tracking-widest uppercase">
-                    <span>{t(promiseSettings?.grassFedPromise)}</span>
-                    <span className="hidden md:inline text-primary-foreground/50">|</span>
-                    <span>{t(promiseSettings?.freeRangePromise)}</span>
-                    <span className="hidden md:inline text-primary-foreground/50">|</span>
-                    <span>{t(promiseSettings?.ethicallyRearedPromise)}</span>
-                    <span className="hidden md:inline text-primary-foreground/50">|</span>
-                    <span>{t(promiseSettings?.sustainableFarmingPromise)}</span>
+                    <div className="flex overflow-x-auto whitespace-nowrap justify-start md:justify-center items-center gap-x-4 md:gap-x-8 text-base md:text-lg font-semibold tracking-widest uppercase no-scrollbar py-2">
+                        <span>{t(promiseSettings?.grassFedPromise)}</span>
+                        <span className="text-primary-foreground/50">|</span>
+                        <span>{t(promiseSettings?.freeRangePromise)}</span>
+                        <span className="text-primary-foreground/50">|</span>
+                        <span>{t(promiseSettings?.ethicallyRearedPromise)}</span>
+                        <span className="text-primary-foreground/50">|</span>
+                        <span>{t(promiseSettings?.sustainableFarmingPromise)}</span>
                     </div>
                     <p className="mt-6 text-base md:text-lg text-primary-foreground/80 leading-relaxed max-w-4xl mx-auto">
                     {t(promiseSettings?.description)}
