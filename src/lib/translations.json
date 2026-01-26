@@ -1,4 +1,3 @@
-
 {
   "en": {
     "how_it_works": "How It Works",
@@ -38,7 +37,12 @@
     "our_selection": "Our Selection",
     "browse_our_collection_desc": "Browse our entire collection of premium meats.",
     "clear_filters": "Clear Filters",
-    "view_more_products": "View More Products"
+    "view_more_products": "View More Products",
+    "grass_fed_promise": "Grass Fed",
+    "free_range_promise": "Free Range",
+    "ethically_reared_promise": "Ethically Reared",
+    "sustainable_farming_promise": "Sustainable Farming",
+    "our_promise_desc": "We provide the finest grass fed meat produced sustainably and in harmony with nature. We care about traditional British farming and work exclusively with small, family-run farms that follow regenerative, traditional farming methods. We believe strongly that small-scale farming is better for the animal, the local ecology, and for you, and provides exceptionally tasting, ethically reared meat that you can trust completely."
   },
   "ar": {
     "how_it_works": "كيف تعمل",
@@ -78,7 +82,12 @@
     "our_selection": "مجموعتنا",
     "browse_our_collection_desc": "تصفح مجموعتنا الكاملة من اللحوم الفاخرة.",
     "clear_filters": "مسح الفلاتر",
-    "view_more_products": "عرض المزيد من المنتجات"
+    "view_more_products": "عرض المزيد من المنتجات",
+    "grass_fed_promise": "تغذية على العشب",
+    "free_range_promise": "حرية الحركة",
+    "ethically_reared_promise": "تربية أخلاقية",
+    "sustainable_farming_promise": "زراعة مستدامة",
+    "our_promise_desc": "نحن نقدم أجود أنواع اللحوم التي تتغذى على الأعشاب ويتم إنتاجها بشكل مستدام وبالانسجام مع الطبيعة. نحن نهتم بالزراعة البريطانية التقليدية ونعمل حصريًا مع مزارع عائلية صغيرة تتبع أساليب الزراعة التجديدية والتقليدية. نحن نؤمن بشدة أن الزراعة على نطاق صغير أفضل للحيوان والبيئة المحلية ولكم، وتوفر لحومًا ذات مذاق استثنائي ومرباة أخلاقياً يمكنك الوثوق بها تمامًا."
   },
   "fr": {
     "how_it_works": "Comment ça fonctionne",
@@ -118,7 +127,12 @@
     "our_selection": "Notre Sélection",
     "browse_our_collection_desc": "Parcourez toute notre collection de viandes de première qualité.",
     "clear_filters": "Effacer les filtres",
-    "view_more_products": "Voir plus de produits"
+    "view_more_products": "Voir plus de produits",
+    "grass_fed_promise": "Nourri à l'herbe",
+    "free_range_promise": "Plein air",
+    "ethically_reared_promise": "Élevage éthique",
+    "sustainable_farming_promise": "Agriculture durable",
+    "our_promise_desc": "Nous fournissons la meilleure viande nourrie à l'herbe, produite de manière durable et en harmonie avec la nature. Nous nous soucions de l'agriculture britannique traditionnelle et travaillons exclusivement avec de petites fermes familiales qui suivent des méthodes agricoles régénératrices et traditionnelles. Nous croyons fermement que l'agriculture à petite échelle est meilleure pour l'animal, l'écologie locale et pour vous, et fournit une viande au goût exceptionnel, élevée de manière éthique, en laquelle vous pouvez avoir entièrement confiance."
   },
   "es": {
     "how_it_works": "Cómo funciona",
@@ -158,7 +172,12 @@
     "our_selection": "Nuestra Selección",
     "browse_our_collection_desc": "Explore toda nuestra colección de carnes de primera calidad.",
     "clear_filters": "Borrar filtros",
-    "view_more_products": "Ver más productos"
+    "view_more_products": "Ver más productos",
+    "grass_fed_promise": "Alimentado con pasto",
+    "free_range_promise": "Campo libre",
+    "ethically_reared_promise": "Crianza ética",
+    "sustainable_farming_promise": "Agricultura sostenible",
+    "our_promise_desc": "Ofrecemos la mejor carne alimentada con pasto, producida de forma sostenible y en armonía con la naturaleza. Nos preocupamos por la agricultura tradicional británica y trabajamos exclusivamente con pequeñas granjas familiares que siguen métodos agrícolas regenerativos y tradicionales. Creemos firmemente que la agricultura a pequeña escala es mejor para el animal, la ecología local y para usted, y proporciona una carne de sabor excepcional y criada éticamente en la que puede confiar por completo."
   },
   "ur": {
     "how_it_works": "یہ کیسے کام کرتا ہے",
@@ -198,6 +217,11 @@
     "our_selection": "ہمارا انتخاب",
     "browse_our_collection_desc": "ہمارے پریمیم گوشت کے پورے مجموعے کو براؤز کریں۔",
     "clear_filters": "فلٹرز صاف کریں",
-    "view_more_products": "مزید مصنوعات دیکھیں"
+    "view_more_products": "مزید مصنوعات دیکھیں",
+    "grass_fed_promise": "گھاس کھلایا",
+    "free_range_promise": "فری رینج",
+    "ethically_reared_promise": "اخلاقی طور پر پالا ہوا",
+    "sustainable_farming_promise": "پائیدار کھیتی",
+    "our_promise_desc": "ہم بہترین گھاس کھلایا گوشت فراہم کرتے ہیں جو پائیدار طریقے سے اور فطرت کے ساتھ ہم آہنگی میں تیار کیا جاتا ہے۔ ہم روایتی برطانوی کاشتکاری کا خیال رکھتے ہیں اور خصوصی طور پر چھوٹے، خاندانی فارموں کے ساتھ کام کرتے ہیں جو دوبارہ پیدا کرنے والے، روایتی کاشتکاری کے طریقوں پر عمل کرتے ہیں۔ ہم پختہ یقین رکھتے ہیں کہ چھوٹے پیمانے پر کھیتی باڑی جانوروں، مقامی ماحولیات اور آپ کے لیے بہتر ہے، اور غیر معمولی ذائقہ دار، اخلاقی طور پر پالا ہوا گوشت فراہم کرتی ہے جس پر آپ مکمل بھروسہ کر سکتے ہیں۔"
   }
 }
