@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -82,7 +81,7 @@ export function Header() {
   const firestore = useFirestore();
 
   const brandingRef = useMemo(() => firestore ? doc(firestore, 'settings', 'branding') : null, [firestore]);
-  const { data: brandingSettings } = useDoc<{ logoUrl: string }>(brandingRef);
+  const { data: brandingSettings, isLoading: isLoadingBranding } = useDoc<{ logoUrl: string }>(brandingRef);
   
   const productsQuery = useMemo(() => firestore ? collection(firestore, 'products') : null, [firestore]);
   const { data: products } = useCollection<Product>(productsQuery);
@@ -227,7 +226,9 @@ export function Header() {
                 </Sheet>
             </div>
             <Link href="/" className="flex items-center space-x-2">
-              {isClient && brandingSettings?.logoUrl ? (
+              {isLoadingBranding ? (
+                <Skeleton className="h-16 w-40 bg-white/20" />
+              ) : brandingSettings?.logoUrl ? (
                 <Image src={getPlaceholderImage(brandingSettings.logoUrl)} alt="Me'eat Logo" width={188} height={80} className="h-20 w-auto" unoptimized />
               ) : (
                 <MeeatLogo className="h-16 w-auto" />
