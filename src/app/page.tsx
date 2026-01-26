@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useMemo } from 'react';
 import { useCollection, useFirestore, useDoc } from '@/firebase';
 import { collection, query, where, limit, doc, orderBy } from 'firebase/firestore';
-import type { Product, Country, HomepageSection, HeroSettings } from '@/lib/types';
+import type { Product, Country, HomepageSection, HeroSettings, PromiseSettings } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -27,6 +27,9 @@ export default function Home() {
   const heroSettingsRef = useMemo(() => firestore ? doc(firestore, 'settings', 'hero') : null, [firestore]);
   const { data: heroSettings, isLoading: isLoadingHero } = useDoc<HeroSettings>(heroSettingsRef);
 
+  const promiseSettingsRef = useMemo(() => firestore ? doc(firestore, 'settings', 'promise') : null, [firestore]);
+  const { data: promiseSettings, isLoading: isLoadingPromise } = useDoc<PromiseSettings>(promiseSettingsRef);
+
   const heroImage = heroSettings?.imageUrl ? getPlaceholderImage(heroSettings.imageUrl) : "https://picsum.photos/seed/hero-banner/1200/500";
   const heroTitle = heroSettings?.title;
   const heroSubtitle = heroSettings?.subtitle;
@@ -36,7 +39,7 @@ export default function Home() {
   const homepageSectionsQuery = useMemo(() => firestore ? query(collection(firestore, 'categoryBanners'), orderBy('order')) : null, [firestore]);
   const { data: homepageSections, isLoading: isLoadingSections } = useCollection<HomepageSection>(homepageSectionsQuery);
 
-  const isLoading = isLoadingHero || isLoadingSections;
+  const isLoading = isLoadingHero || isLoadingSections || isLoadingPromise;
 
   const getAlignmentClasses = (alignment: 'left' | 'center' | 'right' | undefined) => {
     switch (alignment) {
@@ -96,18 +99,27 @@ export default function Home() {
         {/* Our Promise Section */}
         <section className="bg-primary py-8 text-primary-foreground">
           <div className="container mx-auto px-4 text-center">
-            <div className="flex flex-wrap justify-center items-center gap-x-4 md:gap-x-8 text-base md:text-lg font-semibold tracking-widest uppercase">
-              <span>{t('grass_fed_promise')}</span>
-              <span className="text-primary-foreground/50">|</span>
-              <span>{t('free_range_promise')}</span>
-              <span className="text-primary-foreground/50">|</span>
-              <span>{t('ethically_reared_promise')}</span>
-              <span className="text-primary-foreground/50">|</span>
-              <span>{t('sustainable_farming_promise')}</span>
-            </div>
-            <p className="mt-6 text-base md:text-lg text-primary-foreground/80 leading-relaxed max-w-4xl mx-auto">
-              {t('our_promise_desc')}
-            </p>
+            {isLoadingPromise ? (
+                <div className="space-y-4">
+                    <Skeleton className="h-6 w-3/4 mx-auto bg-primary-foreground/20" />
+                    <Skeleton className="h-16 w-full max-w-4xl mx-auto bg-primary-foreground/20" />
+                </div>
+            ) : (
+                <>
+                    <div className="flex flex-wrap justify-center items-center gap-x-4 md:gap-x-8 text-base md:text-lg font-semibold tracking-widest uppercase">
+                    <span>{t(promiseSettings?.grassFedPromise)}</span>
+                    <span className="text-primary-foreground/50">|</span>
+                    <span>{t(promiseSettings?.freeRangePromise)}</span>
+                    <span className="text-primary-foreground/50">|</span>
+                    <span>{t(promiseSettings?.ethicallyRearedPromise)}</span>
+                    <span className="text-primary-foreground/50">|</span>
+                    <span>{t(promiseSettings?.sustainableFarmingPromise)}</span>
+                    </div>
+                    <p className="mt-6 text-base md:text-lg text-primary-foreground/80 leading-relaxed max-w-4xl mx-auto">
+                    {t(promiseSettings?.description)}
+                    </p>
+                </>
+            )}
           </div>
         </section>
 
@@ -216,3 +228,5 @@ export default function Home() {
     </div>
   );
 }
+
+    

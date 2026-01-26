@@ -305,6 +305,14 @@ export interface HeroSettings {
     buttonAlignment?: 'left' | 'center' | 'right';
 }
 
+export interface PromiseSettings {
+    grassFedPromise?: LocalizedString | null;
+    freeRangePromise?: LocalizedString | null;
+    ethicallyRearedPromise?: LocalizedString | null;
+    sustainableFarmingPromise?: LocalizedString | null;
+    description?: LocalizedString | null;
+}
+
 export interface BoxOption {
   id: string;
   name: string;
@@ -338,3 +346,5 @@ export interface ChooseBoxStep {
   imageHint?: string;
   name: string; // for compatibility with AttributeManagementPage
 }
+
+    

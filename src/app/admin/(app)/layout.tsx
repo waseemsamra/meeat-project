@@ -124,6 +124,7 @@ const navLinks = [
     label: 'CMS',
     subLinks: [
       { href: '/admin/settings/home-hero', label: 'Home Hero' },
+      { href: '/admin/settings/our-promise', label: 'Our Promise Section' },
       { href: '/admin/settings/branding', label: 'Branding' },
       { href: '/admin/settings/homepage-sections', label: 'Homepage Sections' },
       { href: '/admin/settings/box-management', label: 'Box Management' },
@@ -323,3 +324,5 @@ export default function AdminLayout({
   );
 }
   
+
+    
