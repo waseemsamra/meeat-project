@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -179,14 +180,14 @@ export function Header() {
   return (
     <>
       <header className="sticky top-0 z-40 w-full bg-black text-primary-foreground">
-        <div className="container mx-auto flex h-24 items-center justify-between px-4 gap-8">
+        <div className="container mx-auto flex h-24 items-center justify-between px-4 gap-4">
           {/* Logo */}
           <div className="flex items-center flex-shrink-0">
             <Link href="/" className="flex items-center space-x-2">
               {isClient && brandingSettings?.logoUrl ? (
                 <Image src={getPlaceholderImage(brandingSettings.logoUrl)} alt="Me'eat Logo" width={188} height={80} className="h-20 w-auto" unoptimized />
               ) : (
-                <MeeatLogo className="h-16 w-auto" />
+                <MeeatLogo className="h-20 w-auto" />
               )}
             </Link>
           </div>
@@ -202,147 +203,149 @@ export function Header() {
               {t('search_placeholder')}
             </Button>
           </div>
+          
+          <div className="flex items-center">
+            {/* Desktop Icons */}
+            <nav className="hidden md:flex items-center justify-end gap-1">
+              <Button variant="ghost" className="flex items-center gap-2 text-xs" onClick={() => setIsSettingsOpen(true)}>
+                <Globe className="h-5 w-5" /> {language.code} / {currency}
+              </Button>
+              
+              <div className="h-8 border-l border-primary-foreground/20 mx-2"></div>
 
-          {/* Desktop Icons */}
-          <nav className="hidden md:flex items-center justify-end gap-1">
-            <Button variant="ghost" className="flex items-center gap-2 text-xs" onClick={() => setIsSettingsOpen(true)}>
-              <Globe className="h-5 w-5" /> {language.code} / {currency}
-            </Button>
-            
-            <div className="h-8 border-l border-primary-foreground/20 mx-2"></div>
-
-            {isClient && isUserLoading ? (
-              <div className="flex flex-col h-auto px-2 py-1 items-center gap-1">
-                <Skeleton className="h-7 w-7 rounded-full bg-white/20" />
-                <Skeleton className="h-3 w-12 bg-white/20" />
-              </div>
-            ) : isClient && user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex-col h-auto px-2 py-1">
-                    <Avatar className="h-7 w-7 mb-1 bg-primary-foreground text-primary">
-                      <AvatarFallback>{userInitial}</AvatarFallback>
-                    </Avatar>
-                    <span className="text-xs">Account</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="text-foreground">
-                  <DropdownMenuLabel>
-                    <div className="font-normal">Signed in as</div>
-                    <div className="font-semibold">{user.name}</div>
-                    <div className="text-xs text-muted-foreground">{user.email}</div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/account"><User className="mr-2 h-4 w-4" /> My Account</Link>
-                  </DropdownMenuItem>
-                  {userIsAdmin && (
+              {isClient && isUserLoading ? (
+                <div className="flex flex-col h-auto px-2 py-1 items-center gap-1">
+                  <Skeleton className="h-7 w-7 rounded-full bg-white/20" />
+                  <Skeleton className="h-3 w-12 bg-white/20" />
+                </div>
+              ) : isClient && user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="flex-col h-auto px-2 py-1">
+                      <Avatar className="h-7 w-7 mb-1 bg-primary-foreground text-primary">
+                        <AvatarFallback>{userInitial}</AvatarFallback>
+                      </Avatar>
+                      <span className="text-xs">Account</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="text-foreground">
+                    <DropdownMenuLabel>
+                      <div className="font-normal">Signed in as</div>
+                      <div className="font-semibold">{user.name}</div>
+                      <div className="text-xs text-muted-foreground">{user.email}</div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <Link href="/admin/dashboard"><Shield className="mr-2 h-4 w-4" /> Admin</Link>
+                      <Link href="/account"><User className="mr-2 h-4 w-4" /> My Account</Link>
                     </DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" /> Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : isClient ? (
+                    {userIsAdmin && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin/dashboard"><Shield className="mr-2 h-4 w-4" /> Admin</Link>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" /> Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : isClient ? (
+                <Button asChild variant="ghost" className="flex-col h-auto px-2 py-1">
+                  <Link href="/login">
+                    <User className="h-6 w-6 mb-1" />
+                    <span className="text-xs">Log In</span>
+                  </Link>
+                </Button>
+              ) : (
+                <div className="flex flex-col h-auto px-2 py-1 items-center gap-1">
+                  <Skeleton className="h-7 w-7 rounded-full bg-white/20" />
+                  <Skeleton className="h-3 w-12 bg-white/20" />
+                </div>
+              )}
+
+              <Button variant="ghost" className="flex-col h-auto px-2 py-1">
+                <div className="relative">
+                  <Heart className="h-6 w-6 mb-1" />
+                  <span className="absolute -top-1 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">0</span>
+                </div>
+                <span className="text-xs">Wishlist</span>
+              </Button>
+            
               <Button asChild variant="ghost" className="flex-col h-auto px-2 py-1">
-                <Link href="/login">
-                  <User className="h-6 w-6 mb-1" />
-                  <span className="text-xs">Log In</span>
+                <Link href="/cart">
+                  <div className="relative">
+                    <ShoppingCart className="h-6 w-6 mb-1" />
+                    {isClient && cartCount > 0 && (
+                      <span className="absolute -top-1 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
+                        {cartCount}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs">{isClient ? `Cart: ${defaultCurrency?.symbol || '$'}${cartTotal.toFixed(2)}` : 'Cart'}</span>
                 </Link>
               </Button>
-            ) : (
-              <div className="flex flex-col h-auto px-2 py-1 items-center gap-1">
-                <Skeleton className="h-7 w-7 rounded-full bg-white/20" />
-                <Skeleton className="h-3 w-12 bg-white/20" />
-              </div>
-            )}
+            </nav>
 
-            <Button variant="ghost" className="flex-col h-auto px-2 py-1">
-              <div className="relative">
-                <Heart className="h-6 w-6 mb-1" />
-                <span className="absolute -top-1 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">0</span>
-              </div>
-              <span className="text-xs">Wishlist</span>
-            </Button>
-          
-            <Button asChild variant="ghost" className="flex-col h-auto px-2 py-1">
-              <Link href="/cart">
-                <div className="relative">
-                  <ShoppingCart className="h-6 w-6 mb-1" />
+            {/* Mobile Menu Trigger */}
+            <div className="flex md:hidden items-center gap-2">
+              <Button onClick={() => setIsSearchModalOpen(true)} variant="ghost" size="icon">
+                <Search className="h-5 w-5" />
+                <span className="sr-only">Search</span>
+              </Button>
+              <Button asChild variant="ghost" size="icon" className="relative">
+                <Link href="/cart">
+                  <ShoppingCart className="h-5 w-5" />
                   {isClient && cartCount > 0 && (
-                    <span className="absolute -top-1 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
+                    <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
                       {cartCount}
                     </span>
                   )}
-                </div>
-                <span className="text-xs">{isClient ? `Cart: ${defaultCurrency?.symbol || '$'}${cartTotal.toFixed(2)}` : 'Cart'}</span>
-              </Link>
-            </Button>
-          </nav>
-
-          {/* Mobile Menu Trigger */}
-          <div className="flex md:hidden items-center gap-2">
-            <Button onClick={() => setIsSearchModalOpen(true)} variant="ghost" size="icon">
-              <Search className="h-5 w-5" />
-              <span className="sr-only">Search</span>
-            </Button>
-            <Button asChild variant="ghost" size="icon" className="relative">
-              <Link href="/cart">
-                <ShoppingCart className="h-5 w-5" />
-                {isClient && cartCount > 0 && (
-                  <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
-                    {cartCount}
-                  </span>
-                )}
-                <span className="sr-only">Shopping Cart</span>
-              </Link>
-            </Button>
-            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-6 w-6" />
-                  <span className="sr-only">Toggle Menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left">
-                <SheetHeader>
-                  <SheetTitle className='flex items-center gap-2'>
-                    <MeeatLogo className="h-12 w-auto" />
-                  </SheetTitle>
-                </SheetHeader>
-                <div className="mt-4 flex flex-col space-y-2">
-                  <Button variant="outline" className="w-full justify-start" onClick={() => { closeMobileMenu(); setIsSettingsOpen(true);}}>
-                      <Globe className="mr-2 h-4 w-4" /> {language.code} / {currency}
+                  <span className="sr-only">Shopping Cart</span>
+                </Link>
+              </Button>
+              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-6 w-6" />
+                    <span className="sr-only">Toggle Menu</span>
                   </Button>
-                  <DropdownMenuSeparator className="my-4" />
+                </SheetTrigger>
+                <SheetContent side="left">
+                  <SheetHeader>
+                    <SheetTitle className='flex items-center gap-2'>
+                      <MeeatLogo className="h-12 w-auto" />
+                    </SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-4 flex flex-col space-y-2">
+                    <Button variant="outline" className="w-full justify-start" onClick={() => { closeMobileMenu(); setIsSettingsOpen(true);}}>
+                        <Globe className="mr-2 h-4 w-4" /> {language.code} / {currency}
+                    </Button>
+                    <DropdownMenuSeparator className="my-4" />
 
-                  {mainNav.map((item) => (
-                      <MobileNavLink key={item.label} href={item.href || '#'} onNavigate={closeMobileMenu}>
-                        {item.label}
-                      </MobileNavLink>
-                  ))}
-                  <div className="border-t pt-4 space-y-2">
-                      {isUserLoading ? (
-                        <div className="space-y-2">
-                          <Skeleton className="h-9 w-full" />
-                        </div>
-                      ) : user ? (
-                          <>
-                              <MobileNavLink href="/account" onNavigate={closeMobileMenu}>My Account</MobileNavLink>
-                              {userIsAdmin && <MobileNavLink href="/admin/dashboard" onNavigate={closeMobileMenu}>Admin</MobileNavLink>}
-                              <Button variant="ghost" className="w-full justify-start" onClick={() => { handleLogout(); closeMobileMenu(); }}>Logout</Button>
-                          </>
-                      ) : (
-                          <MobileNavLink href="/login" onNavigate={closeMobileMenu}>Login</MobileNavLink>
-                      )}
+                    {mainNav.map((item) => (
+                        <MobileNavLink key={item.label} href={item.href || '#'} onNavigate={closeMobileMenu}>
+                          {item.label}
+                        </MobileNavLink>
+                    ))}
+                    <div className="border-t pt-4 space-y-2">
+                        {isUserLoading ? (
+                          <div className="space-y-2">
+                            <Skeleton className="h-9 w-full" />
+                          </div>
+                        ) : user ? (
+                            <>
+                                <MobileNavLink href="/account" onNavigate={closeMobileMenu}>My Account</MobileNavLink>
+                                {userIsAdmin && <MobileNavLink href="/admin/dashboard" onNavigate={closeMobileMenu}>Admin</MobileNavLink>}
+                                <Button variant="ghost" className="w-full justify-start" onClick={() => { handleLogout(); closeMobileMenu(); }}>Logout</Button>
+                            </>
+                        ) : (
+                            <MobileNavLink href="/login" onNavigate={closeMobileMenu}>Login</MobileNavLink>
+                        )}
+                    </div>
                   </div>
-                </div>
-              </SheetContent>
-            </Sheet>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </div>
       </header>
