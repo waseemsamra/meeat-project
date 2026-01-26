@@ -19,6 +19,7 @@ import { DynamicProductSection } from '@/components/shared/DynamicProductSection
 import { useTranslation } from '@/hooks/useTranslation';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 import { MasterButchers } from '@/components/shared/MasterButchers';
+import { ChooseBoxSteps } from '@/components/shared/ChooseBoxSteps';
 
 export default function Home() {
   const firestore = useFirestore();
@@ -180,51 +181,7 @@ export default function Home() {
         )}
 
         {/* New "Choose Size of Box" Section */}
-        <section className="py-16 bg-muted">
-            <div className="container mx-auto px-4 text-center">
-                 <p className="text-sm font-semibold tracking-widest text-primary uppercase">{t('our_plans')}</p>
-                 <h2 className="text-4xl md:text-5xl font-bold font-headline mt-2">{t('choose_size_of_box')}</h2>
-                 <p className="mt-2 text-muted-foreground">{t('we_only_offer_the_best')}</p>
-            </div>
-            <div className="container mx-auto px-4 mt-12">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-8 items-center">
-                <div className="md:col-span-1 text-center md:text-left">
-                    <h2 className="text-3xl font-bold font-headline text-primary">From block to box to you</h2>
-                </div>
-                <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-8">
-                    <div className="flex flex-col items-center text-center">
-                    <div className="relative mb-4">
-                        <span className="text-7xl font-bold text-gray-200 dark:text-gray-700 absolute -top-4 -left-2 z-0">1</span>
-                        <Image src={getPlaceholderImage('block-to-box-1')} alt="Cut to order" width={200} height={150} className="rounded-lg object-contain relative z-10" data-ai-hint="raw meat" />
-                    </div>
-                    <h3 className="font-headline text-xl font-semibold text-primary">Cut to order</h3>
-                    <p className="text-sm text-muted-foreground mt-2">Our native-breed meat is cut to your requirements by our skilled and expert butchers.</p>
-                    </div>
-                    <div className="flex flex-col items-center text-center">
-                    <div className="relative mb-4">
-                        <span className="text-7xl font-bold text-gray-200 dark:text-gray-700 absolute -top-4 -left-2 z-0">2</span>
-                        <Image src={getPlaceholderImage('block-to-box-2')} alt="Package with care" width={200} height={150} className="rounded-lg object-contain relative z-10" data-ai-hint="meat packaging" />
-                    </div>
-                    <h3 className="font-headline text-xl font-semibold text-primary">Package with care</h3>
-                    <p className="text-sm text-muted-foreground mt-2">The cuts are packaged into specially designed insulated boxes, with high-tech gel packs that keep the products cool for up to 48 hours on the road.</p>
-                    </div>
-                    <div className="flex flex-col items-center text-center">
-                    <div className="relative mb-4">
-                        <span className="text-7xl font-bold text-gray-200 dark:text-gray-700 absolute -top-4 -left-2 z-0">3</span>
-                        <Image src={getPlaceholderImage('block-to-box-3')} alt="Delivered Fresh" width={200} height={150} className="rounded-lg object-contain relative z-10" data-ai-hint="sliced steak" />
-                    </div>
-                    <h3 className="font-headline text-xl font-semibold text-primary">Delivered Fresh</h3>
-                    <p className="text-sm text-muted-foreground mt-2">Your order arrives with you perfectly chilled, always fresh. Unlike most other online butchers, we never freeze our meat.</p>
-                    </div>
-                </div>
-                </div>
-                 <div className="text-center mt-12">
-                    <Button asChild variant="outline" size="lg">
-                        <Link href="/get-started">Let Get Started</Link>
-                    </Button>
-                </div>
-            </div>
-        </section>
+        <ChooseBoxSteps />
 
         {/* Master Butchers Section */}
         <MasterButchers />

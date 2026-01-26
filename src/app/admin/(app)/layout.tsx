@@ -128,6 +128,7 @@ const navLinks = [
       { href: '/admin/settings/homepage-sections', label: 'Homepage Sections' },
       { href: '/admin/settings/box-management', label: 'Box Management' },
       { href: '/admin/settings/master-butchers', label: 'Master Butchers' },
+      { href: '/admin/settings/choose-box-steps', label: 'Choose Box Steps' },
       { href: '/admin/image-generation-test', label: 'Image Generation', icon: Sparkles },
       { href: '/admin/ai-video-generation', label: 'Video Generation', icon: Clapperboard },
     ],

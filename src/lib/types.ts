@@ -342,3 +342,13 @@ export interface ButcherTab {
   contentButtonLink: string;
   name: string; // for compatibility
 }
+
+export interface ChooseBoxStep {
+  id: string;
+  order: number;
+  title: LocalizedString;
+  description: LocalizedString;
+  imageId: string;
+  imageHint?: string;
+  name: string; // for compatibility with AttributeManagementPage
+}

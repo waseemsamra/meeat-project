@@ -198,5 +198,15 @@ service cloud.firestore {
       allow read, list: if true;
       allow create, update, delete: if hasRole('ADMIN') || hasRole('CONTENT_MANAGER');
     }
+
+    match /butcherTabs/{tabId} {
+      allow read: if true;
+      allow write: if hasRole('ADMIN') || hasRole('CONTENT_MANAGER');
+    }
+
+    match /chooseBoxSteps/{stepId} {
+      allow read: if true;
+      allow write: if hasRole('ADMIN') || hasRole('CONTENT_MANAGER');
+    }
   }
 }

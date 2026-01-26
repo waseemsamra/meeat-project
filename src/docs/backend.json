@@ -780,6 +780,41 @@
         "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp indicating when the post was generated." }
       },
       "required": ["id", "productId", "productName", "postText", "imageUrl", "createdAt", "platform"]
+    },
+    "ButcherTab": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ButcherTab",
+      "description": "Represents a tab in the 'Master Butchers' section on the homepage.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "order": { "type": "number", "description": "The display order of the tab." },
+        "title": { "$ref": "#/entities/LocalizedString" },
+        "icon": { "type": "string", "description": "The name of the lucide-react icon (e.g., 'CleaverIcon')." },
+        "contentTitle": { "$ref": "#/entities/LocalizedString" },
+        "contentDescription": { "$ref": "#/entities/LocalizedString" },
+        "contentImage": { "type": "string", "description": "The image path for the content." },
+        "contentImageHint": { "type": "string", "description": "Hint for AI image search." },
+        "contentButtonText": { "$ref": "#/entities/LocalizedString" },
+        "contentButtonLink": { "type": "string", "description": "The link for the button." }
+      },
+      "required": ["id", "order", "title", "icon", "contentTitle", "contentDescription", "contentImage", "contentButtonText", "contentButtonLink"]
+    },
+    "ChooseBoxStep": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ChooseBoxStep",
+      "description": "Represents a step in the 'From block to box to you' section on the homepage.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "order": { "type": "number", "description": "The display order of the step." },
+        "name": { "type": "string", "description": "The English title of the step, for internal reference." },
+        "title": { "$ref": "#/entities/LocalizedString" },
+        "description": { "$ref": "#/entities/LocalizedString" },
+        "imageId": { "type": "string", "description": "The image ID from placeholder-images.json." },
+        "imageHint": { "type": "string", "description": "Hint for AI image search." }
+      },
+      "required": ["id", "order", "title", "description", "imageId", "name"]
     }
   },
   "auth": {
@@ -1072,6 +1107,24 @@
           "schema": { "$ref": "#/backend/entities/SocialPost" },
           "description": "Stores AI-generated social media posts for products.",
           "params": [{ "name": "postId", "description": "The unique identifier for the social post." }]
+        }
+      },
+      {
+        "path": "/butcherTabs/{tabId}",
+        "definition": {
+          "entityName": "ButcherTab",
+          "schema": { "$ref": "#/backend/entities/ButcherTab" },
+          "description": "Stores content for the 'Master Butchers' section tabs.",
+          "params": [{ "name": "tabId", "description": "The unique identifier for the tab." }]
+        }
+      },
+      {
+        "path": "/chooseBoxSteps/{stepId}",
+        "definition": {
+          "entityName": "ChooseBoxStep",
+          "schema": { "$ref": "#/backend/entities/ChooseBoxStep" },
+          "description": "Stores content for the 'From block to box to you' section steps.",
+          "params": [{ "name": "stepId", "description": "The unique identifier for the step." }]
         }
       }
     ],
