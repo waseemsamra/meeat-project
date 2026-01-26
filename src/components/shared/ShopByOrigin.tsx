@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -82,19 +81,18 @@ export function ShopByOrigin() {
                         ) : (
                             countries?.map(country => (
                                 <CarouselItem key={country.id} className="basis-4/5 md:basis-1/4 lg:basis-1/5">
-                                     <Link href={`/products?category=${selectedCategory}&countryOfOrigin=${country.name.en}`}>
-                                        <Card className="text-center p-4 hover:shadow-lg transition-shadow">
-                                            <CardContent className="flex flex-col items-center justify-center gap-4 p-0">
-                                                <Image
-                                                    src={`https://flagcdn.com/w160/${country.code}.png`}
-                                                    alt={`${t(country.name)} flag`}
-                                                    width={80}
-                                                    height={60}
-                                                    className="rounded-md border object-contain h-20 w-20"
-                                                />
-                                                <span className="font-semibold text-sm">{t(country.name)} {t(selectedCategory)}</span>
-                                            </CardContent>
-                                        </Card>
+                                     <Link href={`/products?category=${selectedCategory}&countryOfOrigin=${country.name.en}`} className="group block">
+                                        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg">
+                                            <Image
+                                                src={`https://flagcdn.com/w160/${country.code}.png`}
+                                                alt={`${t(country.name)} flag`}
+                                                fill
+                                                className="object-cover transition-transform group-hover:scale-105"
+                                            />
+                                            <div className="absolute inset-0 bg-black/40 flex items-end p-4">
+                                                <span className="font-bold text-white text-lg">{t(country.name)} {t(selectedCategory)}</span>
+                                            </div>
+                                        </div>
                                     </Link>
                                 </CarouselItem>
                             ))
