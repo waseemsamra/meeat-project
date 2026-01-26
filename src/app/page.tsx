@@ -105,7 +105,7 @@ export default function Home() {
                 </div>
             ) : (
                 <>
-                    <div className="flex flex-wrap justify-center items-center gap-x-4 md:gap-x-8 text-base md:text-lg font-semibold tracking-widest uppercase">
+                    <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 md:gap-x-8 text-base md:text-lg font-semibold tracking-widest uppercase">
                     <span>{t(promiseSettings?.grassFedPromise)}</span>
                     <span className="text-primary-foreground/50">|</span>
                     <span>{t(promiseSettings?.freeRangePromise)}</span>
