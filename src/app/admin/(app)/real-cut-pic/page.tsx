@@ -18,7 +18,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 
 const realCutPicSchema = z.object({
   title: z.string().min(1, 'Title is required.'),
-  imageUrl: z.string().url('A valid image URL is required.'),
+  imageUrl: z.string().min(1, 'A valid image URL is required.'),
   cutTypeId: z.string().min(1, 'A cut type must be selected.'),
   order: z.coerce.number().int().optional().default(0),
   name: z.string().optional(), // For AttributeManagementPage compatibility
