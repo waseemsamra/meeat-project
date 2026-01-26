@@ -172,7 +172,7 @@ export function Header() {
 
   return (
     <>
-    <header className="sticky top-0 z-40 w-full bg-primary text-primary-foreground">
+    <header className="sticky top-0 z-40 w-full bg-black text-primary-foreground">
       <div className="container mx-auto flex h-24 items-center justify-between px-4 gap-8">
         {/* Logo */}
         <div className="flex items-center flex-shrink-0">
