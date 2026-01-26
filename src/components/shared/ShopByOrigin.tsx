@@ -75,13 +75,13 @@ export function ShopByOrigin() {
                     <CarouselContent>
                         {isLoading ? (
                             Array.from({length: 12}).map((_, i) => (
-                                <CarouselItem key={i} className="basis-1/4 sm:basis-1/6 md:basis-[12.5%] lg:basis-[8.33%]">
+                                <CarouselItem key={i} className="basis-1/4 sm:basis-1/6 md:basis-[12.5%] lg:basis-[12.5%]">
                                     <Skeleton className="h-24 w-full" />
                                 </CarouselItem>
                             ))
                         ) : (
                             countries?.map(country => (
-                                <CarouselItem key={country.id} className="basis-1/4 sm:basis-1/6 md:basis-[12.5%] lg:basis-1/6">
+                                <CarouselItem key={country.id} className="basis-1/4 sm:basis-1/6 md:basis-[12.5%] lg:basis-[12.5%]">
                                      <Link href={`/products?category=${selectedCategory}&countryOfOrigin=${country.name.en}`} className="group block">
                                         <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md">
                                             <Image
@@ -91,7 +91,7 @@ export function ShopByOrigin() {
                                                 className="object-cover transition-transform group-hover:scale-105"
                                             />
                                             <div className="absolute inset-0 bg-black/40 flex items-end p-1">
-                                                <span className="font-bold text-white text-[8px] leading-tight">{t(country.name)} {t(selectedCategory)}</span>
+                                                <span className="font-bold text-white text-xs leading-tight">{t(country.name)} {t(selectedCategory)}</span>
                                             </div>
                                         </div>
                                     </Link>
