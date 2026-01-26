@@ -82,11 +82,11 @@ export default function BrandingPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid w-full max-w-sm items-center gap-1.5">
-            <Label htmlFor="logo-path">Logo S3 Path</Label>
+            <Label htmlFor="logo-path">Logo Path</Label>
             <Input 
                 id="logo-path" 
                 type="text" 
-                placeholder="/image.png"
+                placeholder="/logos/my-logo.png"
                 value={logoPath}
                 onChange={(e) => setLogoPath(e.target.value)}
                 disabled={isLoading}

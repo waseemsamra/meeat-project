@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
@@ -399,8 +397,9 @@ export default function AdminCutTypesPage() {
                 name="imageUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Image Path (from S3)</FormLabel>
+                    <FormLabel>Image Path</FormLabel>
                     <FormControl><Input placeholder="/cuts/ribeye.jpeg" {...field} value={field.value || ''} /></FormControl>
+                    <FormDescription>Path to the image in your S3 bucket, e.g., /cuts/ribeye.jpeg</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

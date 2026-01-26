@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
@@ -12,7 +11,7 @@ import { Languages, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { translateProductAction } from '../../products/all/actions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FormField, FormItem, FormControl, FormMessage, FormLabel } from '@/components/ui/form';
+import { FormField, FormItem, FormControl, FormMessage, FormLabel, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 import { getPlaceholderImage } from '@/lib/utils';
@@ -186,8 +185,11 @@ export default function AdminExploreRangePage() {
                     name="imageUrl"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Image URL (from S3)</FormLabel>
+                            <FormLabel>Image Path</FormLabel>
                             <FormControl><Input placeholder="/range/beef.png" {...field} value={field.value || ''} /></FormControl>
+                            <FormDescription>
+                                Provide the path to the image in your S3 bucket, e.g., /range/beef.png
+                            </FormDescription>
                             {imageUrl && <Image src={getPlaceholderImage(imageUrl)} alt="Preview" width={100} height={100} className="rounded-md mt-2 object-contain bg-muted p-2" />}
                             <FormMessage />
                         </FormItem>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useEffect } from 'react';
@@ -18,7 +17,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 
 const realCutPicSchema = z.object({
   title: z.string().min(1, 'Title is required.'),
-  imageUrl: z.string().min(1, 'A valid image URL is required.'),
+  imageUrl: z.string().min(1, 'A valid image path is required.'),
   cutTypeId: z.string().min(1, 'A cut type must be selected.'),
   order: z.coerce.number().int().optional().default(0),
   name: z.string().optional(), // For AttributeManagementPage compatibility
@@ -71,7 +70,7 @@ export default function AdminRealCutPicturesPage() {
   const formFields = useMemo(() => [
     { name: 'order' as const, label: 'Display Order', placeholder: 'e.g., 1', type: 'number' as const },
     { name: 'title' as const, label: 'Title', placeholder: 'e.g., Premium Ribeye' },
-    { name: 'imageUrl' as const, label: 'Image URL', placeholder: 'https://...', description: 'Provide a direct link to the image (e.g., from AWS S3).' },
+    { name: 'imageUrl' as const, label: 'Image Path', placeholder: '/real-cuts/my-photo.jpg', description: 'Path to the image in your S3 bucket.' },
     { 
       name: 'cutTypeId' as const, 
       label: 'Cut Type', 
@@ -127,12 +126,12 @@ export default function AdminRealCutPicturesPage() {
                 name="imageUrl"
                 render={({ field: formField }) => (
                   <FormItem>
-                    <FormLabel>Image URL</FormLabel>
+                    <FormLabel>Image Path</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://..." {...formField} />
+                      <Input placeholder="/real-cuts/my-photo.jpg" {...formField} />
                     </FormControl>
                     <FormDescription>
-                      Provide a direct link to the image (e.g., from AWS S3).
+                      Path to the image in your S3 bucket.
                     </FormDescription>
                     <FormMessage />
                     {imageUrlValue && (
