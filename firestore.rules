@@ -210,7 +210,7 @@ service cloud.firestore {
     }
     
     match /exploreRangeItems/{itemId} {
-      allow get, list: if true;
+      allow read: if true;
       allow write: if hasRole('ADMIN') || hasRole('CONTENT_MANAGER');
     }
   }
