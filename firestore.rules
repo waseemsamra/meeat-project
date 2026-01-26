@@ -208,5 +208,10 @@ service cloud.firestore {
       allow read: if true;
       allow write: if hasRole('ADMIN') || hasRole('CONTENT_MANAGER');
     }
+    
+    match /exploreRangeItems/{itemId} {
+      allow get, list: if true;
+      allow write: if hasRole('ADMIN') || hasRole('CONTENT_MANAGER');
+    }
   }
 }
