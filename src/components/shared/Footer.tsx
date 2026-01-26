@@ -102,7 +102,7 @@ export function Footer() {
                 </div>
 
                 <div className="mt-12 pt-8 border-t flex flex-col sm:flex-row justify-between items-center">
-                    <p className="text-sm text-muted-foreground">&copy; {new Date().getFullYear()} Me'eat. All rights reserved.</p>
+                    <p className="text-sm text-muted-foreground">&copy; {isClient ? new Date().getFullYear() : '2024'} Me'eat. All rights reserved.</p>
                     {/* Placeholder for social links */}
                     <div className="flex space-x-4 mt-4 sm:mt-0">
                         {/* Icons would go here */}
