@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -108,65 +109,6 @@ export default function Home() {
               {t('our_promise_desc')}
             </p>
           </div>
-        </section>
-
-        {/* Features Section */}
-        <section className="py-8 bg-card border-b">
-            <div className="container mx-auto px-4">
-                <div className="md:hidden">
-                    <Carousel
-                        opts={{
-                            align: "start",
-                        }}
-                        className="w-full"
-                    >
-                        <CarouselContent>
-                            <CarouselItem className="basis-3/4">
-                                <div className="flex items-center justify-center gap-3 h-full p-2">
-                                    <LeafIcon className="h-8 w-8 text-primary flex-shrink-0"/>
-                                    <span className="text-sm font-medium text-left">{t('grass_fed')}</span>
-                                </div>
-                            </CarouselItem>
-                            <CarouselItem className="basis-3/4">
-                                <div className="flex items-center justify-center gap-3 h-full p-2">
-                                    <TruckIcon className="h-8 w-8 text-primary flex-shrink-0"/>
-                                    <span className="text-sm font-medium text-left">{t('delivery_wide')}</span>
-                                </div>
-                            </CarouselItem>
-                            <CarouselItem className="basis-3/4">
-                                <div className="flex items-center justify-center gap-3 h-full p-2">
-                                    <CleaverIcon className="h-8 w-8 text-primary flex-shrink-0"/>
-                                    <span className="text-sm font-medium text-left">{t('cut_fresh')}</span>
-                                </div>
-                            </CarouselItem>
-                            <CarouselItem className="basis-3/4">
-                                <div className="flex items-center justify-center gap-3 h-full p-2">
-                                    <CowIcon className="h-8 w-8 text-primary flex-shrink-0"/>
-                                    <span className="text-sm font-medium text-left">{t('family_owned')}</span>
-                                </div>
-                            </CarouselItem>
-                        </CarouselContent>
-                    </Carousel>
-                </div>
-                <div className="hidden md:grid md:grid-cols-4 gap-8 text-center">
-                    <div className="flex items-center justify-center gap-3">
-                        <LeafIcon className="h-8 w-8 text-primary"/>
-                        <span className="text-sm font-medium">{t('grass_fed')}</span>
-                    </div>
-                    <div className="flex items-center justify-center gap-3">
-                        <TruckIcon className="h-8 w-8 text-primary"/>
-                        <span className="text-sm font-medium">{t('delivery_wide')}</span>
-                    </div>
-                    <div className="flex items-center justify-center gap-3">
-                        <CleaverIcon className="h-8 w-8 text-primary"/>
-                        <span className="text-sm font-medium">{t('cut_fresh')}</span>
-                    </div>
-                    <div className="flex items-center justify-center gap-3">
-                        <CowIcon className="h-8 w-8 text-primary"/>
-                        <span className="text-sm font-medium">{t('family_owned')}</span>
-                    </div>
-                </div>
-            </div>
         </section>
 
         <ShopByOrigin />
