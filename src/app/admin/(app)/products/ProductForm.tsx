@@ -219,6 +219,8 @@ export function ProductForm({ product, isCloning = false }: ProductFormProps) {
         !isLoadingCategories && !isLoadingCutTypes && !isLoadingGrades && !isLoadingCountries && !isLoadingRubs && !isLoadingStyles
     );
 
+    const defaultLocalizedString = { en: '', es: '', fr: '', ar: '', ur: '' };
+
     if (product && isDataReady) {
         setIsSlugManuallyEdited(true);
         const englishName = typeof product.name === 'string' ? product.name : product.name?.en || '';
@@ -228,10 +230,13 @@ export function ProductForm({ product, isCloning = false }: ProductFormProps) {
             setIsSlugManuallyEdited(false);
         }
         
+        const productNameObject = typeof product.name === 'object' ? product.name : { en: initialName };
+        const productDescriptionObject = typeof product.description === 'object' ? product.description : { en: product.description || '' };
+
         form.reset({
-            name: typeof product.name === 'object' ? product.name : { en: initialName },
+            name: { ...defaultLocalizedString, ...productNameObject },
             slug: initialSlug,
-            description: typeof product.description === 'object' ? product.description : { en: product.description || '' },
+            description: { ...defaultLocalizedString, ...productDescriptionObject },
             price: product.price || 0,
             perKgPrice: product.perKgPrice || 0,
             cutWeight: product.cutWeight || "",
@@ -252,9 +257,9 @@ export function ProductForm({ product, isCloning = false }: ProductFormProps) {
     } else if (!product && isDataReady) {
         setIsSlugManuallyEdited(false);
         form.reset({
-            name: { en: '' },
+            name: defaultLocalizedString,
             slug: "",
-            description: { en: '' },
+            description: defaultLocalizedString,
             price: 0,
             perKgPrice: 0,
             cutWeight: "",
@@ -369,8 +374,9 @@ export function ProductForm({ product, isCloning = false }: ProductFormProps) {
     });
     
     if (result.success) {
-      form.setValue('name', { ...name, ...result.translatedName });
-      form.setValue('description', { ...description, ...result.translatedDescription });
+      const defaultLocalizedString = { en: '', fr: '', es: '', ar: '', ur: '' };
+      form.setValue('name', { ...defaultLocalizedString, ...name, ...result.translatedName });
+      form.setValue('description', { ...defaultLocalizedString, ...description, ...result.translatedDescription });
       toast({ title: 'Translations Generated', description: 'All language fields have been populated.' });
     } else {
       toast({ variant: 'destructive', title: 'Translation Failed', description: result.error });
