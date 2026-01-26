@@ -180,7 +180,7 @@ export function Header() {
   return (
     <>
       <header className="sticky top-0 z-40 w-full bg-black text-primary-foreground">
-        <div className="container mx-auto flex h-20 items-center px-4">
+        <div className="container mx-auto flex h-20 items-center justify-between px-4">
           
           {/* Left Section: Logo */}
           <div className="flex-shrink-0">
@@ -193,7 +193,7 @@ export function Header() {
             </Link>
           </div>
 
-          {/* Center Section: Desktop Search Bar or Mobile Spacer */}
+          {/* Center Section: Desktop Search Bar */}
           <div className="hidden md:flex flex-1 justify-center px-8">
             <Button
               variant="outline"
@@ -204,8 +204,6 @@ export function Header() {
               {t('search_placeholder')}
             </Button>
           </div>
-          <div className="flex-1 md:hidden" />
-
 
           {/* Right Section: Icons */}
           <div className="flex flex-shrink-0 items-center justify-end gap-1">
@@ -353,7 +351,7 @@ export function Header() {
           </div>
         </div>
       </header>
-
+      
       <Dialog open={isSearchModalOpen} onOpenChange={setIsSearchModalOpen}>
         <DialogContent className="h-dvh w-screen max-w-full bg-background p-0 gap-0 flex flex-col sm:rounded-none">
           <DialogHeader className="p-4 border-b">
