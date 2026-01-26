@@ -530,6 +530,11 @@
         "conversionRate": {
             "type": "number",
             "description": "The conversion rate against the default currency."
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the currency.",
+          "enum": ["enabled", "disabled"]
         }
       }
     },
@@ -735,6 +740,19 @@
         "buttonLink": { "type": "string", "description": "URL for the call-to-action button." }
       }
     },
+    "PromiseSettings": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PromiseSettings",
+      "description": "Settings for the 'Our Promise' section on the homepage.",
+      "type": "object",
+      "properties": {
+        "grassFedPromise": { "$ref": "#/entities/LocalizedString" },
+        "freeRangePromise": { "$ref": "#/entities/LocalizedString" },
+        "ethicallyRearedPromise": { "$ref": "#/entities/LocalizedString" },
+        "sustainableFarmingPromise": { "$ref": "#/entities/LocalizedString" },
+        "description": { "$ref": "#/entities/LocalizedString" }
+      }
+    },
     "Temperature": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Temperature",
@@ -796,6 +814,35 @@
         "imageHint": { "type": "string", "description": "Hint for AI image search." }
       },
       "required": ["id", "order", "title", "description", "imageId", "name"]
+    },
+    "RealCutPic": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "RealCutPic",
+      "description": "Represents a real picture of a meat cut, used for galleries or references.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the picture." },
+        "title": { "type": "string", "description": "A title or name for the picture." },
+        "imageUrl": { "type": "string", "format": "uri", "description": "URL of the uploaded image." },
+        "cutTypeId": { "type": "string", "description": "Reference to the CutType this picture is for." },
+        "productId": { "type": "string", "description": "Optional reference to a specific Product." },
+        "order": { "type": "number", "description": "Display order." }
+      },
+      "required": ["id", "title", "imageUrl"]
+    },
+    "ExploreRangeItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Explore Range Item",
+      "description": "Represents an item in the 'Explore the Range' section on the homepage.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "order": { "type": "number" },
+        "name": { "$ref": "#/entities/LocalizedString" },
+        "imageUrl": { "type": "string", "format": "uri" },
+        "link": { "type": "string", "format": "uri" }
+      },
+      "required": ["id", "order", "name", "imageUrl", "link"]
     }
   },
   "auth": {
@@ -1073,6 +1120,15 @@
         }
       },
       {
+        "path": "/settings/promise",
+        "definition": {
+            "entityName": "PromiseSettings",
+            "schema": { "$ref": "#/entities/PromiseSettings" },
+            "description": "Settings for the 'Our Promise' section on the homepage.",
+            "params": []
+        }
+      },
+      {
         "path": "/boxOptions/{boxId}",
         "definition": {
           "entityName": "BoxOption",
@@ -1097,6 +1153,24 @@
           "schema": { "$ref": "#/backend/entities/ChooseBoxStep" },
           "description": "Stores content for the 'From block to box to you' section steps.",
           "params": [{ "name": "stepId", "description": "The unique identifier for the step." }]
+        }
+      },
+      {
+        "path": "/realCutPics/{picId}",
+        "definition": {
+          "entityName": "RealCutPic",
+          "schema": { "$ref": "#/backend/entities/RealCutPic" },
+          "description": "Stores real pictures of meat cuts. Publicly readable.",
+          "params": [{ "name": "picId", "description": "The unique identifier for the picture." }]
+        }
+      },
+      {
+        "path": "/exploreRangeItems/{itemId}",
+        "definition": {
+          "entityName": "ExploreRangeItem",
+          "schema": { "$ref": "#/backend/entities/ExploreRangeItem" },
+          "description": "Stores items for the 'Explore the Range' homepage section.",
+          "params": [{ "name": "itemId", "description": "The unique identifier for the item." }]
         }
       }
     ],

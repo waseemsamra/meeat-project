@@ -348,4 +348,11 @@ export interface ChooseBoxStep {
   name: string; // for compatibility with AttributeManagementPage
 }
 
+export interface ExploreRangeItem {
+  id: string;
+  order: number;
+  name: LocalizedString;
+  imageUrl: string;
+  link: string;
+}
     

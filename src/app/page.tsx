@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -17,6 +18,7 @@ import { DynamicProductSection } from '@/components/shared/DynamicProductSection
 import { useTranslation } from '@/hooks/useTranslation';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 import { ChooseBoxSteps } from '@/components/shared/ChooseBoxSteps';
+import { ExploreTheRange } from '@/components/shared/ExploreTheRange';
 
 export default function Home() {
   const firestore = useFirestore();
@@ -56,7 +58,7 @@ export default function Home() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative w-full bg-black">
-           <div className="relative w-full h-[60vh] md:h-[50vh]">
+           <div className="relative w-full h-[70vh] md:h-[60vh]">
                 {isLoadingHero ? (
                     <Skeleton className="h-full w-full" />
                 ) : (
@@ -120,6 +122,8 @@ export default function Home() {
             )}
           </div>
         </section>
+
+        <ExploreTheRange />
 
         <ShopByCut />
 

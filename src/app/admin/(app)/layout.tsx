@@ -18,6 +18,7 @@ import {
   Clapperboard,
   Calculator,
   Camera,
+  Compass
 } from 'lucide-react';
 
 import {
@@ -128,6 +129,7 @@ const navLinks = [
       { href: '/admin/settings/our-promise', label: 'Our Promise Section' },
       { href: '/admin/settings/branding', label: 'Branding' },
       { href: '/admin/settings/homepage-sections', label: 'Homepage Sections' },
+      { href: '/admin/settings/explore-range', label: 'Explore Range Section', icon: Compass },
       { href: '/admin/settings/box-management', label: 'Box Management' },
       { href: '/admin/settings/choose-box-steps', label: 'Choose Box Steps' },
       { href: '/admin/real-cut-pic', label: 'Real Cut Pictures', icon: Camera },

@@ -34,7 +34,9 @@
     "our_selection": "Our Selection",
     "browse_our_collection_desc": "Browse our entire collection of premium meats.",
     "clear_filters": "Clear Filters",
-    "view_more_products": "View More Products"
+    "view_more_products": "View More Products",
+    "explore_the_range": "Explore The Range",
+    "explore_the_range_subtitle": "A CUT ABOVE THE REST"
   },
   "ar": {
     "how_it_works": "كيف تعمل",
@@ -70,7 +72,9 @@
     "our_selection": "مجموعتنا",
     "browse_our_collection_desc": "تصفح مجموعتنا الكاملة من اللحوم الفاخرة.",
     "clear_filters": "مسح الفلاتر",
-    "view_more_products": "عرض المزيد من المنتجات"
+    "view_more_products": "عرض المزيد من المنتجات",
+    "explore_the_range": "استكشف النطاق",
+    "explore_the_range_subtitle": "قطعة فوق البقية"
   },
   "fr": {
     "how_it_works": "Comment ça fonctionne",
@@ -106,7 +110,9 @@
     "our_selection": "Notre Sélection",
     "browse_our_collection_desc": "Parcourez toute notre collection de viandes de première qualité.",
     "clear_filters": "Effacer les filtres",
-    "view_more_products": "Voir plus de produits"
+    "view_more_products": "Voir plus de produits",
+    "explore_the_range": "Explorer la gamme",
+    "explore_the_range_subtitle": "Une coupe au-dessus du reste"
   },
   "es": {
     "how_it_works": "Cómo funciona",
@@ -142,7 +148,9 @@
     "our_selection": "Nuestra Selección",
     "browse_our_collection_desc": "Explore toda nuestra colección de carnes de primera calidad.",
     "clear_filters": "Borrar filtros",
-    "view_more_products": "Ver más productos"
+    "view_more_products": "Ver más productos",
+    "explore_the_range": "Explora la gama",
+    "explore_the_range_subtitle": "UN CORTE POR ENCIMA DEL RESTO"
   },
   "ur": {
     "how_it_works": "یہ کیسے کام کرتا ہے",
@@ -178,8 +186,8 @@
     "our_selection": "ہمارا انتخاب",
     "browse_our_collection_desc": "ہمارے پریمیم گوشت کے پورے مجموعے کو براؤز کریں۔",
     "clear_filters": "فلٹرز صاف کریں",
-    "view_more_products": "مزید مصنوعات دیکھیں"
+    "view_more_products": "مزید مصنوعات دیکھیں",
+    "explore_the_range": "رینج کو دریافت کریں",
+    "explore_the_range_subtitle": "باقی سے ایک کٹ اوپر"
   }
 }
-
-    
