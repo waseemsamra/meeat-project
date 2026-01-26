@@ -1,9 +1,7 @@
-
-"use client";
+'use client';
 
 import Link from "next/link";
 import { MeeatLogo } from "../icons";
-import { useState, useEffect } from "react";
 
 const footerLinks = [
     {
@@ -58,12 +56,6 @@ const footerLinks = [
 ];
 
 export function Footer() {
-    const [isClient, setIsClient] = useState(false);
-
-    useEffect(() => {
-        setIsClient(true);
-    }, []);
-
     return (
         <footer className="border-t bg-card">
             <div className="container mx-auto px-4 py-12">
@@ -75,7 +67,7 @@ export function Footer() {
                         <p className="text-sm text-muted-foreground">The finest quality beef and lamb, delivered to your door.</p>
                     </div>
 
-                    {isClient && footerLinks.map((section) => (
+                    {footerLinks.map((section) => (
                         <div key={section.title}>
                             <h3 className="font-headline text-md font-semibold mb-4">{section.title}</h3>
                             <ul className="space-y-2">
