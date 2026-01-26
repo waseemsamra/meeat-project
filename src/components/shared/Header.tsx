@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -313,12 +314,12 @@ export function Header() {
             
             <div className="h-8 border-l border-primary-foreground/20 mx-2"></div>
 
-            {isUserLoading ? (
+            {isClient && isUserLoading ? (
                 <div className="flex flex-col h-auto px-2 py-1 items-center gap-1">
                     <Skeleton className="h-7 w-7 rounded-full bg-white/20" />
                     <Skeleton className="h-3 w-12 bg-white/20" />
                 </div>
-            ) : user ? (
+            ) : isClient && user ? (
                 <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="flex-col h-auto px-2 py-1">
@@ -349,13 +350,18 @@ export function Header() {
                     </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            ) : (
+            ) : isClient ? (
                 <Button asChild variant="ghost" className="flex-col h-auto px-2 py-1">
                     <Link href="/login">
                         <User className="h-6 w-6 mb-1" />
                         <span className="text-xs">Log In</span>
                     </Link>
                 </Button>
+            ) : (
+                <div className="flex flex-col h-auto px-2 py-1 items-center gap-1">
+                    <Skeleton className="h-7 w-7 rounded-full bg-white/20" />
+                    <Skeleton className="h-3 w-12 bg-white/20" />
+                </div>
             )}
 
             <Button variant="ghost" className="flex-col h-auto px-2 py-1">
