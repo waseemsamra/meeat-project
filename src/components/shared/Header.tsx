@@ -181,9 +181,7 @@ export function Header() {
     <>
       <header className="sticky top-0 z-40 w-full bg-black text-primary-foreground">
         <div className="container mx-auto flex h-20 items-center justify-between px-4">
-          
-          {/* Left Section */}
-          <div className="flex items-center gap-2 md:flex-1 md:justify-start">
+          <div className="flex items-center gap-2">
             <div className="md:hidden">
                 <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                     <SheetTrigger asChild>
@@ -192,7 +190,7 @@ export function Header() {
                         <span className="sr-only">Toggle Menu</span>
                     </Button>
                     </SheetTrigger>
-                    <SheetContent side="left">
+                    <SheetContent side="right">
                     <SheetHeader>
                         <SheetTitle className='flex items-center gap-2'>
                         <MeeatLogo className="h-12 w-auto" />
@@ -237,7 +235,6 @@ export function Header() {
             </Link>
           </div>
 
-          {/* Center Section: Desktop Search Bar */}
           <div className="hidden md:flex flex-1 justify-center px-8">
             <Button
               variant="outline"
@@ -249,9 +246,7 @@ export function Header() {
             </Button>
           </div>
 
-          {/* Right Section: Icons */}
-          <div className="flex items-center gap-1 md:flex-1 md:justify-end">
-            {/* Desktop Icons */}
+          <div className="flex items-center gap-1 md:flex-initial">
             <nav className="hidden md:flex items-center gap-1">
               <Button variant="ghost" className="flex items-center gap-2 text-xs" onClick={() => setIsSettingsOpen(true)}>
                 <Globe className="h-5 w-5" /> {language.code} / {currency}
@@ -332,7 +327,6 @@ export function Header() {
               </Button>
             </nav>
 
-            {/* Mobile Icons */}
             <div className="flex items-center md:hidden">
               <Button onClick={() => setIsSearchModalOpen(true)} variant="ghost" size="icon">
                 <Search className="h-5 w-5" />
@@ -449,10 +443,6 @@ export function Header() {
                   )}
               </div>
           </ScrollArea>
-          <DialogClose className="absolute right-6 top-6 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
-              <X className="h-6 w-6" />
-              <span className="sr-only">Close</span>
-          </DialogClose>
         </DialogContent>
       </Dialog>
 
