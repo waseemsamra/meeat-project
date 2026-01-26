@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -146,7 +145,7 @@ export function Header() {
       const result = await suggestCurrency({ language: newLanguageName });
       const suggestedCode = result.currencyCode;
       
-      const currencyExists = currencies?.some(c => c.code === suggestedCode);
+      const currencyExists = currencies?.some(c => c.code === suggestedCode && c.status !== 'disabled');
       if (currencyExists) {
         setTempCurrency(suggestedCode);
         toast({ title: 'Currency Suggestion', description: `We've updated the currency to ${suggestedCode} for you.` });
@@ -455,7 +454,7 @@ export function Header() {
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            {currencies?.map(c => (
+                            {currencies?.filter(c => c.status !== 'disabled').map(c => (
                                 <SelectItem key={c.id} value={c.code}>{c.name} ({c.symbol})</SelectItem>
                             ))}
                         </SelectContent>
