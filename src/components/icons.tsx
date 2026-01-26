@@ -1,13 +1,15 @@
+
 'use client';
 
 import { SVGProps } from 'react';
 
 export function MeeatLogo(props: SVGProps<SVGSVGElement>) {
+  const { width, height, ...rest } = props;
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 160 160"
-      {...props}
+      {...rest}
     >
       <rect width="150" height="150" fill="#a03c31" rx="10" ry="10" />
       <text
@@ -129,6 +131,3 @@ export function TruckIcon(props: SVGProps<SVGSVGElement>) {
         </svg>
     );
 }
-    
-
-    

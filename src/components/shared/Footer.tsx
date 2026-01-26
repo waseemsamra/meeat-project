@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from "next/link";
@@ -85,8 +86,8 @@ export function Footer() {
                         <p className="text-sm text-muted-foreground">The finest quality beef and lamb, delivered to your door.</p>
                     </div>
 
-                    {footerLinks.map((section) => (
-                        <div key={section.title}>
+                    {footerLinks.map((section, index) => (
+                        <div key={`${section.title}-${index}`}>
                             <h3 className="font-headline text-md font-semibold mb-4">{section.title}</h3>
                             <ul className="space-y-2">
                                 {section.links.map((link) => (
