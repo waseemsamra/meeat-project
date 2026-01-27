@@ -49,7 +49,7 @@ export function ShopByCut() {
                                     <CarouselItem key={cut.id} className="basis-2/5 sm:basis-1/2 md:basis-1/4 lg:basis-1/6">
                                          <Link href={`/products?cutTypeId=${cut.id}`}>
                                             <div className="text-center group">
-                                                <div className="relative w-36 h-36 mx-auto bg-muted rounded-full border-4 border-muted transition-all group-hover:ring-2 group-hover:ring-primary overflow-hidden">
+                                                <div className="relative w-28 h-28 md:w-36 md:h-36 mx-auto bg-muted rounded-full border-4 border-muted transition-all group-hover:ring-2 group-hover:ring-primary overflow-hidden">
                                                     <Image
                                                         src={imageUrl}
                                                         alt={t(cut.name)}
@@ -66,7 +66,7 @@ export function ShopByCut() {
                                 <CarouselItem className="basis-2/5 sm:basis-1/2 md:basis-1/4 lg:basis-1/6">
                                     <Link href="/products">
                                         <div className="text-center group h-full flex flex-col justify-center items-center">
-                                            <div className="rounded-full border-4 border-dashed border-muted bg-background object-cover h-36 w-36 mx-auto transition-all group-hover:border-primary flex items-center justify-center flex-col">
+                                            <div className="rounded-full border-4 border-dashed border-muted bg-background object-cover h-28 w-28 md:h-36 md:w-36 mx-auto transition-all group-hover:border-primary flex items-center justify-center flex-col">
                                                 <span className="font-semibold text-sm">View All</span>
                                                 <ArrowRight className="h-5 w-5 mt-1 text-muted-foreground transition-transform group-hover:translate-x-1" />
                                             </div>
