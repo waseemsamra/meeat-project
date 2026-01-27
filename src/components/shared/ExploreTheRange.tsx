@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo } from 'react';
@@ -10,12 +9,15 @@ import { collection, orderBy, query } from 'firebase/firestore';
 import { Skeleton } from '../ui/skeleton';
 import Link from 'next/link';
 import { useTranslation } from '@/hooks/useTranslation';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 
 const ItemSkeleton = () => (
-    <div className="flex flex-col items-center text-center">
-        <Skeleton className="h-28 w-44 mb-4" />
-        <Skeleton className="h-6 w-24" />
-    </div>
+    <CarouselItem className="basis-1/2 md:basis-1/4 pl-4">
+        <div className="flex flex-col items-center text-center">
+            <Skeleton className="h-28 w-44 mb-4" />
+            <Skeleton className="h-6 w-24" />
+        </div>
+    </CarouselItem>
 );
 
 export function ExploreTheRange() {
@@ -32,23 +34,35 @@ export function ExploreTheRange() {
                  <h2 className="text-4xl md:text-5xl font-bold font-headline mt-2">{t('explore_the_range')}</h2>
             </div>
             <div className="container mx-auto px-4 mt-12">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-8 items-start">
-                    {isLoading ? (
-                        Array.from({ length: 4 }).map((_, i) => <ItemSkeleton key={i} />)
-                    ) : items?.map((item) => (
-                         <Link key={item.id} href={item.link} className="flex flex-col items-center text-center group">
-                            <div className="relative mb-4 h-32 w-48">
-                                <Image 
-                                    src={getPlaceholderImage(item.imageUrl)} 
-                                    alt={t(item.name)} 
-                                    fill
-                                    className="object-contain transition-transform duration-300 group-hover:scale-105"
-                                />
-                            </div>
-                            <h3 className="font-headline text-xl font-semibold tracking-wider text-primary group-hover:underline">{t(item.name)}</h3>
-                        </Link>
-                    ))}
-                </div>
+                <Carousel
+                  opts={{
+                    align: "start",
+                    dragFree: true,
+                  }}
+                  className="w-full dir-rtl md:dir-ltr" // RTL on mobile, LTR on desktop
+                >
+                    <CarouselContent className="-ml-4">
+                        {isLoading ? (
+                            Array.from({ length: 4 }).map((_, i) => <ItemSkeleton key={i} />)
+                        ) : items?.map((item) => (
+                             <CarouselItem key={item.id} className="basis-1/2 md:basis-1/4 pl-4">
+                                <Link href={item.link} className="flex flex-col items-center text-center group">
+                                    <div className="relative mb-4 h-32 w-48">
+                                        <Image 
+                                            src={getPlaceholderImage(item.imageUrl)} 
+                                            alt={t(item.name)} 
+                                            fill
+                                            className="object-contain transition-transform duration-300 group-hover:scale-105"
+                                        />
+                                    </div>
+                                    <h3 className="font-headline text-xl font-semibold tracking-wider text-primary group-hover:underline">{t(item.name)}</h3>
+                                </Link>
+                            </CarouselItem>
+                        ))}
+                    </CarouselContent>
+                    <CarouselPrevious className="hidden md:flex" />
+                    <CarouselNext className="hidden md:flex" />
+                </Carousel>
             </div>
         </section>
     );
