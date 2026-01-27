@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo } from 'react';
@@ -38,7 +37,7 @@ export function ShopByCut() {
                     <CarouselContent>
                         {isLoading ? (
                             Array.from({length: 6}).map((_, i) => (
-                                <CarouselItem key={i} className="basis-4/5 sm:basis-1/2 md:basis-1/4 lg:basis-1/6">
+                                <CarouselItem key={i} className="basis-2/5 sm:basis-1/2 md:basis-1/4 lg:basis-1/6">
                                     <Skeleton className="h-48 w-full" />
                                 </CarouselItem>
                             ))
@@ -47,7 +46,7 @@ export function ShopByCut() {
                                 {displayedCutTypes?.map(cut => {
                                     const imageUrl = getPlaceholderImage(cut.imageUrl || t(cut.name).toLowerCase().replace(/\s/g, ''));
                                     return(
-                                    <CarouselItem key={cut.id} className="basis-[85%] sm:basis-1/2 md:basis-1/4 lg:basis-1/6">
+                                    <CarouselItem key={cut.id} className="basis-2/5 sm:basis-1/2 md:basis-1/4 lg:basis-1/6">
                                          <Link href={`/products?cutTypeId=${cut.id}`}>
                                             <div className="text-center group">
                                                 <div className="relative w-36 h-36 mx-auto bg-muted rounded-full border-4 border-muted transition-all group-hover:ring-2 group-hover:ring-primary overflow-hidden">
@@ -64,7 +63,7 @@ export function ShopByCut() {
                                         </Link>
                                     </CarouselItem>
                                 )})}
-                                <CarouselItem className="basis-[85%] sm:basis-1/2 md:basis-1/4 lg:basis-1/6">
+                                <CarouselItem className="basis-2/5 sm:basis-1/2 md:basis-1/4 lg:basis-1/6">
                                     <Link href="/products">
                                         <div className="text-center group h-full flex flex-col justify-center items-center">
                                             <div className="rounded-full border-4 border-dashed border-muted bg-background object-cover h-36 w-36 mx-auto transition-all group-hover:border-primary flex items-center justify-center flex-col">
