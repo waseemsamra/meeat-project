@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -162,8 +163,8 @@ export function DynamicProductSection({ section, type, title }: DynamicProductSe
         <section className="py-8">
             <div className="container mx-auto px-4">
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-8 border-b pb-4 gap-4">
-                    <h2 className="text-2xl md:text-3xl font-bold font-headline">{t(title)}</h2>
-                    <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
+                    <h2 className="text-2xl md:text-3xl font-bold font-headline flex-shrink-0">{t(title)}</h2>
+                    <div className="flex flex-wrap items-center justify-start md:justify-end gap-4">
                          <Select value={selectedCountry} onValueChange={setSelectedCountry} disabled={isLoadingCountries}>
                             <SelectTrigger className="w-full sm:w-[180px]">
                                 <SelectValue placeholder="Filter by country" />
@@ -177,7 +178,7 @@ export function DynamicProductSection({ section, type, title }: DynamicProductSe
                                 ))}
                             </SelectContent>
                         </Select>
-                        <Link href={viewAllLink} className="text-sm font-bold text-primary hover:underline whitespace-nowrap self-end sm:self-center">
+                        <Link href={viewAllLink} className="text-sm font-bold text-primary hover:underline whitespace-nowrap pr-4">
                             {t('view_all')} &raquo;
                         </Link>
                     </div>
