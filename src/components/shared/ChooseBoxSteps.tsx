@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo } from 'react';
@@ -32,7 +33,7 @@ export function ChooseBoxSteps() {
         <section className="py-16 bg-muted">
             <div className="container mx-auto px-4 text-center">
                  <p className="text-sm font-semibold tracking-widest text-primary uppercase">{t('our_plans')}</p>
-                 <h2 className="text-4xl md:text-5xl font-bold font-headline mt-2">{t('choose_size_of_box')}</h2>
+                 <h2 className="text-3xl md:text-4xl font-bold font-headline mt-2">{t('choose_size_of_box')}</h2>
                  <p className="mt-2 text-muted-foreground">{t('we_only_offer_the_best')}</p>
             </div>
             <div className="container mx-auto px-4 mt-12">

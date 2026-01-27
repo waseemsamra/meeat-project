@@ -157,7 +157,7 @@ export default function Home() {
         {/* How It Works Section */}
         <section className="py-8 bg-card">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center md:text-4xl font-headline">{t('how_it_works')}</h2>
+            <h2 className="text-2xl font-bold text-center md:text-3xl font-headline">{t('how_it_works')}</h2>
             <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
               <div className="text-center">
                 <div className="flex justify-center">
@@ -200,7 +200,7 @@ export default function Home() {
         <section className="py-8 bg-background">
           <div className="container mx-auto px-4">
             <div className="mx-auto max-w-4xl text-center">
-              <h2 className="text-3xl font-bold md:text-4xl font-headline">{t('our_promise_of_quality')}</h2>
+              <h2 className="text-2xl font-bold md:text-3xl font-headline">{t('our_promise_of_quality')}</h2>
               <p className="mt-4 text-lg text-muted-foreground">
                 {t('our_promise_of_quality_desc')}
               </p>

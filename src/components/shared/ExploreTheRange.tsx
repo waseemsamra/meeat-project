@@ -32,7 +32,7 @@ export function ExploreTheRange() {
         <section className="py-16 bg-background">
             <div className="container mx-auto px-4 text-center">
                  <p className="text-sm font-semibold tracking-widest text-primary uppercase">{t('explore_the_range_subtitle') || 'A CUT ABOVE THE REST'}</p>
-                 <h2 className="text-3xl md:text-4xl font-bold font-headline mt-2">{t('explore_the_range')}</h2>
+                 <h2 className="text-2xl md:text-3xl font-bold font-headline mt-2">{t('explore_the_range')}</h2>
             </div>
             <div className="container mx-auto px-4 mt-12">
                 <Carousel

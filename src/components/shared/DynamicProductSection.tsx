@@ -162,9 +162,9 @@ export function DynamicProductSection({ section, type, title }: DynamicProductSe
     return (
         <section className="py-8">
             <div className="container mx-auto px-4">
-                <div className="flex items-center justify-between mb-8 border-b pb-4 gap-2 md:gap-4">
-                    <h2 className="text-xl md:text-3xl font-bold font-headline flex-shrink-0 truncate pr-2">{t(title)}</h2>
-                    <div className="flex items-center gap-2 md:gap-4 ml-auto flex-shrink-0">
+                <div className="flex flex-wrap items-center justify-between mb-8 border-b pb-4 gap-x-4 gap-y-2">
+                    <h2 className="text-lg md:text-2xl font-bold font-headline">{t(title)}</h2>
+                    <div className="flex items-center gap-2 md:gap-4">
                         <Select value={selectedCountry} onValueChange={setSelectedCountry} disabled={isLoadingCountries}>
                             <SelectTrigger className="w-[120px] md:w-[180px] text-xs md:text-sm">
                                 <SelectValue placeholder="Country" />

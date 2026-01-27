@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo } from 'react';
@@ -26,7 +27,7 @@ export function ShopByCut() {
     return (
         <section className="py-16 bg-card">
             <div className="container mx-auto px-4">
-                <h2 className="text-2xl md:text-3xl font-bold text-center font-headline">{t('shop_by_cut')}</h2>
+                <h2 className="text-xl md:text-2xl font-bold text-center font-headline">{t('shop_by_cut')}</h2>
                 
                 <Carousel
                     opts={{
