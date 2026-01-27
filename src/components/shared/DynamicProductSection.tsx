@@ -161,11 +161,11 @@ export function DynamicProductSection({ section, type, title }: DynamicProductSe
     return (
         <section className="py-8">
             <div className="container mx-auto px-4">
-                <div className="flex justify-between items-center mb-8 border-b pb-4 gap-4">
-                    <div className="flex items-center gap-4">
-                        <h2 className="text-2xl md:text-3xl font-bold font-headline">{t(title)}</h2>
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-8 border-b pb-4 gap-4">
+                    <h2 className="text-2xl md:text-3xl font-bold font-headline">{t(title)}</h2>
+                    <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
                          <Select value={selectedCountry} onValueChange={setSelectedCountry} disabled={isLoadingCountries}>
-                            <SelectTrigger className="w-[180px]">
+                            <SelectTrigger className="w-full sm:w-[180px]">
                                 <SelectValue placeholder="Filter by country" />
                             </SelectTrigger>
                             <SelectContent>
@@ -177,10 +177,10 @@ export function DynamicProductSection({ section, type, title }: DynamicProductSe
                                 ))}
                             </SelectContent>
                         </Select>
+                        <Link href={viewAllLink} className="text-sm font-bold text-primary hover:underline whitespace-nowrap self-end sm:self-center">
+                            {t('view_all')} &raquo;
+                        </Link>
                     </div>
-                    <Link href={viewAllLink} className="text-sm font-bold text-primary hover:underline whitespace-nowrap">
-                        {t('view_all')} &raquo;
-                    </Link>
                 </div>
                 <Carousel
                     opts={{
