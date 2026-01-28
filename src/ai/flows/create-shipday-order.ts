@@ -36,14 +36,37 @@ const createShipdayOrderFlow = ai.defineFlow(
   },
   async (input) => {
     
+    console.log('--- SHIPDAY ORDER CREATION ---');
+    console.log('Received input for Shipday:', JSON.stringify(input, null, 2));
+
     const apiKey = process.env.SHIPDAY_API_KEY;
     if (!apiKey) {
+      console.error('Shipday API key is not configured.');
       return { success: false, errorMessage: 'Shipday API key is not configured.' };
     }
 
     try {
         const now = new Date();
         const deliveryTime = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour from now
+        
+        const requestBody = {
+            orderNumber: `#${input.orderId.substring(0, 8)}`,
+            customerName: input.customerName,
+            customerAddress: input.customerAddress,
+            customerEmail: input.customerEmail,
+            customerPhoneNumber: input.customerPhoneNumber,
+            restaurantName: "Me'eat",
+            restaurantAddress: "Mazreat Al Wadi Dubai",
+            // A placeholder phone number
+            restaurantPhoneNumber: "+971501234567",
+            expectedDeliveryDate: deliveryTime.toISOString().split('T')[0],
+            expectedDeliveryTime: deliveryTime.toTimeString().split(' ')[0], // HH:mm:ss format
+            deliveryInstruction: `Order Items:\n${input.orderItemsText}`,
+            total: input.total,
+            orderSource: "Website"
+        };
+        
+        console.log('Sending request to Shipday with body:', JSON.stringify(requestBody, null, 2));
 
         const response = await fetch('https://api.shipday.com/orders', {
             method: 'POST',
@@ -51,25 +74,13 @@ const createShipdayOrderFlow = ai.defineFlow(
                 'Content-Type': 'application/json',
                 'Authorization': `Basic ${apiKey}`
             },
-            body: JSON.stringify({
-                orderNumber: `#${input.orderId.substring(0, 8)}`,
-                customerName: input.customerName,
-                customerAddress: input.customerAddress,
-                customerEmail: input.customerEmail,
-                customerPhoneNumber: input.customerPhoneNumber,
-                restaurantName: "Me'eat",
-                restaurantAddress: "Mazreat Al Wadi Dubai",
-                // A placeholder phone number
-                restaurantPhoneNumber: "+971501234567",
-                expectedDeliveryDate: deliveryTime.toISOString().split('T')[0],
-                expectedDeliveryTime: deliveryTime.toTimeString().split(' ')[0], // HH:mm:ss format
-                deliveryInstruction: `Order Items:\n${input.orderItemsText}`,
-                total: input.total,
-                orderSource: "Website"
-            })
+            body: JSON.stringify(requestBody)
         });
 
         const responseData = await response.json();
+        
+        console.log('Received response from Shipday API. Status:', response.status);
+        console.log('Response body:', JSON.stringify(responseData, null, 2));
 
         if (!response.ok) {
             console.error('Shipday API Error Response:', responseData);
