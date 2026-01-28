@@ -73,6 +73,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface InventoryManagementPageProps {
   collectionName: string;
@@ -95,6 +96,7 @@ export function InventoryManagementPage({
 }: InventoryManagementPageProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { t } = useTranslation();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
@@ -325,7 +327,7 @@ export function InventoryManagementPage({
                         </FormControl>
                         <SelectContent>
                             {products?.map(option => (
-                            <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
+                            <SelectItem key={option.id} value={option.id}>{t(option.name)}</SelectItem>
                             ))}
                         </SelectContent>
                         </Select>

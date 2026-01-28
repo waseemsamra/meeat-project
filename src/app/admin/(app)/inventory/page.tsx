@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { ExternalLink } from 'lucide-react';
 import { useMemo } from 'react';
 import { useSettings } from '@/hooks/useSettings';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const inventoryLotSchema = z.object({
   productId: z.string().min(1, { message: 'Product is required.' }),
@@ -28,6 +29,7 @@ export default function AdminInventoryPage() {
   const firestore = useFirestore();
   const { defaultCurrency } = useSettings();
   const currencySymbol = defaultCurrency?.symbol || '$';
+  const { t } = useTranslation();
   
   const productsQuery = useMemo(() => (firestore ? collection(firestore, 'products') : null), [firestore]);
   const { data: products, isLoading: isLoadingProducts } = useCollection<Product>(productsQuery);
@@ -41,7 +43,7 @@ export default function AdminInventoryPage() {
         const product = products?.find((p) => p.id === lot.productId);
         return (
           <div className="flex items-center gap-2">
-            <span className="font-medium">{product?.name || 'Unknown Product'}</span>
+            <span className="font-medium">{product ? t(product.name) : 'Unknown Product'}</span>
              {product && (
                 <Button asChild variant="ghost" size="icon" className="h-6 w-6">
                     <Link href={`/admin/products/${product.id}/edit`} target="_blank">
