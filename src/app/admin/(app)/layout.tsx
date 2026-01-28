@@ -17,7 +17,11 @@ import {
   Clapperboard,
   Calculator,
   Camera,
-  Compass
+  Compass,
+  Map as MapIcon,
+  ClipboardList,
+  Star,
+  BarChart,
 } from 'lucide-react';
 
 import {
@@ -64,11 +68,6 @@ const navLinks = [
       { href: '/admin/orders/sales', label: 'Sales Orders' },
       { href: '/admin/orders/new', label: 'New Sales Order' },
     ],
-  },
-   {
-    href: '/admin/deliveries',
-    icon: Truck,
-    label: 'Deliveries',
   },
   {
     icon: Package,
@@ -163,6 +162,21 @@ const settingsLinks = [
         { href: '/admin/settings/temperatures', label: 'Temperatures' },
         { href: '/admin/settings/butchery-calculator', label: 'Butchery Calculator', icon: Calculator },
     ]
+  }
+];
+
+const dispatchLinks = [
+  {
+    icon: Truck,
+    label: 'Deliveries',
+    subLinks: [
+        { href: '#', label: 'Dispatch', icon: MapIcon },
+        { href: '/admin/deliveries', label: 'Orders', icon: ClipboardList },
+        { href: '#', label: 'Drivers', icon: Users2 },
+        { href: '#', label: 'Map', icon: MapIcon },
+        { href: '#', label: 'Review', icon: Star },
+        { href: '#', label: 'Reports', icon: BarChart },
+    ],
   }
 ];
 
@@ -285,6 +299,36 @@ export default function AdminLayout({
               <Separator className="my-4" />
               {settingsLinks.map((link) => (
                   <Collapsible key={link.label} className="w-full group" defaultOpen={link.label === 'Settings'}>
+                      <CollapsibleTrigger asChild>
+                          <Button
+                          variant="ghost"
+                          className="w-full justify-start gap-2"
+                          >
+                          <link.icon className="h-5 w-5" />
+                          {link.label}
+                          <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]:rotate-180" />
+                          </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                      <div className="ml-7 flex flex-col gap-1 border-l pl-2 py-1">
+                          {link.subLinks.map(subLink => (
+                          <Link key={subLink.href} href={subLink.href} passHref>
+                              <Button
+                                  variant={pathname === subLink.href ? "secondary" : "ghost"}
+                                  className="w-full justify-start text-sm h-8"
+                              >
+                                  {subLink.icon && <subLink.icon className="h-4 w-4 mr-2" />}
+                                  {subLink.label}
+                              </Button>
+                          </Link>
+                          ))}
+                      </div>
+                      </CollapsibleContent>
+                  </Collapsible>
+              ))}
+              <Separator className="my-4" />
+              {dispatchLinks.map((link) => (
+                  <Collapsible key={link.label} className="w-full group">
                       <CollapsibleTrigger asChild>
                           <Button
                           variant="ghost"
