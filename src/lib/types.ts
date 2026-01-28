@@ -373,10 +373,13 @@ export interface ShipdayOrderDetails {
     delivery?: {
         placementTime?: string;
         assignedTime?: string;
+        requestedPickupTime?: string;
+        requestedDeliveryTime?: string;
         eta?: string;
         actualPickupTime?: string;
         actualDeliveryTime?: string;
         deliveryCompleteTime?: string;
+        orderCompletionTime?: number; // In minutes
         driver?: { name?: string; };
         deliveryInstruction?: string;
     };

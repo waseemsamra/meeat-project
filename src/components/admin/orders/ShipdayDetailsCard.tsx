@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ShipdayOrderDetails } from '@/lib/types';
@@ -25,6 +26,22 @@ const DetailRow = ({ label, value }: { label: string; value?: string | number | 
 const formatShipdayDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
     try {
+        return format(new Date(dateString), "MMM d, yyyy h:mm a");
+    } catch {
+        return dateString; // return original string if it's not a valid date
+    }
+};
+
+const formatShipdayTime = (dateString?: string) => {
+    if (!dateString) return 'N/A';
+    try {
+        // The API might return time only for requested times like "17:49:00"
+        if (dateString.match(/^\d{2}:\d{2}:\d{2}$/)) {
+            const today = new Date();
+            const [hours, minutes, seconds] = dateString.split(':');
+            today.setHours(parseInt(hours, 10), parseInt(minutes, 10), parseInt(seconds, 10));
+            return format(today, "h:mm a");
+        }
         return format(new Date(dateString), "MMM d, yyyy h:mm a");
     } catch {
         return dateString; // return original string if it's not a valid date
@@ -86,11 +103,13 @@ export function ShipdayDetailsCard({ details, isLoading }: ShipdayDetailsCardPro
                 <div className="space-y-4">
                     <h4 className="font-semibold flex items-center gap-2"><Clock className="h-4 w-4 text-muted-foreground" /> Delivery Timeline</h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-sm pl-6">
-                        <DetailRow label="Placed" value={formatShipdayDate(details.delivery?.placementTime)} />
-                        <DetailRow label="Accepted" value={formatShipdayDate(details.delivery?.assignedTime)} />
-                        <DetailRow label="Pickup" value={formatShipdayDate(details.delivery?.actualPickupTime)} />
-                        <DetailRow label="Delivered" value={formatShipdayDate(details.delivery?.actualDeliveryTime)} />
-                        <DetailRow label="Completed" value={formatShipdayDate(details.delivery?.deliveryCompleteTime)} />
+                        <DetailRow label="Order Placement Time" value={formatShipdayDate(details.delivery?.placementTime)} />
+                        <DetailRow label="Requested Pickup Time" value={formatShipdayTime(details.delivery?.requestedPickupTime)} />
+                        <DetailRow label="Requested Delivery Time" value={formatShipdayDate(details.delivery?.requestedDeliveryTime)} />
+                        <DetailRow label="Order Accept Time" value={formatShipdayDate(details.delivery?.assignedTime)} />
+                        <DetailRow label="Order Pickup Time" value={formatShipdayDate(details.delivery?.actualPickupTime)} />
+                        <DetailRow label="Order Delivery Time" value={formatShipdayDate(details.delivery?.actualDeliveryTime)} />
+                        <DetailRow label="Order Completion Time" value={details.delivery?.orderCompletionTime !== undefined ? `${details.delivery.orderCompletionTime} mins` : 'N/A'} />
                         <DetailRow label="Driver" value={details.delivery?.driver?.name} />
                     </div>
                 </div>

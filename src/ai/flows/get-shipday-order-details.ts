@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A server-side flow for fetching order details from Shipday.
@@ -38,6 +39,9 @@ const ShipdayOrderDetailsOutputSchema = z.object({
         deliveryCompleteTime: z.string().optional(),
         driver: z.object({ name: z.string().optional() }).optional(),
         deliveryInstruction: z.string().optional(),
+        requestedPickupTime: z.string().optional(),
+        requestedDeliveryTime: z.string().optional(),
+        orderCompletionTime: z.number().optional(),
     }).optional(),
     payment: z.object({
         paymentMethod: z.string().optional(),
@@ -101,6 +105,9 @@ const getShipdayOrderDetailsFlow = ai.defineFlow(
                 deliveryCompleteTime: responseData.activity?.deliveryCompleteTime,
                 driver: { name: responseData.assignedDriver?.name },
                 deliveryInstruction: responseData.deliveryInstruction,
+                requestedPickupTime: responseData.expectedPickupTime,
+                requestedDeliveryTime: responseData.expectedDeliveryTime,
+                orderCompletionTime: responseData.orderCompletionTimeInMinutes,
             },
             payment: {
                 paymentMethod: responseData.payment?.paymentMethod
