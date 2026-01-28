@@ -110,6 +110,32 @@ export default function AllOrdersPage() {
         updatedAt: new Date().toISOString() 
     };
 
+    if (status === 'shipped' || status === 'ready_for_pickup') {
+        const customer = users?.find(u => u.id === order.userId);
+        const address = order.shippingAddress;
+        if (customer) {
+            const shipdayResult = await createShipdayOrder({
+                orderId: order.id,
+                customerName: customer.name || 'N/A',
+                customerAddress: address ? `${address.street}, ${address.city}` : customer.deliveryAddress || 'N/A',
+                customerEmail: customer.email,
+                customerPhoneNumber: customer.telephone,
+                orderItemsText: order.orderItemIds.map(item => `${item.product?.name} x${item.quantity}`).join('\n'),
+                total: order.total
+            });
+
+            if (shipdayResult.success && shipdayResult.shipdayOrderId) {
+                updateData.shipdayOrderId = shipdayResult.shipdayOrderId;
+                toast({ title: 'Shipday Order Created', description: `Order successfully dispatched to Shipday with ID: ${shipdayResult.shipdayOrderId}` });
+            } else {
+                 toast({ variant: 'destructive', title: 'Shipday Dispatch Failed', description: shipdayResult.errorMessage || 'An unknown error occurred.' });
+            }
+        } else {
+             toast({ variant: 'destructive', title: 'Shipday Dispatch Failed', description: 'Could not find customer details for this order.' });
+        }
+    }
+
+
     try {
         await updateDoc(orderDocRef, updateData);
         toast({ title: 'Status Updated', description: `Order #${order.id.substring(0,8)} status updated to ${status}.` });
