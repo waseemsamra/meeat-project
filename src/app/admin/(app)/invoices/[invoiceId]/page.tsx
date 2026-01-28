@@ -15,6 +15,7 @@ import { Printer, Download } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import printJS from 'print-js';
 import { useSettings } from '@/hooks/useSettings';
+import { useTranslation } from '@/hooks/useTranslation';
 
 
 function InvoicePageSkeleton() {
@@ -55,6 +56,7 @@ export default function InvoicePage() {
   const firestore = useFirestore();
   const { defaultCurrency } = useSettings();
   const currencySymbol = defaultCurrency?.symbol || '$';
+  const { t } = useTranslation();
 
   const invoiceRef = useMemo(() => (firestore && invoiceId ? doc(firestore, 'invoices', invoiceId) : null), [firestore, invoiceId]);
   const { data: invoice, isLoading: isLoadingInvoice } = useDoc<Invoice>(invoiceRef);
@@ -197,7 +199,7 @@ export default function InvoicePage() {
                             {orderItems.map((item) => (
                                 <TableRow key={item.id}>
                                     <TableCell>
-                                        <div className="font-medium">{item.product?.name || 'Item'}</div>
+                                        <div className="font-medium">{t(item.product?.name) || 'Item'}</div>
                                         <div className="text-xs text-muted-foreground">{item.selectedUnit}</div>
                                     </TableCell>
                                     <TableCell>{item.quantity}</TableCell>
