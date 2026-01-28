@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -200,6 +199,8 @@ export default function CheckoutPage() {
         },
         paymentMethod: formData.paymentMethod,
         orderNotes: formData.orderNotes,
+        customerEmail: user.email,
+        customerPhoneNumber: user.telephone || formData.phone,
       };
       
       const { orderId } = await createOrder(orderInput);

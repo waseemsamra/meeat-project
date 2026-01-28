@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview A server-side flow for creating customer orders and dispatching to Shipday.
@@ -61,6 +60,8 @@ const CreateOrderFlowInputSchema = z.object({
   }),
   paymentMethod: z.string().optional(),
   orderNotes: z.string().optional(),
+  customerEmail: z.string().optional(),
+  customerPhoneNumber: z.string().optional(),
 });
 type CreateOrderFlowInput = z.infer<typeof CreateOrderFlowInputSchema>;
 
@@ -77,16 +78,7 @@ const createOrderFlow = ai.defineFlow(
       throw new Error("Firestore is not initialized");
     }
 
-    const { userId, cartItems, total, shippingAddress, paymentMethod, orderNotes } = input;
-
-    // Fetch user details for Shipday
-    const userRef = doc(firestore, 'users', userId);
-    const userSnap = await getDoc(userRef);
-    if (!userSnap.exists()) {
-        throw new Error(`User with ID ${userId} not found.`);
-    }
-    const user = userSnap.data() as User;
-
+    const { userId, cartItems, total, shippingAddress, paymentMethod, orderNotes, customerEmail, customerPhoneNumber } = input;
 
     const batch = writeBatch(firestore);
 
@@ -166,8 +158,8 @@ const createOrderFlow = ai.defineFlow(
         orderId: orderId,
         customerName: shippingAddress.fullName,
         customerAddress: `${shippingAddress.street}, ${shippingAddress.city}, ${shippingAddress.country}`,
-        customerEmail: user.email,
-        customerPhoneNumber: user.telephone,
+        customerEmail: customerEmail,
+        customerPhoneNumber: customerPhoneNumber,
         orderItemsText: orderItemsTextSummary.trim(),
         total: total,
     }).then(shipdayResult => {
