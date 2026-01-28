@@ -75,32 +75,26 @@ export default function AdminOrderDetailsPage() {
   const [isLoadingItems, setIsLoadingItems] = useState(true);
   const [shipdayDetails, setShipdayDetails] = useState<ShipdayOrderDetails | null>(null);
   const [isLoadingShipday, setIsLoadingShipday] = useState(false);
+  const [shipdayError, setShipdayError] = useState<string | null>(null);
 
   useEffect(() => {
     if (order?.shipdayOrderId) {
         setIsLoadingShipday(true);
+        setShipdayError(null);
         getShipdayOrderDetails({ shipdayOrderId: order.shipdayOrderId })
             .then(result => {
                 if (result.success && result.details) {
                     setShipdayDetails(result.details);
                 } else {
-                    toast({
-                        variant: 'destructive',
-                        title: 'Could not fetch delivery details',
-                        description: result.errorMessage || 'An error occurred while fetching data from Shipday.',
-                    });
+                    setShipdayError(result.errorMessage || 'An error occurred while fetching data from Shipday.');
                 }
             })
             .catch(err => {
-                toast({
-                    variant: 'destructive',
-                    title: 'Action Failed',
-                    description: 'Could not communicate with the server to get delivery details.',
-                });
+                setShipdayError('Could not communicate with the server to get delivery details.');
             })
             .finally(() => setIsLoadingShipday(false));
     }
-  }, [order, toast]);
+  }, [order]);
 
   useEffect(() => {
     async function fetchOrderItems() {
@@ -313,7 +307,7 @@ export default function AdminOrderDetailsPage() {
         </div>
         
         {order.shipdayOrderId && (
-            <ShipdayDetailsCard details={shipdayDetails} isLoading={isLoadingShipday} />
+            <ShipdayDetailsCard details={shipdayDetails} isLoading={isLoadingShipday} error={shipdayError} />
         )}
       </div>
     </div>

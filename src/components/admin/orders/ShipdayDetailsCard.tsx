@@ -6,11 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { Truck, Package, User, Clock, MapPin, FileText, CheckCircle } from 'lucide-react';
+import { Truck, Package, User, Clock, MapPin, FileText, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface ShipdayDetailsCardProps {
     details: ShipdayOrderDetails | null;
     isLoading: boolean;
+    error: string | null;
 }
 
 const DetailRow = ({ label, value }: { label: string; value?: string | number | null; }) => {
@@ -48,7 +50,7 @@ const formatShipdayTime = (dateString?: string) => {
     }
 };
 
-export function ShipdayDetailsCard({ details, isLoading }: ShipdayDetailsCardProps) {
+export function ShipdayDetailsCard({ details, isLoading, error }: ShipdayDetailsCardProps) {
 
     if (isLoading) {
         return (
@@ -61,6 +63,27 @@ export function ShipdayDetailsCard({ details, isLoading }: ShipdayDetailsCardPro
                     <Skeleton className="h-8 w-1/4" />
                     <Skeleton className="h-20 w-full" />
                     <Skeleton className="h-20 w-full" />
+                </CardContent>
+            </Card>
+        );
+    }
+    
+    if (error) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Truck className="h-5 w-5" /> Shipday Delivery Details</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Alert variant="destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>Could Not Fetch Delivery Details</AlertTitle>
+                        <AlertDescription>
+                            There was an error communicating with Shipday. Please try again later.
+                            <br />
+                            <span className="text-xs">Error: {error}</span>
+                        </AlertDescription>
+                    </Alert>
                 </CardContent>
             </Card>
         );
