@@ -66,7 +66,8 @@ const getShipdayOrderDetailsFlow = ai.defineFlow(
     }
 
     try {
-        const response = await fetch(`https://api.shipday.com/orders/${input.shipdayOrderId}`, {
+        // Fetching from the /status endpoint as per the provided sample response.
+        const response = await fetch(`https://api.shipday.com/orders/${input.shipdayOrderId}/status`, {
             method: 'GET',
             headers: {
                 'Authorization': `Basic ${apiKey}`
@@ -76,44 +77,51 @@ const getShipdayOrderDetailsFlow = ai.defineFlow(
         if (!response.ok) {
             const errorData = await response.json();
             console.error('Shipday API Error:', errorData);
-            throw new Error(errorData.message || `Failed to fetch Shipday order. Status: ${response.status}`);
+            throw new Error(errorData.message || `Failed to fetch Shipday order status. Status: ${response.status}`);
         }
 
         const responseData = await response.json();
         
+        // Destructure the expected main objects from the response.
         const { fixedData, dynamicData } = responseData;
 
+        // Map the data to the ShipdayOrderDetails type, handling potential undefined values.
         const mappedData: ShipdayOrderDetails = {
-            orderStatus: dynamicData?.orderStatus?.status || responseData.orderStatus,
+            orderStatus: dynamicData?.orderStatus?.status,
             deliverTo: {
-                name: fixedData?.customer?.name || responseData.customerName,
-                address: fixedData?.customer?.address || responseData.customerAddress,
-                phone: fixedData?.carrier?.phoneNumber || responseData.customerPhoneNumber,
-                email: responseData.customerEmail,
+                name: fixedData?.customer?.name,
+                address: fixedData?.customer?.address,
+                phone: fixedData?.customer?.phoneNumber,
+                email: fixedData?.customer?.email,
             },
             pickupFrom: {
-                name: fixedData?.restaurant?.name || responseData.restaurantName,
-                address: fixedData?.restaurant?.address || responseData.restaurantAddress,
-                phone: responseData.restaurantPhoneNumber,
+                name: fixedData?.restaurant?.name,
+                address: fixedData?.restaurant?.address,
+                phone: fixedData?.restaurant?.phoneNumber,
             },
             delivery: {
-                placementTime: dynamicData?.orderStatus?.startTime || responseData.activity?.placementTime,
-                assignedTime: dynamicData?.orderStatus?.assignedTime || responseData.activity?.assignedTime,
-                eta: dynamicData?.estimatedTimeInMinutes || responseData.eta,
-                actualPickupTime: dynamicData?.orderStatus?.pickedTime || responseData.activity?.actualPickupTime,
-                actualDeliveryTime: dynamicData?.orderStatus?.deliveryTime || responseData.activity?.actualDeliveryTime,
-                deliveryCompleteTime: dynamicData?.orderStatus?.deliveryTime || responseData.activity?.deliveryCompleteTime,
-                driver: { name: fixedData?.carrier?.name || responseData.assignedDriver?.name },
-                deliveryInstruction: responseData.deliveryInstruction,
-                requestedPickupTime: responseData.expectedPickupTime,
-                requestedDeliveryTime: responseData.expectedDeliveryTime,
-                orderCompletionTime: responseData.orderCompletionTimeInMinutes,
+                // Timeline from dynamicData
+                placementTime: dynamicData?.orderStatus?.startTime,
+                assignedTime: dynamicData?.orderStatus?.assignedTime,
+                eta: dynamicData?.estimatedTimeInMinutes,
+                actualPickupTime: dynamicData?.orderStatus?.pickedTime,
+                actualDeliveryTime: dynamicData?.orderStatus?.deliveryTime,
+                deliveryCompleteTime: dynamicData?.orderStatus?.deliveryTime,
+
+                // Driver from fixedData
+                driver: { name: fixedData?.carrier?.name },
+                
+                // These might come from a different endpoint, so they will likely be undefined here.
+                deliveryInstruction: undefined, 
+                requestedPickupTime: undefined,
+                requestedDeliveryTime: undefined,
+                orderCompletionTime: undefined,
             },
             payment: {
-                paymentMethod: responseData.payment?.paymentMethod
+                paymentMethod: undefined,
             },
-            deliveryLocation: dynamicData?.carrierLocation || responseData.deliveryLocation,
-            pod: responseData.proofOfDelivery?.podText
+            deliveryLocation: dynamicData?.carrierLocation,
+            pod: undefined,
         };
         
         return mappedData;
