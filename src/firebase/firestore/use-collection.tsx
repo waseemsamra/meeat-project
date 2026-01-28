@@ -97,7 +97,6 @@ export function useCollection<T = any>(
         if (!path || path === '/') {
             const genericError = new Error("Firestore permission error on an invalid path. This is often due to an uninitialized query.");
             setError(genericError);
-            console.error(genericError);
         } else {
             const contextualError = await FirestorePermissionError.create({
               operation: 'list',
