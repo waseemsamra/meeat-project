@@ -105,56 +105,14 @@ export default function AllOrdersPage() {
         return;
     }
     const orderDocRef = doc(firestore, `users/${order.userId}/orders`, order.id);
-    const updateData: { [key: string]: any } = { updatedAt: new Date().toISOString() };
-
-    // Don't downgrade status from 'delivered' to 'shipped'
-    // but allow the shipday task creation to proceed.
-    if (!(order.fulfillmentStatus === 'delivered' && status === 'shipped')) {
-        updateData.fulfillmentStatus = status;
-    }
-
-    // If marking as shipped or ready for pickup, also trigger Shipday integration
-    if ((status === 'shipped' || status === 'ready_for_pickup') && !order.shipdayOrderId) {
-        try {
-            const customer = users?.find(u => u.id === order.userId);
-            if (!customer) {
-                toast({ variant: 'destructive', title: 'Error', description: 'Customer details not found for Shipday integration.'});
-                return;
-            }
-
-            const orderItemsText = order.orderItemIds.map(item => {
-                const productName = item.product?.name?.en || 'Item';
-                return `${productName} x${item.quantity}`;
-            }).join('\n');
-
-            const shipdayResult = await createShipdayOrder({
-                orderId: order.id,
-                customerName: customer.name || 'N/A',
-                customerAddress: `${order.shippingAddress?.street}, ${order.shippingAddress?.city}, ${order.shippingAddress?.country}`,
-                customerEmail: customer.email,
-                customerPhoneNumber: customer.telephone,
-                orderItemsText: orderItemsText.trim(),
-                total: order.total,
-            });
-
-            if (shipdayResult.success && shipdayResult.shipdayOrderId) {
-                updateData.shipdayOrderId = shipdayResult.shipdayOrderId;
-                toast({ title: 'Shipday Order Created', description: `Delivery task created in Shipday with ID: ${shipdayResult.shipdayOrderId}`});
-            } else {
-                toast({ variant: 'destructive', title: 'Shipday Error', description: shipdayResult.errorMessage || 'Failed to create Shipday order.' });
-                return; // Stop if shipday fails
-            }
-        } catch (shipdayError) {
-            console.error("Shipday integration failed:", shipdayError);
-            toast({ variant: 'destructive', title: 'Shipday Integration Failed', description: 'Could not create delivery task.' });
-            return; // Stop if shipday fails
-        }
-    }
-
+    const updateData: { [key: string]: any } = { 
+        fulfillmentStatus: status,
+        updatedAt: new Date().toISOString() 
+    };
 
     try {
         await updateDoc(orderDocRef, updateData);
-        toast({ title: 'Status Updated', description: `Order #${order.id.substring(0,8)} status updated.` });
+        toast({ title: 'Status Updated', description: `Order #${order.id.substring(0,8)} status updated to ${status}.` });
     } catch (e: any) {
         const contextualError = await FirestorePermissionError.create({ path: orderDocRef.path, operation: 'update', requestResourceData: updateData });
         errorEmitter.emit('permission-error', contextualError);
@@ -330,15 +288,15 @@ export default function AllOrdersPage() {
                         
                         <DropdownMenuItem 
                             onClick={() => handleStatusUpdate(order, 'shipped')}
-                            disabled={!!order.shipdayOrderId}
+                            disabled={order.fulfillmentStatus === 'shipped'}
                         >
-                            Mark as Shipped / Create Task
+                            Mark as Shipped
                         </DropdownMenuItem>
                         <DropdownMenuItem 
                             onClick={() => handleStatusUpdate(order, 'ready_for_pickup')}
-                            disabled={order.fulfillmentStatus === 'ready_for_pickup' || !!order.shipdayOrderId}
+                            disabled={order.fulfillmentStatus === 'ready_for_pickup'}
                         >
-                            Ready for Pickup / Create Task
+                            Ready for Pickup
                         </DropdownMenuItem>
                         <DropdownMenuItem 
                             onClick={() => handleStatusUpdate(order, 'delivered')}
