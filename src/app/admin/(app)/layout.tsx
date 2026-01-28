@@ -266,7 +266,7 @@ export default function AdminLayout({
                       <CollapsibleContent>
                           <div className="ml-7 flex flex-col gap-1 border-l pl-2 py-1">
                           {link.subLinks.map(subLink => (
-                              <Link key={subLink.href} href={subLink.href} passHref>
+                              <Link key={subLink.label} href={subLink.href} passHref>
                               <Button
                                   variant={pathname === subLink.href ? "secondary" : "ghost"}
                                   className="w-full justify-start text-sm h-8"
@@ -299,7 +299,7 @@ export default function AdminLayout({
               )}
               <Separator className="my-4" />
               {settingsLinks.map((link) => (
-                  <Collapsible key={link.label} className="w-full group">
+                  <Collapsible key={link.label} className="w-full group" defaultOpen={false}>
                       <CollapsibleTrigger asChild>
                           <Button
                           variant="ghost"
@@ -313,7 +313,7 @@ export default function AdminLayout({
                       <CollapsibleContent>
                       <div className="ml-7 flex flex-col gap-1 border-l pl-2 py-1">
                           {link.subLinks.map(subLink => (
-                          <Link key={subLink.href} href={subLink.href} passHref>
+                          <Link key={subLink.label} href={subLink.href} passHref>
                               <Button
                                   variant={pathname === subLink.href ? "secondary" : "ghost"}
                                   className="w-full justify-start text-sm h-8"
@@ -343,7 +343,7 @@ export default function AdminLayout({
                       <CollapsibleContent>
                       <div className="ml-7 flex flex-col gap-1 border-l pl-2 py-1">
                           {link.subLinks.map(subLink => (
-                          <Link key={subLink.href} href={subLink.href} passHref>
+                          <Link key={subLink.label} href={subLink.href} passHref>
                               <Button
                                   variant={pathname === subLink.href ? "secondary" : "ghost"}
                                   className="w-full justify-start text-sm h-8"
