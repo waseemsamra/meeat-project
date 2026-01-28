@@ -69,7 +69,6 @@ const getShipdayOrderDetailsFlow = ai.defineFlow(
   async (input) => {
     const apiKey = process.env.SHIPDAY_API_KEY;
     if (!apiKey) {
-      console.error('Shipday API key is not configured.');
       return { success: false, errorMessage: 'Shipday API key is not configured.' };
     }
 

@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview A server-side flow for creating a delivery order with Shipday.
@@ -39,7 +38,6 @@ const createShipdayOrderFlow = ai.defineFlow(
     
     const apiKey = process.env.SHIPDAY_API_KEY;
     if (!apiKey) {
-      console.error('Shipday API key is not configured.');
       return { success: false, errorMessage: 'Shipday API key is not configured.' };
     }
 
