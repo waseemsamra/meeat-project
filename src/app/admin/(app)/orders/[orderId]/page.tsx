@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useParams, notFound, useSearchParams, useRouter } from 'next/navigation';
@@ -85,7 +84,6 @@ export default function AdminOrderDetailsPage() {
                 if (result.success && result.details) {
                     setShipdayDetails(result.details);
                 } else {
-                    console.error("Failed to fetch shipday details:", result.errorMessage);
                     toast({
                         variant: 'destructive',
                         title: 'Could not fetch delivery details',
@@ -94,7 +92,6 @@ export default function AdminOrderDetailsPage() {
                 }
             })
             .catch(err => {
-                console.error("Failed to execute getShipdayOrderDetails action:", err);
                 toast({
                     variant: 'destructive',
                     title: 'Action Failed',
