@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { ShipdayOrderDetails } from '@/lib/types';
@@ -70,9 +69,9 @@ export function ShipdayDetailsCard({ details, isLoading, error }: ShipdayDetails
     
     if (error) {
         const isServerError = error.includes('Status: 500');
-        const title = isServerError ? "Shipday Server Error" : "Could Not Fetch Delivery Details";
+        const title = isServerError ? "Shipday API Error" : "Could Not Fetch Delivery Details";
         const description = isServerError
-            ? "We received a '500 Internal Server Error' from Shipday's API. This indicates a problem on their end. It might be temporary, or the requested order data may be invalid or expired on their system."
+            ? "We received a '500 Internal Server Error' from Shipday's API. This often indicates a problem on their servers. Since your trial period has ended, it's possible their system can no longer access the requested order data, which may be causing this error. Please check your Shipday account or contact their support for more information."
             : error;
 
         return (
