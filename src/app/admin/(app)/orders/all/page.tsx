@@ -105,7 +105,13 @@ export default function AllOrdersPage() {
         return;
     }
     const orderDocRef = doc(firestore, `users/${order.userId}/orders`, order.id);
-    const updateData: { [key: string]: any } = { fulfillmentStatus: status, updatedAt: new Date().toISOString() };
+    const updateData: { [key: string]: any } = { updatedAt: new Date().toISOString() };
+
+    // Don't downgrade status from 'delivered' to 'shipped'
+    // but allow the shipday task creation to proceed.
+    if (!(order.fulfillmentStatus === 'delivered' && status === 'shipped')) {
+        updateData.fulfillmentStatus = status;
+    }
 
     // If marking as shipped or ready for pickup, also trigger Shipday integration
     if ((status === 'shipped' || status === 'ready_for_pickup') && !order.shipdayOrderId) {
@@ -136,17 +142,19 @@ export default function AllOrdersPage() {
                 toast({ title: 'Shipday Order Created', description: `Delivery task created in Shipday with ID: ${shipdayResult.shipdayOrderId}`});
             } else {
                 toast({ variant: 'destructive', title: 'Shipday Error', description: shipdayResult.errorMessage || 'Failed to create Shipday order.' });
+                return; // Stop if shipday fails
             }
         } catch (shipdayError) {
             console.error("Shipday integration failed:", shipdayError);
             toast({ variant: 'destructive', title: 'Shipday Integration Failed', description: 'Could not create delivery task.' });
+            return; // Stop if shipday fails
         }
     }
 
 
     try {
         await updateDoc(orderDocRef, updateData);
-        toast({ title: 'Status Updated', description: `Order #${order.id.substring(0,8)} marked as ${status}.` });
+        toast({ title: 'Status Updated', description: `Order #${order.id.substring(0,8)} status updated.` });
     } catch (e: any) {
         const contextualError = await FirestorePermissionError.create({ path: orderDocRef.path, operation: 'update', requestResourceData: updateData });
         errorEmitter.emit('permission-error', contextualError);
@@ -316,13 +324,29 @@ export default function AllOrdersPage() {
                         <DropdownMenuItem onClick={() => handleOpenLinkModal(order)} disabled={!!order.shipdayOrderId}>
                             Link Shipday ID
                         </DropdownMenuItem>
+                        
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel>Fulfillment</DropdownMenuLabel>
+                        
                         <DropdownMenuItem 
                             onClick={() => handleStatusUpdate(order, 'shipped')}
-                            disabled={order.fulfillmentStatus === 'shipped' || !!order.shipdayOrderId}
+                            disabled={!!order.shipdayOrderId}
                         >
-                            Mark as Shipped
+                            Mark as Shipped / Create Task
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleStatusUpdate(order, 'ready_for_pickup')}>Ready for Pickup</DropdownMenuItem>
+                        <DropdownMenuItem 
+                            onClick={() => handleStatusUpdate(order, 'ready_for_pickup')}
+                            disabled={order.fulfillmentStatus === 'ready_for_pickup' || !!order.shipdayOrderId}
+                        >
+                            Ready for Pickup / Create Task
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                            onClick={() => handleStatusUpdate(order, 'delivered')}
+                            disabled={order.fulfillmentStatus === 'delivered'}
+                        >
+                            Mark as Delivered
+                        </DropdownMenuItem>
+
                          <DropdownMenuSeparator />
                          <DropdownMenuItem className="text-destructive" onClick={() => handleOpenAlert(order)}>
                             Delete Order
