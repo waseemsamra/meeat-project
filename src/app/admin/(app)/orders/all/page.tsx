@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -106,8 +107,8 @@ export default function AllOrdersPage() {
     const orderDocRef = doc(firestore, `users/${order.userId}/orders`, order.id);
     const updateData: { [key: string]: any } = { fulfillmentStatus: status, updatedAt: new Date().toISOString() };
 
-    // If marking as shipped, also trigger Shipday integration
-    if (status === 'shipped' && !order.shipdayOrderId) {
+    // If marking as shipped or ready for pickup, also trigger Shipday integration
+    if ((status === 'shipped' || status === 'ready_for_pickup') && !order.shipdayOrderId) {
         try {
             const customer = users?.find(u => u.id === order.userId);
             if (!customer) {
