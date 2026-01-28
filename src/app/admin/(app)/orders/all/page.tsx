@@ -284,7 +284,17 @@ export default function AllOrdersPage() {
                         <DropdownMenuItem asChild>
                             <Link href={`/admin/orders/${order.id}?userId=${order.userId}`}>View Details</Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleStatusUpdate(order, 'shipped')}>Mark as Shipped</DropdownMenuItem>
+                        {order.shipdayOrderId && (
+                            <DropdownMenuItem asChild>
+                                <Link href={`/admin/orders/${order.id}?userId=${order.userId}`}>View Shipping Details</Link>
+                            </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem 
+                            onClick={() => handleStatusUpdate(order, 'shipped')}
+                            disabled={order.fulfillmentStatus === 'shipped' || !!order.shipdayOrderId}
+                        >
+                            Mark as Shipped
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleStatusUpdate(order, 'ready_for_pickup')}>Ready for Pickup</DropdownMenuItem>
                          <DropdownMenuSeparator />
                          <DropdownMenuItem className="text-destructive" onClick={() => handleOpenAlert(order)}>
