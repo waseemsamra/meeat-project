@@ -10,7 +10,6 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 // Define the expected input from our application (order and customer details)
-// This will be refined once the user provides the Shipday API details.
 const CreateShipdayOrderInputSchema = z.object({
     orderId: z.string(),
     customerName: z.string(),
@@ -44,46 +43,48 @@ const createShipdayOrderFlow = ai.defineFlow(
       return { success: false, errorMessage: 'Shipday API key is not configured.' };
     }
 
-    // Placeholder for Shipday API call logic.
-    // This will be implemented once the user provides the API details/code snippet.
-    console.log("Preparing to send order to Shipday:", input);
-
-    // Example of what the fetch call might look like:
-    /*
     try {
+        const now = new Date();
+        const deliveryTime = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour from now
+
         const response = await fetch('https://api.shipday.com/orders', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
+                'Authorization': `Basic ${apiKey}`
             },
             body: JSON.stringify({
-                // ... map `input` to the Shipday API format ...
                 orderNumber: input.orderId,
                 customerName: input.customerName,
-                deliveryAddress: input.customerAddress,
-                // etc.
+                customerAddress: input.customerAddress,
+                customerEmail: input.customerEmail,
+                customerPhoneNumber: input.customerPhoneNumber,
+                restaurantName: "Me'eat",
+                restaurantAddress: "Mazreat Al Wadi Dubai",
+                // A placeholder phone number
+                restaurantPhoneNumber: "+971501234567",
+                expectedDeliveryDate: deliveryTime.toISOString().split('T')[0],
+                expectedDeliveryTime: deliveryTime.toTimeString().split(' ')[0], // HH:mm:ss format
+                deliveryInstruction: `Order Items:\n${input.orderItemsText}`,
+                total: input.total,
+                orderSource: "Website"
             })
         });
 
-        if (!response.ok) {
-            const errorBody = await response.json();
-            throw new Error(errorBody.message || 'Failed to create Shipday order');
-        }
-
         const responseData = await response.json();
+
+        if (!response.ok) {
+            console.error('Shipday API Error Response:', responseData);
+            throw new Error(responseData.message || `Failed to create Shipday order. Status: ${response.status}`);
+        }
 
         return { success: true, shipdayOrderId: responseData.orderId };
 
     } catch (error) {
         const message = error instanceof Error ? error.message : 'An unknown error occurred.';
-        console.error('Shipday API Error:', message);
+        console.error('Shipday API Error:', message, error);
         return { success: false, errorMessage: message };
     }
-    */
-
-    // Returning a placeholder success response for now.
-    return { success: true, shipdayOrderId: 12345 };
   }
 );
 
