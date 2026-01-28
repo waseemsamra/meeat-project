@@ -34,6 +34,7 @@ import { Printer, ArrowLeft } from 'lucide-react';
 import printJS from 'print-js';
 import { getShipdayOrderDetails } from '@/ai/flows/get-shipday-order-details';
 import { ShipdayDetailsCard } from '@/components/admin/orders/ShipdayDetailsCard';
+import { useTranslation } from '@/hooks/useTranslation';
 
 function OrderDetailsSkeleton() {
   return (
@@ -60,6 +61,7 @@ export default function AdminOrderDetailsPage() {
   const userId = searchParams.get('userId');
   const fromCustomerReport = searchParams.get('from') === 'customer-report';
   const firestore = useFirestore();
+  const { t } = useTranslation();
 
   const orderRef = useMemo(() => {
     if (!firestore || !orderId || !userId) return null;
@@ -179,9 +181,7 @@ export default function AdminOrderDetailsPage() {
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Report
             </Button>
-            <Badge variant={order.fulfillmentStatus === 'shipped' ? 'default' : 'secondary'} className="capitalize text-base px-4 py-2">
-                {order.fulfillmentStatus}
-            </Badge>
+            <Badge variant={order.fulfillmentStatus === 'delivered' ? 'default' : 'secondary'} className="capitalize">{order.fulfillmentStatus}</Badge>
             <Button onClick={handlePrint} variant="outline">
                 <Printer className="mr-2 h-4 w-4" />
                 Print Order
@@ -215,7 +215,7 @@ export default function AdminOrderDetailsPage() {
                                 {item.product && item.product.images && (
                                     <Image
                                         src={getPlaceholderImage(item.product.images[0])}
-                                        alt={item.product.name}
+                                        alt={t(item.product.name)}
                                         fill
                                         className="object-contain"
                                         data-ai-hint={`${item.product.category.toLowerCase()} ${item.product.cutType.toLowerCase()}`}
@@ -225,7 +225,7 @@ export default function AdminOrderDetailsPage() {
                             <div>
                                 <p className="font-medium">
                                     {item.product ? (
-                                        <Link href={`/products/${item.product.slug}`} className="hover:underline">{item.product.name}</Link>
+                                        <Link href={`/products/${item.product.slug}`} className="hover:underline">{t(item.product.name)}</Link>
                                     ) : 'Product not found'}
                                 </p>
                                 <div className="text-sm text-muted-foreground">
