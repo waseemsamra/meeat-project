@@ -69,6 +69,12 @@ export function ShipdayDetailsCard({ details, isLoading, error }: ShipdayDetails
     }
     
     if (error) {
+        const isServerError = error.includes('Status: 500');
+        const title = isServerError ? "Shipday Server Error" : "Could Not Fetch Delivery Details";
+        const description = isServerError
+            ? "We received a '500 Internal Server Error' from Shipday's API. This indicates a problem on their end. It might be temporary, or the requested order data may be invalid or expired on their system."
+            : error;
+
         return (
             <Card>
                 <CardHeader>
@@ -77,11 +83,9 @@ export function ShipdayDetailsCard({ details, isLoading, error }: ShipdayDetails
                 <CardContent>
                     <Alert variant="destructive">
                         <AlertTriangle className="h-4 w-4" />
-                        <AlertTitle>Could Not Fetch Delivery Details</AlertTitle>
+                        <AlertTitle>{title}</AlertTitle>
                         <AlertDescription>
-                            There was an error communicating with Shipday. Please try again later.
-                            <br />
-                            <span className="text-xs">Error: {error}</span>
+                            {description}
                         </AlertDescription>
                     </Alert>
                 </CardContent>
@@ -96,7 +100,7 @@ export function ShipdayDetailsCard({ details, isLoading, error }: ShipdayDetails
     let statusVariant: "default" | "secondary" | "outline" = "secondary";
     if (details.orderStatus === 'Delivered') {
         statusVariant = 'default';
-    } else if (details.orderStatus === 'On the way') {
+    } else if (details.orderStatus === 'On the way' || details.orderStatus === 'PICKED_UP') {
         statusVariant = 'outline';
     }
 
@@ -106,7 +110,7 @@ export function ShipdayDetailsCard({ details, isLoading, error }: ShipdayDetails
                 <CardTitle className="flex items-center gap-2"><Truck className="h-5 w-5" /> Shipday Delivery Details</CardTitle>
                 <div className="flex items-center justify-between">
                     <CardDescription>Live delivery status and details from Shipday.</CardDescription>
-                    <Badge variant={statusVariant} className="capitalize">{details.orderStatus}</Badge>
+                    <Badge variant={statusVariant} className="capitalize">{details.orderStatus?.replace('_', ' ')}</Badge>
                 </div>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -169,7 +173,7 @@ export function ShipdayDetailsCard({ details, isLoading, error }: ShipdayDetails
                                         <span>Proof of Delivery: {details.pod}</span>
                                     </>
                                 ) : (
-                                    <span className="text-destructive">No Proof of Delivery taken.</span>
+                                    <span className="text-muted-foreground">No Proof of Delivery taken.</span>
                                 )}
                              </p>
                         </div>
