@@ -78,20 +78,19 @@ const getShipdayOrderDetailsFlow = ai.defineFlow(
 
         const responseData = await response.json();
         
-        // Map the response to our schema. This mapping is based on common API patterns and the user's screenshot.
-        // It might need adjustment if the actual Shipday API response is different.
+        // Map the response to our schema.
         const mappedData: ShipdayOrderDetails = {
             orderStatus: responseData.orderStatus,
             deliverTo: {
-                name: responseData.customer?.name,
-                address: responseData.customer?.address,
-                phone: responseData.customer?.phoneNumber,
-                email: responseData.customer?.emailAddress,
+                name: responseData.customerName,
+                address: responseData.customerAddress,
+                phone: responseData.customerPhoneNumber,
+                email: responseData.customerEmail,
             },
             pickupFrom: {
-                name: responseData.vendor?.name,
-                address: responseData.vendor?.address,
-                phone: responseData.vendor?.phoneNumber,
+                name: responseData.restaurantName,
+                address: responseData.restaurantAddress,
+                phone: responseData.restaurantPhoneNumber,
             },
             delivery: {
                 placementTime: responseData.activity?.placementTime,
