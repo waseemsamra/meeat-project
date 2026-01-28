@@ -66,7 +66,6 @@ const getShipdayOrderDetailsFlow = ai.defineFlow(
     }
 
     try {
-        // Assuming Shipday API endpoint for fetching an order is `GET /orders/{orderId}`
         const response = await fetch(`https://api.shipday.com/orders/${input.shipdayOrderId}`, {
             method: 'GET',
             headers: {
@@ -82,28 +81,29 @@ const getShipdayOrderDetailsFlow = ai.defineFlow(
 
         const responseData = await response.json();
         
-        // Correctly map the response, assuming timeline data is in `activity`
+        const { fixedData, dynamicData } = responseData;
+
         const mappedData: ShipdayOrderDetails = {
-            orderStatus: responseData.orderStatus,
+            orderStatus: dynamicData?.orderStatus?.status || responseData.orderStatus,
             deliverTo: {
-                name: responseData.customerName,
-                address: responseData.customerAddress,
-                phone: responseData.customerPhoneNumber,
+                name: fixedData?.customer?.name || responseData.customerName,
+                address: fixedData?.customer?.address || responseData.customerAddress,
+                phone: fixedData?.carrier?.phoneNumber || responseData.customerPhoneNumber,
                 email: responseData.customerEmail,
             },
             pickupFrom: {
-                name: responseData.restaurantName,
-                address: responseData.restaurantAddress,
+                name: fixedData?.restaurant?.name || responseData.restaurantName,
+                address: fixedData?.restaurant?.address || responseData.restaurantAddress,
                 phone: responseData.restaurantPhoneNumber,
             },
             delivery: {
-                placementTime: responseData.activity?.placementTime,
-                assignedTime: responseData.activity?.assignedTime,
-                eta: responseData.eta,
-                actualPickupTime: responseData.activity?.actualPickupTime,
-                actualDeliveryTime: responseData.activity?.actualDeliveryTime,
-                deliveryCompleteTime: responseData.activity?.deliveryCompleteTime,
-                driver: { name: responseData.assignedDriver?.name },
+                placementTime: dynamicData?.orderStatus?.startTime || responseData.activity?.placementTime,
+                assignedTime: dynamicData?.orderStatus?.assignedTime || responseData.activity?.assignedTime,
+                eta: dynamicData?.estimatedTimeInMinutes || responseData.eta,
+                actualPickupTime: dynamicData?.orderStatus?.pickedTime || responseData.activity?.actualPickupTime,
+                actualDeliveryTime: dynamicData?.orderStatus?.deliveryTime || responseData.activity?.actualDeliveryTime,
+                deliveryCompleteTime: dynamicData?.orderStatus?.deliveryTime || responseData.activity?.deliveryCompleteTime,
+                driver: { name: fixedData?.carrier?.name || responseData.assignedDriver?.name },
                 deliveryInstruction: responseData.deliveryInstruction,
                 requestedPickupTime: responseData.expectedPickupTime,
                 requestedDeliveryTime: responseData.expectedDeliveryTime,
@@ -112,7 +112,7 @@ const getShipdayOrderDetailsFlow = ai.defineFlow(
             payment: {
                 paymentMethod: responseData.payment?.paymentMethod
             },
-            deliveryLocation: responseData.deliveryLocation,
+            deliveryLocation: dynamicData?.carrierLocation || responseData.deliveryLocation,
             pod: responseData.proofOfDelivery?.podText
         };
         
