@@ -10,3 +10,4 @@ import '@/ai/flows/generate-social-post.ts';
 import '@/ai/flows/generate-video-flow.ts';
 import '@/ai/flows/suggest-currency.ts';
 import '@/ai/flows/translate-product.ts';
+import '@/ai/flows/create-shipday-order.ts';

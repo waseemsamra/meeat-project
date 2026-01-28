@@ -1,7 +1,7 @@
 
 'use server';
 /**
- * @fileOverview A server-side flow for creating customer orders.
+ * @fileOverview A server-side flow for creating customer orders and dispatching to Shipday.
  * 
  * - createOrder - A function that handles the entire order creation transaction.
  */
@@ -10,8 +10,9 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { getFirestore, Timestamp } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
-import { doc, writeBatch, collection } from 'firebase/firestore';
-import type { Order, OrderItem, Address, Product } from '@/lib/types';
+import { doc, getDoc, writeBatch, collection } from 'firebase/firestore';
+import type { Order, OrderItem, Address, Product, User } from '@/lib/types';
+import { createShipdayOrder } from './create-shipday-order';
 
 
 // Schemas remain in the server file, but are not exported.
@@ -78,6 +79,15 @@ const createOrderFlow = ai.defineFlow(
 
     const { userId, cartItems, total, shippingAddress, paymentMethod, orderNotes } = input;
 
+    // Fetch user details for Shipday
+    const userRef = doc(firestore, 'users', userId);
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) {
+        throw new Error(`User with ID ${userId} not found.`);
+    }
+    const user = userSnap.data() as User;
+
+
     const batch = writeBatch(firestore);
 
     // 1. Pre-generate Order ID
@@ -86,6 +96,7 @@ const createOrderFlow = ai.defineFlow(
     
     // 2. Process cart items and add them to the batch
     const orderItemReferencesForOrderDoc: Order['orderItemIds'] = [];
+    let orderItemsTextSummary = '';
 
     for (const cartItem of cartItems) {
         const orderItemRef = doc(collection(firestore, 'orders_items'));
@@ -93,6 +104,9 @@ const createOrderFlow = ai.defineFlow(
         
         const isRegularItem = !cartItem.isBox;
         const regularItem = isRegularItem ? (cartItem as z.infer<typeof CartItemSchema>) : null;
+
+        const itemName = cartItem.isBox ? cartItem.name : regularItem!.product.name;
+        orderItemsTextSummary += `${itemName} x${cartItem.quantity}\n`;
 
         const newOrderItem: Omit<OrderItem, 'product'> = {
             id: orderItemId,
@@ -144,6 +158,27 @@ const createOrderFlow = ai.defineFlow(
     
     // 5. Atomically commit all writes
     await batch.commit();
+
+    // 6. After successful order creation, trigger Shipday integration
+    // We do this after the commit to ensure the order exists before we try to dispatch it.
+    // We will not block the response to the user on this integration.
+    createShipdayOrder({
+        orderId: orderId,
+        customerName: shippingAddress.fullName,
+        customerAddress: `${shippingAddress.street}, ${shippingAddress.city}, ${shippingAddress.country}`,
+        customerEmail: user.email,
+        customerPhoneNumber: user.telephone,
+        orderItemsText: orderItemsTextSummary.trim(),
+        total: total,
+    }).then(shipdayResult => {
+        if (!shipdayResult.success) {
+            console.error(`Failed to create Shipday order for orderId ${orderId}:`, shipdayResult.errorMessage);
+            // Here you might want to add more robust error handling,
+            // like saving the failed Shipday order to a separate collection for retry.
+        } else {
+            console.log(`Successfully created Shipday order ${shipdayResult.shipdayOrderId} for orderId ${orderId}`);
+        }
+    });
 
     return { orderId };
   }
