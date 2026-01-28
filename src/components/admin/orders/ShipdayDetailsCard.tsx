@@ -69,6 +69,13 @@ export function ShipdayDetailsCard({ details, isLoading }: ShipdayDetailsCardPro
     if (!details) {
         return null; // Don't render the card if there are no details (e.g., order not sent to Shipday)
     }
+    
+    let statusVariant: "default" | "secondary" | "outline" = "secondary";
+    if (details.orderStatus === 'Delivered') {
+        statusVariant = 'default';
+    } else if (details.orderStatus === 'On the way') {
+        statusVariant = 'outline';
+    }
 
     return (
         <Card>
@@ -76,7 +83,7 @@ export function ShipdayDetailsCard({ details, isLoading }: ShipdayDetailsCardPro
                 <CardTitle className="flex items-center gap-2"><Truck className="h-5 w-5" /> Shipday Delivery Details</CardTitle>
                 <div className="flex items-center justify-between">
                     <CardDescription>Live delivery status and details from Shipday.</CardDescription>
-                    <Badge variant={details.orderStatus === 'Delivered' ? 'default' : 'secondary'} className="capitalize">{details.orderStatus}</Badge>
+                    <Badge variant={statusVariant} className="capitalize">{details.orderStatus}</Badge>
                 </div>
             </CardHeader>
             <CardContent className="space-y-6">
