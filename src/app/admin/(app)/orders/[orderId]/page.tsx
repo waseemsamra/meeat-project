@@ -295,7 +295,7 @@ export default function AdminOrderDetailsPage() {
             </div>
         </div>
         
-        {order.shipdayOrderId && order.fulfillmentStatus === 'shipped' && (
+        {order.shipdayOrderId && (
             <ShipdayDetailsCard details={shipdayDetails} isLoading={isLoadingShipday} />
         )}
       </div>

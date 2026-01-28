@@ -36,6 +36,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogClose,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { MoreHorizontal } from "lucide-react"
@@ -78,6 +90,9 @@ export default function AllOrdersPage() {
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [visibleCount, setVisibleCount] = useState(20);
+  
+  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
+  const [shipdayIdInput, setShipdayIdInput] = useState("");
 
   const usersQuery = useMemo(() => firestore ? collection(firestore, "users") : null, [firestore]);
   const { data: users, isLoading: isLoadingUsers } = useCollection<User>(usersQuery);
@@ -163,6 +178,36 @@ export default function AllOrdersPage() {
     setSelectedOrder(order);
     setIsAlertOpen(true);
   };
+  
+  const handleOpenLinkModal = (order: Order) => {
+    setSelectedOrder(order);
+    setShipdayIdInput(""); // Clear previous input
+    setIsLinkModalOpen(true);
+  }
+
+  const handleLinkShipdayOrder = async () => {
+    if (!firestore || !selectedOrder || !selectedOrder.userId || !shipdayIdInput) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Missing information to link order.' });
+        return;
+    }
+
+    const orderDocRef = doc(firestore, `users/${selectedOrder.userId}/orders`, selectedOrder.id);
+    const shipdayOrderId = parseInt(shipdayIdInput, 10);
+
+    if (isNaN(shipdayOrderId)) {
+        toast({ variant: 'destructive', title: 'Invalid ID', description: 'Shipday Order ID must be a number.' });
+        return;
+    }
+
+    try {
+        await updateDoc(orderDocRef, { shipdayOrderId });
+        toast({ title: 'Success', description: 'Shipday order linked successfully.' });
+        setIsLinkModalOpen(false);
+    } catch (e: any) {
+        const contextualError = await FirestorePermissionError.create({ path: orderDocRef.path, operation: 'update', requestResourceData: { shipdayOrderId } });
+        errorEmitter.emit('permission-error', contextualError);
+    }
+  }
 
   const handleDelete = async () => {
     if (!firestore || !selectedOrder || !selectedOrder.userId) {
@@ -289,6 +334,9 @@ export default function AllOrdersPage() {
                                 <Link href={`/admin/orders/${order.id}?userId=${order.userId}`}>View Shipping Details</Link>
                             </DropdownMenuItem>
                         )}
+                        <DropdownMenuItem onClick={() => handleOpenLinkModal(order)} disabled={!!order.shipdayOrderId}>
+                            Link Shipday ID
+                        </DropdownMenuItem>
                         <DropdownMenuItem 
                             onClick={() => handleStatusUpdate(order, 'shipped')}
                             disabled={order.fulfillmentStatus === 'shipped' || !!order.shipdayOrderId}
@@ -322,6 +370,30 @@ export default function AllOrdersPage() {
         )}
       </Card>
     </div>
+     <Dialog open={isLinkModalOpen} onOpenChange={setIsLinkModalOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Link Shipday Order</DialogTitle>
+                <DialogDescription>
+                    Enter the numeric Shipday Order ID for order #{selectedOrder?.id.substring(0,8)}. You can find this in your Shipday dashboard.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+                <Label htmlFor="shipday-id">Shipday Order ID</Label>
+                <Input 
+                    id="shipday-id" 
+                    value={shipdayIdInput}
+                    onChange={(e) => setShipdayIdInput(e.target.value)}
+                    placeholder="e.g., 12345678"
+                    type="number"
+                />
+            </div>
+            <DialogFooter>
+                <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+                <Button onClick={handleLinkShipdayOrder}>Link Order</Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
     <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
