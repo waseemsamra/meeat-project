@@ -46,6 +46,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useMemo, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/hooks/useSettings";
+import { createShipdayOrder } from "@/ai/flows/create-shipday-order";
 
 function OrderRowSkeleton() {
     return (
@@ -110,7 +111,45 @@ export default function AllOrdersPage() {
         return;
     }
     const orderDocRef = doc(firestore, `users/${order.userId}/orders`, order.id);
-    const updateData = { fulfillmentStatus: status, updatedAt: new Date().toISOString() };
+    const updateData: { [key: string]: any } = { fulfillmentStatus: status, updatedAt: new Date().toISOString() };
+
+    // If marking as shipped, also trigger Shipday integration
+    if (status === 'shipped' && !order.shipdayOrderId) {
+        try {
+            const customer = users?.find(u => u.id === order.userId);
+            if (!customer) {
+                toast({ variant: 'destructive', title: 'Error', description: 'Customer details not found for Shipday integration.'});
+                return;
+            }
+
+            const orderItemsText = order.orderItemIds.map(item => {
+                const productName = item.product?.name?.en || 'Item';
+                return `${productName} x${item.quantity}`;
+            }).join('\n');
+
+            const shipdayResult = await createShipdayOrder({
+                orderId: order.id,
+                customerName: customer.name || 'N/A',
+                customerAddress: `${order.shippingAddress?.street}, ${order.shippingAddress?.city}, ${order.shippingAddress?.country}`,
+                customerEmail: customer.email,
+                customerPhoneNumber: customer.telephone,
+                orderItemsText: orderItemsText.trim(),
+                total: order.total,
+            });
+
+            if (shipdayResult.success && shipdayResult.shipdayOrderId) {
+                updateData.shipdayOrderId = shipdayResult.shipdayOrderId;
+                toast({ title: 'Shipday Order Created', description: `Delivery task created in Shipday with ID: ${shipdayResult.shipdayOrderId}`});
+            } else {
+                toast({ variant: 'destructive', title: 'Shipday Error', description: shipdayResult.errorMessage || 'Failed to create Shipday order.' });
+            }
+        } catch (shipdayError) {
+            console.error("Shipday integration failed:", shipdayError);
+            toast({ variant: 'destructive', title: 'Shipday Integration Failed', description: 'Could not create delivery task.' });
+        }
+    }
+
+
     try {
         await updateDoc(orderDocRef, updateData);
         toast({ title: 'Status Updated', description: `Order #${order.id.substring(0,8)} marked as ${status}.` });
