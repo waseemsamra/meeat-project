@@ -109,6 +109,7 @@ export type Order = {
   createdAt: string;
   updatedAt: string;
   qtyToDeliver?: number;
+  shipdayOrderId?: number;
   // Denormalized for convenience
   customer?: User;
   description?: string | null;
@@ -354,5 +355,38 @@ export interface ExploreRangeItem {
   name: LocalizedString;
   imageUrl: string;
   link: string;
+}
+
+export interface ShipdayOrderDetails {
+    orderStatus?: string;
+    deliverTo?: {
+        name?: string;
+        address?: string;
+        phone?: string;
+        email?: string;
+    };
+    pickupFrom?: {
+        name?: string;
+        address?: string;
+        phone?: string;
+    };
+    delivery?: {
+        placementTime?: string;
+        assignedTime?: string;
+        eta?: string;
+        actualPickupTime?: string;
+        actualDeliveryTime?: string;
+        deliveryCompleteTime?: string;
+        driver?: { name?: string; };
+        deliveryInstruction?: string;
+    };
+    payment?: {
+        paymentMethod?: string;
+    };
+    deliveryLocation?: {
+        latitude?: number;
+        longitude?: number;
+    };
+    pod?: string;
 }
     

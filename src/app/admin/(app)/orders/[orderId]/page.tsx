@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useParams, notFound, useSearchParams, useRouter } from 'next/navigation';
@@ -11,7 +12,7 @@ import {
   getDocs,
   documentId,
 } from 'firebase/firestore';
-import type { Order, OrderItem, Product } from '@/lib/types';
+import type { Order, OrderItem, Product, ShipdayOrderDetails } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -31,6 +32,8 @@ import { getPlaceholderImage } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Printer, ArrowLeft } from 'lucide-react';
 import printJS from 'print-js';
+import { getShipdayOrderDetails } from '@/ai/flows/get-shipday-order-details';
+import { ShipdayDetailsCard } from '@/components/admin/orders/ShipdayDetailsCard';
 
 function OrderDetailsSkeleton() {
   return (
@@ -67,6 +70,18 @@ export default function AdminOrderDetailsPage() {
 
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [isLoadingItems, setIsLoadingItems] = useState(true);
+  const [shipdayDetails, setShipdayDetails] = useState<ShipdayOrderDetails | null>(null);
+  const [isLoadingShipday, setIsLoadingShipday] = useState(false);
+
+  useEffect(() => {
+    if (order?.shipdayOrderId) {
+        setIsLoadingShipday(true);
+        getShipdayOrderDetails({ shipdayOrderId: order.shipdayOrderId })
+            .then(details => setShipdayDetails(details))
+            .catch(err => console.error("Failed to fetch shipday details", err))
+            .finally(() => setIsLoadingShipday(false));
+    }
+  }, [order]);
 
   useEffect(() => {
     async function fetchOrderItems() {
@@ -174,7 +189,7 @@ export default function AdminOrderDetailsPage() {
         </div>
       </div>
         
-      <div id="order-details-to-print">
+      <div id="order-details-to-print" className="space-y-8">
         <div className="grid gap-8 md:grid-cols-3">
             <div className="md:col-span-2">
             <Card>
@@ -279,6 +294,10 @@ export default function AdminOrderDetailsPage() {
             </Card>
             </div>
         </div>
+        
+        {order.shipdayOrderId && (
+            <ShipdayDetailsCard details={shipdayDetails} isLoading={isLoadingShipday} />
+        )}
       </div>
     </div>
   );

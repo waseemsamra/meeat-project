@@ -9,7 +9,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { getFirestore, Timestamp } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
-import { doc, getDoc, writeBatch, collection } from 'firebase/firestore';
+import { doc, getDoc, writeBatch, collection, updateDoc } from 'firebase/firestore';
 import type { Order, OrderItem, Address, Product, User } from '@/lib/types';
 import { createShipdayOrder } from './create-shipday-order';
 
@@ -152,8 +152,6 @@ const createOrderFlow = ai.defineFlow(
     await batch.commit();
 
     // 6. After successful order creation, trigger Shipday integration
-    // We do this after the commit to ensure the order exists before we try to dispatch it.
-    // We will not block the response to the user on this integration.
     createShipdayOrder({
         orderId: orderId,
         customerName: shippingAddress.fullName,
@@ -163,12 +161,19 @@ const createOrderFlow = ai.defineFlow(
         orderItemsText: orderItemsTextSummary.trim(),
         total: total,
     }).then(shipdayResult => {
-        if (!shipdayResult.success) {
+        if (!shipdayResult.success || !shipdayResult.shipdayOrderId) {
             console.error(`Failed to create Shipday order for orderId ${orderId}:`, shipdayResult.errorMessage);
             // Here you might want to add more robust error handling,
             // like saving the failed Shipday order to a separate collection for retry.
         } else {
             console.log(`Successfully created Shipday order ${shipdayResult.shipdayOrderId} for orderId ${orderId}`);
+            // Update the order with the shipdayOrderId
+            const orderDocRef = doc(firestore, `users/${userId}/orders`, orderId);
+            updateDoc(orderDocRef, {
+                shipdayOrderId: shipdayResult.shipdayOrderId
+            }).catch(updateError => {
+                console.error(`Failed to update order ${orderId} with shipdayOrderId:`, updateError);
+            });
         }
     });
 

@@ -11,3 +11,4 @@ import '@/ai/flows/generate-video-flow.ts';
 import '@/ai/flows/suggest-currency.ts';
 import '@/ai/flows/translate-product.ts';
 import '@/ai/flows/create-shipday-order.ts';
+import '@/ai/flows/get-shipday-order-details.ts';
