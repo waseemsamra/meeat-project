@@ -35,6 +35,7 @@ import printJS from 'print-js';
 import { getShipdayOrderDetails } from '@/ai/flows/get-shipday-order-details';
 import { ShipdayDetailsCard } from '@/components/admin/orders/ShipdayDetailsCard';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useToast } from '@/hooks/use-toast';
 
 function OrderDetailsSkeleton() {
   return (
@@ -62,6 +63,7 @@ export default function AdminOrderDetailsPage() {
   const fromCustomerReport = searchParams.get('from') === 'customer-report';
   const firestore = useFirestore();
   const { t } = useTranslation();
+  const { toast } = useToast();
 
   const orderRef = useMemo(() => {
     if (!firestore || !orderId || !userId) return null;
@@ -79,11 +81,29 @@ export default function AdminOrderDetailsPage() {
     if (order?.shipdayOrderId) {
         setIsLoadingShipday(true);
         getShipdayOrderDetails({ shipdayOrderId: order.shipdayOrderId })
-            .then(details => setShipdayDetails(details))
-            .catch(err => console.error("Failed to fetch shipday details", err))
+            .then(result => {
+                if (result.success && result.details) {
+                    setShipdayDetails(result.details);
+                } else {
+                    console.error("Failed to fetch shipday details:", result.errorMessage);
+                    toast({
+                        variant: 'destructive',
+                        title: 'Could not fetch delivery details',
+                        description: result.errorMessage || 'An error occurred while fetching data from Shipday.',
+                    });
+                }
+            })
+            .catch(err => {
+                console.error("Failed to execute getShipdayOrderDetails action:", err);
+                toast({
+                    variant: 'destructive',
+                    title: 'Action Failed',
+                    description: 'Could not communicate with the server to get delivery details.',
+                });
+            })
             .finally(() => setIsLoadingShipday(false));
     }
-  }, [order]);
+  }, [order, toast]);
 
   useEffect(() => {
     async function fetchOrderItems() {

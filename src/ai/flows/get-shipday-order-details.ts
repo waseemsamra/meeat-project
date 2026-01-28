@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview A server-side flow for fetching order details from Shipday.
@@ -17,7 +16,7 @@ export type GetShipdayOrderDetailsInput = z.infer<typeof GetShipdayOrderDetailsI
 
 // This schema is a representation of the expected data and may not match the Shipday API 1:1.
 // It's used to structure the output of our flow.
-const ShipdayOrderDetailsOutputSchema = z.object({
+const ShipdayOrderDetailsSchema = z.object({
     orderStatus: z.string().optional(),
     deliverTo: z.object({
         name: z.string().optional(),
@@ -53,16 +52,25 @@ const ShipdayOrderDetailsOutputSchema = z.object({
     pod: z.string().optional(),
 }).optional();
 
+const GetShipdayOrderDetailsOutputSchema = z.object({
+    success: z.boolean(),
+    details: ShipdayOrderDetailsSchema.optional(),
+    errorMessage: z.string().optional(),
+});
+export type GetShipdayOrderDetailsOutput = z.infer<typeof GetShipdayOrderDetailsOutputSchema>;
+
+
 const getShipdayOrderDetailsFlow = ai.defineFlow(
   {
     name: 'getShipdayOrderDetailsFlow',
     inputSchema: GetShipdayOrderDetailsInputSchema,
-    outputSchema: ShipdayOrderDetailsOutputSchema,
+    outputSchema: GetShipdayOrderDetailsOutputSchema,
   },
   async (input) => {
     const apiKey = process.env.SHIPDAY_API_KEY;
     if (!apiKey) {
-      throw new Error('Shipday API key is not configured.');
+      console.error('Shipday API key is not configured.');
+      return { success: false, errorMessage: 'Shipday API key is not configured.' };
     }
 
     try {
@@ -92,7 +100,7 @@ const getShipdayOrderDetailsFlow = ai.defineFlow(
             } catch(e) {
                 // It's not JSON, so we use the generic error message.
             }
-            throw new Error(errorMessage);
+            return { success: false, errorMessage };
         }
 
         const responseData = await response.json();
@@ -132,16 +140,16 @@ const getShipdayOrderDetailsFlow = ai.defineFlow(
             pod: dynamicData?.pod,
         };
         
-        return mappedData;
+        return { success: true, details: mappedData };
 
     } catch (error) {
         const message = error instanceof Error ? error.message : 'An unknown error occurred.';
         console.error('getShipdayOrderDetailsFlow Error:', message, error);
-        throw new Error(message);
+        return { success: false, errorMessage: message };
     }
   }
 );
 
-export async function getShipdayOrderDetails(input: GetShipdayOrderDetailsInput): Promise<ShipdayOrderDetails> {
+export async function getShipdayOrderDetails(input: GetShipdayOrderDetailsInput): Promise<GetShipdayOrderDetailsOutput> {
     return getShipdayOrderDetailsFlow(input);
 }
