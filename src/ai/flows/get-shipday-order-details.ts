@@ -66,7 +66,6 @@ const getShipdayOrderDetailsFlow = ai.defineFlow(
     }
 
     try {
-        // Fetching from the /status endpoint as per the provided sample response.
         const response = await fetch(`https://api.shipday.com/orders/${input.shipdayOrderId}/status`, {
             method: 'GET',
             headers: {
@@ -75,17 +74,31 @@ const getShipdayOrderDetailsFlow = ai.defineFlow(
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            console.error('Shipday API Error:', errorData);
-            throw new Error(errorData.message || `Failed to fetch Shipday order status. Status: ${response.status}`);
+            let errorBody = 'Could not read error response from Shipday.';
+            try {
+                 errorBody = await response.text(); 
+            } catch (e) {
+                // Ignore if we can't even get text
+            }
+
+            console.error('Shipday API Error:', `Status: ${response.status}`, errorBody);
+            
+            let errorMessage = `Failed to fetch Shipday order status. Status: ${response.status}`;
+            try {
+                const errorJson = JSON.parse(errorBody);
+                if (errorJson.message) {
+                    errorMessage = errorJson.message;
+                }
+            } catch(e) {
+                // It's not JSON, so we use the generic error message.
+            }
+            throw new Error(errorMessage);
         }
 
         const responseData = await response.json();
         
-        // Destructure the expected main objects from the response.
         const { fixedData, dynamicData } = responseData;
 
-        // Map the data to the ShipdayOrderDetails type, handling potential undefined values.
         const mappedData: ShipdayOrderDetails = {
             orderStatus: dynamicData?.orderStatus?.status,
             deliverTo: {
@@ -100,28 +113,23 @@ const getShipdayOrderDetailsFlow = ai.defineFlow(
                 phone: fixedData?.restaurant?.phoneNumber,
             },
             delivery: {
-                // Timeline from dynamicData
                 placementTime: dynamicData?.orderStatus?.startTime,
                 assignedTime: dynamicData?.orderStatus?.assignedTime,
                 eta: dynamicData?.estimatedTimeInMinutes,
                 actualPickupTime: dynamicData?.orderStatus?.pickedTime,
                 actualDeliveryTime: dynamicData?.orderStatus?.deliveryTime,
                 deliveryCompleteTime: dynamicData?.orderStatus?.deliveryTime,
-
-                // Driver from fixedData
                 driver: { name: fixedData?.carrier?.name },
-                
-                // These might come from a different endpoint, so they will likely be undefined here.
-                deliveryInstruction: undefined, 
-                requestedPickupTime: undefined,
-                requestedDeliveryTime: undefined,
-                orderCompletionTime: undefined,
+                deliveryInstruction: fixedData?.order?.deliveryInstruction, 
+                requestedPickupTime: fixedData?.order?.expectedDeliveryTime,
+                requestedDeliveryTime: fixedData?.order?.expectedDeliveryDate,
+                orderCompletionTime: fixedData?.order?.orderCompletionTimeInMinutes,
             },
             payment: {
-                paymentMethod: undefined,
+                paymentMethod: fixedData?.order?.paymentMethod,
             },
             deliveryLocation: dynamicData?.carrierLocation,
-            pod: undefined,
+            pod: dynamicData?.pod,
         };
         
         return mappedData;
