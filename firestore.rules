@@ -64,7 +64,6 @@ service cloud.firestore {
        * @description Rules for the /users/{userId}/orders/{orderId} subcollection.
        */
       match /orders/{orderId} {
-        allow get: if isUser(userId);
         allow read: if isOwner(userId);
         // Allow client-side creation for logged-in users and staff.
         // Allow server-side (unauthenticated) creation as well.
