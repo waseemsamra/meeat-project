@@ -82,7 +82,9 @@ const getShipdayOrderDetailsFlow = ai.defineFlow(
 
         const responseData = await response.json();
         
-        // Map the response to our schema.
+        // Correctly map the response, assuming timeline data is in `activityLog`
+        const activityLog = responseData.activityLog || {};
+
         const mappedData: ShipdayOrderDetails = {
             orderStatus: responseData.orderStatus,
             deliverTo: {
@@ -97,12 +99,12 @@ const getShipdayOrderDetailsFlow = ai.defineFlow(
                 phone: responseData.restaurantPhoneNumber,
             },
             delivery: {
-                placementTime: responseData.placementTime,
-                assignedTime: responseData.assignedTime,
+                placementTime: activityLog.placementTime,
+                assignedTime: activityLog.assignedTime,
                 eta: responseData.eta,
-                actualPickupTime: responseData.actualPickupTime,
-                actualDeliveryTime: responseData.actualDeliveryTime,
-                deliveryCompleteTime: responseData.deliveryCompleteTime,
+                actualPickupTime: activityLog.actualPickupTime,
+                actualDeliveryTime: activityLog.actualDeliveryTime,
+                deliveryCompleteTime: activityLog.deliveryCompleteTime,
                 driver: { name: responseData.assignedDriver?.name },
                 deliveryInstruction: responseData.deliveryInstruction,
                 requestedPickupTime: responseData.expectedPickupTime,
