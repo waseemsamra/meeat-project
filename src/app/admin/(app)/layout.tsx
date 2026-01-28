@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -298,7 +299,7 @@ export default function AdminLayout({
               )}
               <Separator className="my-4" />
               {settingsLinks.map((link) => (
-                  <Collapsible key={link.label} className="w-full group" defaultOpen={link.label === 'Settings'}>
+                  <Collapsible key={link.label} className="w-full group">
                       <CollapsibleTrigger asChild>
                           <Button
                           variant="ghost"
