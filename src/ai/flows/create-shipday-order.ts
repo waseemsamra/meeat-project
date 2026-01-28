@@ -54,7 +54,7 @@ const createShipdayOrderFlow = ai.defineFlow(
                 'Authorization': `Basic ${apiKey}`
             },
             body: JSON.stringify({
-                orderNumber: input.orderId,
+                orderNumber: `#${input.orderId.substring(0, 8)}`,
                 customerName: input.customerName,
                 customerAddress: input.customerAddress,
                 customerEmail: input.customerEmail,
