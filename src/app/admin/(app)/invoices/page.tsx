@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -15,7 +16,7 @@ import { collection, query, orderBy, collectionGroup, doc, updateDoc, writeBatch
 import type { Invoice, Order, User, Payment, PaymentType } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
-import { MoreHorizontal, Calendar as CalendarIcon } from 'lucide-react';
+import { MoreHorizontal, Calendar as CalendarIcon, Mail, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useMemo, useState } from 'react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -217,6 +218,28 @@ export default function AdminInvoicesPage() {
       setSelectedInvoice(null);
     }
   }
+  
+  const handleSendEmail = (invoiceId: string) => {
+    toast({
+      title: 'Action Triggered',
+      description: `Email for invoice #${invoiceId.substring(0, 8)} would be sent here.`,
+    });
+  };
+
+  const handleSendWhatsApp = (invoice: Invoice) => {
+    const customer = (invoice as any).customer;
+    if (!customer?.telephone) {
+      toast({
+        variant: 'destructive',
+        title: 'Missing Phone Number',
+        description: 'This customer does not have a phone number on file.',
+      });
+      return;
+    }
+    const message = `Hello ${customer.name}, your invoice #${invoice.id.substring(0, 8)} for ${currencySymbol}${invoice.totalAmount.toFixed(2)} is ready. You can view it here: ${window.location.origin}/admin/invoices/${invoice.id}`;
+    const whatsappUrl = `https://wa.me/${customer.telephone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
 
   const isLoading = isLoadingInvoices || isLoadingOrders || isLoadingUsers;
 
@@ -332,6 +355,14 @@ export default function AdminInvoicesPage() {
                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                 <DropdownMenuItem asChild>
                                     <Link href={`/admin/invoices/${invoice.id}`}>View Invoice</Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleSendEmail(invoice.id)}>
+                                    <Mail className="mr-2 h-4 w-4" />
+                                    <span>Send Email</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleSendWhatsApp(invoice)}>
+                                    <MessageSquare className="mr-2 h-4 w-4" />
+                                    <span>Send WhatsApp</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuLabel>Status</DropdownMenuLabel>
