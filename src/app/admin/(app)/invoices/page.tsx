@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -83,10 +82,7 @@ export default function AdminInvoicesPage() {
   const [visibleCount, setVisibleCount] = useState(20);
 
   const [statusFilter, setStatusFilter] = useState('all');
-  const [dateFilter, setDateFilter] = useState<DateRange | undefined>({
-    from: addDays(new Date(), -30),
-    to: new Date(),
-  });
+  const [dateFilter, setDateFilter] = useState<DateRange | undefined>();
 
   const invoicesQuery = useMemo(() => firestore ? query(collection(firestore, 'invoices'), orderBy('invoiceDate', 'desc')) : null, [firestore]);
   const { data: invoices, isLoading: isLoadingInvoices } = useCollection<Invoice>(invoicesQuery);
@@ -110,12 +106,14 @@ export default function AdminInvoicesPage() {
         }
 
         // Date filter
-        const invoiceDate = new Date(invoice.invoiceDate);
-        if (dateFilter?.from && invoiceDate < startOfDay(dateFilter.from)) {
-            return false;
-        }
-        if (dateFilter?.to && invoiceDate > endOfDay(dateFilter.to)) {
-            return false;
+        if (dateFilter?.from) {
+            const invoiceDate = new Date(invoice.invoiceDate);
+            if (invoiceDate < startOfDay(dateFilter.from)) {
+                return false;
+            }
+            if (dateFilter.to && invoiceDate > endOfDay(dateFilter.to)) {
+                return false;
+            }
         }
         
         return true;
