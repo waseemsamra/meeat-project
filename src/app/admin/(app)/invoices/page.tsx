@@ -16,8 +16,8 @@ import { collection, query, orderBy, collectionGroup, doc, updateDoc, writeBatch
 import type { Invoice, Order, User, Payment, PaymentType } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
-import { MoreHorizontal } from 'lucide-react';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { MoreHorizontal, Calendar as CalendarIcon } from 'lucide-react';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useMemo, useState } from 'react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
@@ -44,7 +44,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { useSettings } from '@/hooks/useSettings';
-
+import { DateRange } from 'react-day-picker';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { format, addDays, startOfDay, endOfDay } from 'date-fns';
+import { Calendar } from '@/components/ui/calendar';
 
 function InvoiceRowSkeleton() {
   return (
@@ -61,6 +65,8 @@ function InvoiceRowSkeleton() {
   );
 }
 
+const INVOICE_STATUSES: Invoice['status'][] = ['draft', 'sent', 'paid', 'overdue', 'unpaid'];
+
 export default function AdminInvoicesPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -76,6 +82,11 @@ export default function AdminInvoicesPage() {
   const [chequeNumber, setChequeNumber] = useState('');
   const [visibleCount, setVisibleCount] = useState(20);
 
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState<DateRange | undefined>({
+    from: addDays(new Date(), -30),
+    to: new Date(),
+  });
 
   const invoicesQuery = useMemo(() => firestore ? query(collection(firestore, 'invoices'), orderBy('invoiceDate', 'desc')) : null, [firestore]);
   const { data: invoices, isLoading: isLoadingInvoices } = useCollection<Invoice>(invoicesQuery);
@@ -92,14 +103,32 @@ export default function AdminInvoicesPage() {
     const orderMap = new Map(orders.map(o => [o.id, o]));
     const userMap = new Map(users.map(u => [u.id, u]));
 
-    const enriched = invoices.map(invoice => {
+    const filtered = invoices.filter(invoice => {
+        // Status filter
+        if (statusFilter !== 'all' && invoice.status !== statusFilter) {
+            return false;
+        }
+
+        // Date filter
+        const invoiceDate = new Date(invoice.invoiceDate);
+        if (dateFilter?.from && invoiceDate < startOfDay(dateFilter.from)) {
+            return false;
+        }
+        if (dateFilter?.to && invoiceDate > endOfDay(dateFilter.to)) {
+            return false;
+        }
+        
+        return true;
+    });
+
+    const enriched = filtered.map(invoice => {
       const order = orderMap.get(invoice.orderId);
       const customer = order ? userMap.get(order.userId) : undefined;
       return { ...invoice, order, customer };
     });
-    // Sort client-side
+    
     return enriched.sort((a,b) => new Date(b.invoiceDate).getTime() - new Date(a.invoiceDate).getTime());
-  }, [invoices, orders, users]);
+  }, [invoices, orders, users, statusFilter, dateFilter]);
   
   const handleOpenModal = (invoice: Invoice) => {
     setSelectedInvoice(invoice);
@@ -201,7 +230,59 @@ export default function AdminInvoicesPage() {
             <p className="text-muted-foreground">Manage all order invoices.</p>
         </div>
       <Card>
-        <CardContent className="pt-6">
+        <CardHeader>
+          <CardTitle>Filters</CardTitle>
+          <CardDescription>Filter invoices by status and date range.</CardDescription>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-4">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                {INVOICE_STATUSES.map(s => (
+                  <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  id="date"
+                  variant={"outline"}
+                  className={cn(
+                    "w-full sm:w-[300px] justify-start text-left font-normal",
+                    !dateFilter && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateFilter?.from ? (
+                    dateFilter.to ? (
+                      <>
+                        {format(dateFilter.from, "LLL dd, y")} - {format(dateFilter.to, "LLL dd, y")}
+                      </>
+                    ) : (
+                      format(dateFilter.from, "LLL dd, y")
+                    )
+                  ) : (
+                    <span>Pick a date range</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={dateFilter?.from}
+                  selected={dateFilter}
+                  onSelect={setDateFilter}
+                  numberOfMonths={2}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
           <Table>
             <TableHeader>
               <TableRow>
