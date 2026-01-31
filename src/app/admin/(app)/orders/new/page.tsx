@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -24,6 +22,7 @@ import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Form } from '@/components/ui/form';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const lineItemSchema = z.object({
   inventoryLotId: z.string().min(1, 'Lot is required.'),
@@ -52,6 +51,7 @@ export default function NewSalesOrderPage() {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const { user: adminUser } = useUser();
+  const { t } = useTranslation();
 
   const form = useForm<SalesOrderFormValues>({
     resolver: zodResolver(salesOrderSchema),
@@ -106,7 +106,7 @@ export default function NewSalesOrderPage() {
     const product = products?.find(p => p.id === lot?.productId);
     if (lot && product) {
       form.setValue(`lineItems.${index}.productId`, product.id);
-      form.setValue(`lineItems.${index}.description`, product.name);
+      form.setValue(`lineItems.${index}.description`, t(product.name));
       form.setValue(`lineItems.${index}.unit`, lot.unit);
       form.setValue(`lineItems.${index}.unitPrice`, product.price); 
     }
@@ -300,7 +300,7 @@ export default function NewSalesOrderPage() {
                                                     <SelectContent>
                                                         {inventoryLots?.map(l => {
                                                             const p = products?.find(prod => prod.id === l.productId);
-                                                            return <SelectItem key={l.id} value={l.id}>{p?.name} - {l.unit} (Lot: {l.id.substring(0,6)})</SelectItem>
+                                                            return <SelectItem key={l.id} value={l.id}>{t(p?.name)} - {l.unit} (Lot: {l.id.substring(0,6)})</SelectItem>
                                                         })}
                                                     </SelectContent>
                                                 </Select>
