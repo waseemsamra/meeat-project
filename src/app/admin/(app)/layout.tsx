@@ -23,6 +23,7 @@ import {
   ClipboardList,
   Star,
   BarChart,
+  Ruler,
 } from 'lucide-react';
 
 import {
@@ -162,6 +163,7 @@ const settingsLinks = [
         { href: '/admin/settings/rubs', label: 'Rubs' },
         { href: '/admin/settings/temperatures', label: 'Temperatures' },
         { href: '/admin/settings/butchery-calculator', label: 'Butchery Calculator', icon: Calculator },
+        { href: '/admin/settings/measuring-guide', label: 'Measuring Guide', icon: Ruler },
     ]
   }
 ];

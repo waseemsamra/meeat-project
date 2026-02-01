@@ -847,6 +847,16 @@
         "link": { "type": "string", "format": "uri" }
       },
       "required": ["id", "order", "name", "imageUrl", "link"]
+    },
+    "MeasuringGuideSettings": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MeasuringGuideSettings",
+      "description": "Settings for the meat measuring guide.",
+      "type": "object",
+      "properties": {
+        "imageUrl": { "type": "string", "description": "Path to the measuring guide image." },
+        "description": { "$ref": "#/entities/LocalizedString" }
+      }
     }
   },
   "auth": {
@@ -1130,6 +1140,15 @@
             "schema": { "$ref": "#/entities/PromiseSettings" },
             "description": "Settings for the 'Our Promise' section on the homepage.",
             "params": []
+        }
+      },
+      {
+        "path": "/settings/measuringGuide",
+        "definition": {
+          "entityName": "MeasuringGuideSettings",
+          "schema": { "$ref": "#/entities/MeasuringGuideSettings" },
+          "description": "Stores settings for the meat measuring guide.",
+          "params": []
         }
       },
       {

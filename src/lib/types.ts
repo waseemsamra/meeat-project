@@ -392,4 +392,9 @@ export interface ShipdayOrderDetails {
     };
     pod?: string;
 }
+
+export interface MeasuringGuideSettings {
+    imageUrl?: string | null;
+    description?: LocalizedString | null;
+}
     
