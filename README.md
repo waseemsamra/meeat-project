@@ -20,7 +20,7 @@ git push -u origin main
 Before your Android app or web app can access the latest structure and security, you must deploy your configuration:
 
 1.  **Login to Firebase**: `npx firebase login`
-2.  **Deploy Security Rules & Storage Rules**: `npm run firebase:deploy:rules`
+2.  **Deploy Security Rules**: `npm run firebase:deploy:rules`
 3.  **Deploy Firestore Indexes**: `npm run firebase:deploy:indexes`
 
 ---
@@ -65,20 +65,29 @@ If your app cannot access data, check the following:
 - **Sync Project**: Always "Sync Project with Gradle Files" after adding the JSON file.
 - **Internet Permission**: Ensure `<uses-permission android:name="android.permission.INTERNET" />` is in your `AndroidManifest.xml`.
 
-### 4. Fetching Data (Kotlin Example)
-Your Android app should use the same collection names as defined in `docs/backend.json`.
+### 4. Fetching Data (Kotlin Examples)
 
-**Fetch Products**:
+**Fetch Featured Products**:
 ```kotlin
 val db = Firebase.firestore
 db.collection("products")
+    .whereEqualTo("featured", true)
     .get()
-    .addOnSuccessListener { result ->
-        for (document in result) {
-            val name = document.get("name") as? Map<*, *>
-            val enName = name?.get("en")
-            println("${document.id} => $enName")
+    .addOnSuccessListener { documents ->
+        for (document in documents) {
+            Log.d("Firestore", "${document.id} => ${document.data}")
         }
+    }
+```
+
+**Fetch Today's Deals**:
+```kotlin
+val db = Firebase.firestore
+db.collection("products")
+    .whereEqualTo("deal", true)
+    .get()
+    .addOnSuccessListener { documents ->
+        // Handle deals
     }
 ```
 
