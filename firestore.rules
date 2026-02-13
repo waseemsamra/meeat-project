@@ -40,13 +40,11 @@ service cloud.firestore {
 
     /**
      * @description Rules for the 'orders' collection group.
-     * Allows admins and staff to list all orders across all users for the dashboard.
+     * Allows admins and staff to list all orders across all users for the dashboard and mobile back-office.
      * This also requires a collection group index.
      */
     match /{path=**}/orders/{orderId} {
       allow read: if hasRole('ADMIN') || hasRole('STAFF');
-      // This rule grants admins full write access to any order document in any user's subcollection.
-      // This is necessary for deletion and status updates from the admin panel.
       allow write, update, delete: if hasRole('ADMIN');
     }
 
@@ -62,6 +60,7 @@ service cloud.firestore {
 
       /**
        * @description Rules for the /users/{userId}/orders/{orderId} subcollection.
+       * Mobile app users can fetch and list their own orders.
        */
       match /orders/{orderId} {
         allow read: if isOwner(userId);
@@ -69,7 +68,6 @@ service cloud.firestore {
         // Allow server-side (unauthenticated) creation as well.
         allow create: if isUser(userId) || hasRole('STAFF') || hasRole('ADMIN') || request.auth == null;
         allow update: if isOwner(userId);
-        // Explicitly allow ADMIN to delete orders from the subcollection path as well.
         allow delete: if hasRole('ADMIN');
       }
 
@@ -89,17 +87,22 @@ service cloud.firestore {
       allow write: if hasRole('ADMIN');
     }
     
+    /**
+     * @description Rules for /orders_items/{orderItemId}.
+     * Supports Android app fetching individual items if needed.
+     */
     match /orders_items/{orderItemId} {
-      // This rule is critical. It allows a user to create order items when placing an order.
-      // Allow server-side creation (unauthenticated) as well.
+      // Allow the owner of the order or an admin to read items.
+      // We check userId on the document for Authorization Independence.
+      allow read: if isSignedIn() && (isUser(resource.data.userId) || hasRole('ADMIN'));
+      // Allow creation during checkout.
       allow create: if isSignedIn() || request.auth == null;
-      // This rule allows an admin to delete order items,
-      // which is necessary when deleting an order that contains them.
       allow delete: if hasRole('ADMIN');
     }
 
     /**
      * @description Rules for the /products/{productId} collection.
+     * Publicly readable for both web and mobile storefronts.
      */
     match /products/{productId} {
       allow get, list: if true;
@@ -208,7 +211,6 @@ service cloud.firestore {
       allow write: if hasRole('ADMIN') || hasRole('CONTENT_MANAGER');
     }
     
-    // Force update by adding a comment
     match /exploreRangeItems/{itemId} {
       allow get, list: if true;
       allow write: if hasRole('ADMIN') || hasRole('CONTENT_MANAGER');

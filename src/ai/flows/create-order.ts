@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A server-side flow for creating customer orders and dispatching to Shipday.
@@ -102,6 +103,7 @@ const createOrderFlow = ai.defineFlow(
         const newOrderItem: Omit<OrderItem, 'product'> = {
             id: orderItemId,
             orderId: orderId,
+            userId: userId, // Added for mobile security and parity
             productId: cartItem.isBox ? cartItem.id : regularItem!.product.id,
             quantity: cartItem.quantity,
             price: cartItem.price,
