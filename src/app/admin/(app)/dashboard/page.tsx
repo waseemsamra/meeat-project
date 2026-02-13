@@ -17,7 +17,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { DollarSign, ShoppingCart, Users, BarChart } from 'lucide-react';
+import { DollarSign, ShoppingCart, Users, BarChart, AlertTriangle } from 'lucide-react';
 import { useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
 import {
   collection,
@@ -26,7 +26,7 @@ import {
   collectionGroup,
   FirestoreError,
 } from 'firebase/firestore';
-import type { Order, User } from '@/lib/types';
+import type { Order, User, Product, InventoryLot } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   LineChart,
@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/chart";
 import { format, parseISO } from 'date-fns';
 import { useSettings } from '@/hooks/useSettings';
+import { useTranslation } from '@/hooks/useTranslation';
 
 function StatCardSkeleton() {
   return (
@@ -94,62 +95,63 @@ export default function AdminDashboard() {
   const firestore = useFirestore();
   const { defaultCurrency } = useSettings();
   const currencySymbol = defaultCurrency?.symbol || '$';
+  const { t } = useTranslation();
 
   const [users, setUsers] = useState<User[] | null>(null);
   const [orders, setOrders] = useState<Order[] | null>(null);
+  const [products, setProducts] = useState<Product[] | null>(null);
+  const [lots, setLots] = useState<InventoryLot[] | null>(null);
+  
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [isLoadingOrders, setIsLoadingOrders] = useState(true);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+  const [isLoadingLots, setIsLoadingLots] = useState(true);
 
   useEffect(() => {
     if (!firestore) return;
 
-    const usersQuery = collection(firestore, 'users');
-    const unsubscribeUsers = onSnapshot(
-      usersQuery,
-      (snapshot) => {
-        const usersData = snapshot.docs.map(
-          (doc) => ({ ...doc.data(), id: doc.id } as User)
-        );
-        setUsers(usersData);
-        setIsLoadingUsers(false);
-      },
-      async (err: FirestoreError) => {
-        console.error('Error fetching users:', err);
-        const contextualError = await FirestorePermissionError.create({
-          path: usersQuery.path,
-          operation: 'list',
-        });
-        errorEmitter.emit('permission-error', contextualError);
-        setIsLoadingUsers(false);
-      }
-    );
+    const unsubscribeUsers = onSnapshot(collection(firestore, 'users'), (snapshot) => {
+      setUsers(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User)));
+      setIsLoadingUsers(false);
+    });
 
-    const allOrdersQuery = query(collectionGroup(firestore, 'orders'));
-    const unsubscribeOrders = onSnapshot(
-      allOrdersQuery,
-      (snapshot) => {
-        const ordersData = snapshot.docs.map(
-          (doc) => ({ ...doc.data(), id: doc.id } as Order)
-        );
-        setOrders(ordersData);
-        setIsLoadingOrders(false);
-      },
-      async (err: FirestoreError) => {
-        console.error('Error fetching orders:', err);
-        const contextualError = await FirestorePermissionError.create({
-          path: 'orders',
-          operation: 'list',
-        });
-        errorEmitter.emit('permission-error', contextualError);
-        setIsLoadingOrders(false);
-      }
-    );
+    const unsubscribeOrders = onSnapshot(query(collectionGroup(firestore, 'orders')), (snapshot) => {
+      setOrders(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Order)));
+      setIsLoadingOrders(false);
+    });
+
+    const unsubscribeProducts = onSnapshot(collection(firestore, 'products'), (snapshot) => {
+      setProducts(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Product)));
+      setIsLoadingProducts(false);
+    });
+
+    const unsubscribeLots = onSnapshot(collection(firestore, 'inventoryLots'), (snapshot) => {
+      setLots(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as InventoryLot)));
+      setIsLoadingLots(false);
+    });
 
     return () => {
       unsubscribeUsers();
       unsubscribeOrders();
+      unsubscribeProducts();
+      unsubscribeLots();
     };
   }, [firestore]);
+
+  const lowStockAlerts = useMemo(() => {
+    if (!products || !lots) return [];
+    
+    const stockMap = new Map<string, number>();
+    lots.forEach(lot => {
+        stockMap.set(lot.productId, (stockMap.get(lot.productId) || 0) + lot.quantity);
+    });
+
+    return products.filter(p => (stockMap.get(p.id) || 0) < 10).map(p => ({
+        id: p.id,
+        name: t(p.name),
+        quantity: stockMap.get(p.id) || 0,
+    }));
+  }, [products, lots, t]);
 
   const sortedOrders = useMemo(() => {
     if (!orders) return [];
@@ -169,25 +171,21 @@ export default function AdminDashboard() {
         monthlyRevenue[month] = (monthlyRevenue[month] || 0) + order.total;
     });
 
-    const data = Object.keys(monthlyRevenue)
+    return Object.keys(monthlyRevenue)
         .map(month => ({
             name: month.split(' ')[0],
             revenue: monthlyRevenue[month],
-            // Create a sortable date key
             sortKey: new Date(month.split(' ')[1], ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].indexOf(month.split(' ')[0]))
         }))
         .sort((a,b) => a.sortKey.getTime() - b.sortKey.getTime());
-    
-    return data;
   }, [orders]);
 
 
-  const isLoading = isLoadingUsers || isLoadingOrders;
+  const isLoading = isLoadingUsers || isLoadingOrders || isLoadingProducts || isLoadingLots;
 
   const totalRevenue = orders?.reduce((acc, order) => acc + order.total, 0) ?? 0;
   const totalOrders = orders?.length ?? 0;
-  const totalCustomers =
-    users?.filter((u) => u.roles?.includes('CUSTOMER')).length ?? 0;
+  const totalCustomers = users?.filter((u) => u.roles?.includes('CUSTOMER')).length ?? 0;
   const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
   
   const chartConfig = {
@@ -213,21 +211,14 @@ export default function AdminDashboard() {
           <>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Total Revenue
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {currencySymbol}{totalRevenue.toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+                  {currencySymbol}{totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  +20.1% from last month
-                </p>
+                <p className="text-xs text-muted-foreground">+20.1% from last month</p>
               </CardContent>
             </Card>
             <Card>
@@ -237,23 +228,17 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">+{totalOrders}</div>
-                <p className="text-xs text-muted-foreground">
-                  +180.1% from last month
-                </p>
+                <p className="text-xs text-muted-foreground">+180.1% from last month</p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Total Customers
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">+{totalCustomers}</div>
-                <p className="text-xs text-muted-foreground">
-                  +19% from last month
-                </p>
+                <p className="text-xs text-muted-foreground">+19% from last month</p>
               </CardContent>
             </Card>
             <Card>
@@ -263,22 +248,17 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                  <div className="text-2xl font-bold">
-                    {currencySymbol}{averageOrderValue.toLocaleString('en-US', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                    })}
+                    {currencySymbol}{averageOrderValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  +2.5% from last month
-                </p>
+                <p className="text-xs text-muted-foreground">+2.5% from last month</p>
               </CardContent>
             </Card>
           </>
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
            {isLoading ? <ChartSkeleton /> : (
             <Card>
               <CardHeader>
@@ -289,86 +269,87 @@ export default function AdminDashboard() {
                   <ResponsiveContainer>
                     <LineChart data={chartData}>
                       <CartesianGrid vertical={false} />
-                      <XAxis
-                        dataKey="name"
-                        tickLine={false}
-                        axisLine={false}
-                        tickMargin={8}
-                      />
-                      <YAxis
-                        tickFormatter={(value) => `${currencySymbol}${value / 1000}k`}
-                        tickLine={false}
-                        axisLine={false}
-                      />
-                       <ChartTooltip
-                        cursor={false}
-                        content={<ChartTooltipContent indicator="dot" />}
-                      />
-                      <Line
-                        dataKey="revenue"
-                        type="monotone"
-                        stroke="hsl(var(--primary))"
-                        strokeWidth={2}
-                        dot={false}
-                      />
+                      <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} />
+                      <YAxis tickFormatter={(value) => `${currencySymbol}${value / 1000}k`} tickLine={false} axisLine={false} />
+                       <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
+                      <Line dataKey="revenue" type="monotone" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
                 </ChartContainer>
               </CardContent>
             </Card>
            )}
-        </div>
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Recent Orders</h2>
-          <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading && <RecentOrdersSkeleton />}
-                {!isLoading &&
-                  recentOrders?.map((order) => {
-                    const customer = users?.find((u) => u.id === order.userId);
-                    return (
-                      <TableRow key={order.id}>
-                        <TableCell>
-                          <div className="font-medium">{customer?.name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {customer?.email}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              order.fulfillmentStatus === 'shipped'
-                                ? 'default'
-                                : 'secondary'
-                            }
-                          >
-                            {order.fulfillmentStatus}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {currencySymbol}{order.total.toFixed(2)}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                {!isLoading && recentOrders.length === 0 && (
+
+          <div>
+            <h2 className="text-2xl font-semibold mb-4">Recent Orders</h2>
+            <Card>
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center h-24">
-                      No recent orders.
-                    </TableCell>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </Card>
+                </TableHeader>
+                <TableBody>
+                  {isLoading && <RecentOrdersSkeleton />}
+                  {!isLoading &&
+                    recentOrders?.map((order) => {
+                      const customer = users?.find((u) => u.id === order.userId);
+                      return (
+                        <TableRow key={order.id}>
+                          <TableCell>
+                            <div className="font-medium">{customer?.name || 'Guest'}</div>
+                            <div className="text-sm text-muted-foreground">{customer?.email}</div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={order.fulfillmentStatus === 'delivered' ? 'default' : 'secondary'}>{order.fulfillmentStatus}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right">{currencySymbol}{order.total.toFixed(2)}</TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  {!isLoading && recentOrders.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center h-24">No recent orders.</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </Card>
+          </div>
+        </div>
+
+        <div className="space-y-8">
+            <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+                <AlertTriangle className="text-destructive h-6 w-6" /> Low Stock Alerts
+            </h2>
+            <Card className="border-destructive/20 bg-destructive/5">
+                <CardContent className="pt-6">
+                    {isLoading ? (
+                        <div className="space-y-4">
+                            <Skeleton className="h-12 w-full" />
+                            <Skeleton className="h-12 w-full" />
+                        </div>
+                    ) : lowStockAlerts.length > 0 ? (
+                        <div className="space-y-4">
+                            {lowStockAlerts.map(alert => (
+                                <div key={alert.id} className="flex items-center justify-between border-b pb-2 last:border-0">
+                                    <div>
+                                        <p className="font-semibold text-sm">{alert.name}</p>
+                                        <p className="text-xs text-muted-foreground">Qty Remaining: {alert.quantity}</p>
+                                    </div>
+                                    <Badge variant="destructive">Low Stock</Badge>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-8">
+                            <p className="text-sm text-muted-foreground">All stock levels are healthy.</p>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
         </div>
       </div>
     </div>

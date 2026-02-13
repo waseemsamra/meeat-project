@@ -11,7 +11,7 @@ export function MeeatLogo(props: SVGProps<SVGSVGElement>) {
       viewBox="0 0 160 160"
       {...rest}
     >
-      <rect width="150" height="150" fill="#a03c31" rx="10" ry="10" />
+      <rect width="150" height="150" fill="hsl(16, 53%, 33%)" rx="10" ry="10" />
       <text
         x="20"
         y="65"
@@ -37,7 +37,8 @@ export function MeeatLogo(props: SVGProps<SVGSVGElement>) {
         y="145"
         fontFamily="sans-serif"
         fontSize="12"
-        fill="#a03c31"
+        fill="white"
+        fillOpacity="0.8"
         fontWeight="bold"
         textAnchor="end"
       >
