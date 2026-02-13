@@ -58,7 +58,14 @@ To connect your Kotlin Android app to the same data source, follow these steps:
   }
   ```
 
-### 3. Fetching Data (Kotlin Example)
+### 3. Troubleshooting Android Access
+If your app cannot access data, check the following:
+- **SHA-1 Fingerprint**: Go to Project Settings in the Firebase Console and add your debug (and release) SHA-1 certificate fingerprints. This is required for many Firebase features.
+- **Package Name**: Ensure the package name in `google-services.json` exactly matches your `applicationId` in `build.gradle`.
+- **Sync Project**: Always "Sync Project with Gradle Files" after adding the JSON file.
+- **Internet Permission**: Ensure `<uses-permission android:name="android.permission.INTERNET" />` is in your `AndroidManifest.xml`.
+
+### 4. Fetching Data (Kotlin Example)
 Your Android app should use the same collection names as defined in `docs/backend.json`.
 
 **Fetch Products**:
@@ -76,7 +83,7 @@ db.collection("products")
 ```
 
 **Fetch User Orders (Collection Group)**:
-Ensure your user is signed in first. This uses the composite index we deployed.
+Ensure your user is signed in first.
 ```kotlin
 val db = Firebase.firestore
 db.collectionGroup("orders")
