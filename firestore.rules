@@ -40,11 +40,11 @@ service cloud.firestore {
 
     /**
      * @description Rules for the 'orders' collection group.
-     * Allows admins and staff to list all orders across all users for the dashboard and mobile back-office.
-     * This also requires a collection group index.
+     * Allows admins and staff to list all orders.
+     * Allows users to list their own orders if they query with a userId filter.
      */
     match /{path=**}/orders/{orderId} {
-      allow read: if hasRole('ADMIN') || hasRole('STAFF');
+      allow read: if (isSignedIn() && (request.auth.uid == resource.data.userId)) || hasRole('ADMIN') || hasRole('STAFF');
       allow write, update, delete: if hasRole('ADMIN');
     }
 
@@ -94,7 +94,7 @@ service cloud.firestore {
     match /orders_items/{orderItemId} {
       // Allow the owner of the order or an admin to read items.
       // We check userId on the document for Authorization Independence.
-      allow read: if isSignedIn() && (isUser(resource.data.userId) || hasRole('ADMIN'));
+      allow read: if isSignedIn() && (request.auth.uid == resource.data.userId || hasRole('ADMIN'));
       // Allow creation during checkout.
       allow create: if isSignedIn() || request.auth == null;
       allow delete: if hasRole('ADMIN');
