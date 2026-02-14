@@ -15,17 +15,17 @@ git remote add origin https://github.com/waseemsamra/meeat-project.git
 git push -u origin main
 ```
 
-## Firebase Deployment
+## 🚀 Firebase Deployment (CRITICAL)
 
-Before your Android app or web app can access the latest structure and security, you must deploy your configuration:
+Before your Android app or web app can access the latest structure and security, you **must** deploy your configuration:
 
 1.  **Login to Firebase**: `npx firebase login`
-2.  **Deploy Security Rules**: `npm run firebase:deploy:rules`
+2.  **Deploy Firestore Rules**: `npm run firebase:deploy:rules`
 3.  **Deploy Firestore Indexes**: `npm run firebase:deploy:indexes`
 
 ---
 
-## Android Studio Configuration
+## 📱 Android Studio Configuration
 
 To connect your Kotlin Android app to the same data source, follow these steps:
 
@@ -80,15 +80,16 @@ Glide.with(context)
     .into(imageView)
 ```
 
-### 4. Troubleshooting Android Access
-If your app cannot access data or images, check the following:
-- **Internet Permission**: Ensure this is in your `AndroidManifest.xml`:
-  ```xml
-  <uses-permission android:name="android.permission.INTERNET" />
-  ```
-- **SHA-1 Fingerprint**: Go to Project Settings in the Firebase Console and add your debug (and release) SHA-1 certificate fingerprints. This is required for many Firebase features.
-- **Package Name**: Ensure the package name in `google-services.json` exactly matches your `applicationId` in `build.gradle`.
-- **Sync Project**: Always "Sync Project with Gradle Files" after adding the JSON file.
+### 4. 🔍 Checklist for Data Visibility
+If your app is not showing data, check these 5 things:
+1.  **Deploy Check**: Did you run `npm run firebase:deploy:rules`? The "allow all" rules must be live on the server.
+2.  **Internet Permission**: Ensure this is in your `AndroidManifest.xml`:
+    ```xml
+    <uses-permission android:name="android.permission.INTERNET" />
+    ```
+3.  **SHA-1 Fingerprint**: Go to Project Settings in the Firebase Console and add your debug SHA-1 certificate fingerprint. This is **mandatory** for communication.
+4.  **Package Name Match**: Ensure the package name in `google-services.json` exactly matches your `applicationId` in `build.gradle`.
+5.  **Sync Project**: Always "Sync Project with Gradle Files" in Android Studio after adding the JSON file.
 
 ### 5. Fetching Data (Kotlin Examples)
 
