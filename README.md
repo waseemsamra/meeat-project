@@ -20,114 +20,52 @@ git push -u origin main
 Before your Android app or web app can access the latest structure and security, you **must** deploy your configuration:
 
 1.  **Login to Firebase**: `npx firebase login`
-2.  **Deploy Firestore Rules**: `npm run firebase:deploy:rules`
-3.  **Deploy Firestore Indexes**: `npm run firebase:deploy:indexes`
+2.  **Deploy Everything**: `npm run firebase:deploy` (Deploys Rules, Indexes, and Storage)
 
 ---
 
 ## 📱 Android Studio Configuration
 
-To connect your Kotlin Android app to the same data source, follow these steps:
-
 ### 1. Firebase Console Setup
 - Go to the [Firebase Console](https://console.firebase.google.com/).
 - Select your project: `studio-7561999182-35b19`.
-- If you haven't added your Android app yet, click **Add App** > **Android**.
 - Register the app with your Android Package Name (e.g., `com.meeat.app`).
-- **Download `google-services.json`**.
+- **Download `google-services.json`** and place it in `app/`.
 
-### 2. Android Project Setup
-- Copy `google-services.json` into your Android project's `app/` folder.
-- **Project-level `build.gradle`** (or `build.gradle.kts`):
-  ```kotlin
-  plugins {
-    id("com.google.gms.google-services") version "4.4.2" apply false
-  }
-  ```
-- **App-level `build.gradle`** (or `build.gradle.kts`):
-  ```kotlin
-  plugins {
-    id("com.android.application")
-    id("com.google.gms.google-services")
-  }
+### 2. ⚠️ BREAKING CHANGE: Handling Localized Data
+We have enabled multi-language support. Fields like `name` and `description` are no longer strings; they are Maps.
 
-  dependencies {
-    implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
-    implementation("com.google.firebase:firebase-firestore-ktx")
-    implementation("com.google.firebase:firebase-auth-ktx")
-    // Highly recommended for image loading
-    implementation("com.github.bumptech.glide:glide:4.16.0")
-  }
-  ```
+**Kotlin Data Model Example**:
+```kotlin
+data class Product(
+    val id: String = "",
+    val name: Map<String, String> = emptyMap(),
+    val description: Map<String, String> = emptyMap(),
+    val price: Double = 0.0,
+    val images: List<String> = emptyList()
+) {
+    // Helper to get English name
+    fun getEnName(): String = name["en"] ?: ""
+}
+```
 
-### 3. Handling AWS S3 Images (AWS Pics)
-The database stores image paths relative to the bucket root (e.g., `/products/steak.jpg`). You must prepend the base URL in your Android code:
-
+### 3. Handling AWS S3 Images
+The database stores relative paths. Prepend the base URL in your UI code:
 **Base URL**: `https://primemeeat.s3.us-east-1.amazonaws.com`
 
-**Kotlin Helper Example**:
 ```kotlin
 fun getImageUrl(path: String?): String {
     val baseUrl = "https://primemeeat.s3.us-east-1.amazonaws.com"
-    if (path == null) return "https://picsum.photos/seed/placeholder/600/400"
-    if (path.startsWith("http")) return path
+    if (path.isNullOrEmpty()) return "https://picsum.photos/seed/placeholder/600/400"
     return if (path.startsWith("/")) "$baseUrl$path" else "$baseUrl/$path"
 }
-
-// Usage with Glide:
-Glide.with(context)
-    .load(getImageUrl(product.images[0]))
-    .into(imageView)
 ```
 
 ### 4. 🔍 Checklist for Data Visibility
-If your app is not showing data, check these 5 things:
-1.  **Deploy Check**: Did you run `npm run firebase:deploy:rules`? The "allow all" rules must be live on the server.
-2.  **Internet Permission**: Ensure this is in your `AndroidManifest.xml`:
-    ```xml
-    <uses-permission android:name="android.permission.INTERNET" />
-    ```
-3.  **SHA-1 Fingerprint**: Go to Project Settings in the Firebase Console and add your debug SHA-1 certificate fingerprint. This is **mandatory** for communication.
-4.  **Package Name Match**: Ensure the package name in `google-services.json` exactly matches your `applicationId` in `build.gradle`.
-5.  **Sync Project**: Always "Sync Project with Gradle Files" in Android Studio after adding the JSON file.
-
-### 5. Fetching Data (Kotlin Examples)
-
-**Fetch Featured Products**:
-```kotlin
-val db = Firebase.firestore
-db.collection("products")
-    .whereEqualTo("featured", true)
-    .get()
-    .addOnSuccessListener { documents ->
-        // Handle featured products
-    }
-```
-
-**Fetch Today's Deals**:
-```kotlin
-val db = Firebase.firestore
-db.collection("products")
-    .whereEqualTo("deal", true)
-    .get()
-    .addOnSuccessListener { documents ->
-        // Handle deals
-    }
-```
-
-**Fetch User Orders (Collection Group)**:
-Ensure your user is signed in first.
-```kotlin
-val db = Firebase.firestore
-db.collectionGroup("orders")
-    .whereEqualTo("userId", Firebase.auth.currentUser?.uid)
-    .orderBy("createdAt", Query.Direction.DESCENDING)
-    .get()
-    .addOnSuccessListener { documents ->
-        // Loop through and display the user's order history
-    }
-```
+1.  **Deploy Check**: Did you run `npm run firebase:deploy`?
+2.  **SHA-1 Fingerprint**: Add your debug SHA-1 to the Firebase Console. This is mandatory for Firestore and Auth.
+3.  **Data Casting**: Ensure you are not casting `name` or `description` directly to `String`. Cast them to `Map<String, String>`.
 
 ## Architecture Notes
 - **Shared Data**: Both platforms use the same Firestore root collections (`/products`, `/categories`, etc.).
-- **Authorization Independence**: The `userId` field is denormalized into order items and orders to allow mobile clients to perform fast, secure queries without complex server-side joins.
+- **Authorization Independence**: The `userId` field is denormalized into order items and orders to allow mobile clients to perform fast, secure queries.

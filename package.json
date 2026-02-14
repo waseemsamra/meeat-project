@@ -11,9 +11,9 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "firebase:login": "firebase login",
+    "firebase:deploy": "firebase deploy",
     "firebase:deploy:rules": "firebase deploy --only firestore:rules",
-    "firebase:deploy:indexes": "firebase deploy --only firestore:indexes",
-    "firebase:deploy:storage": "firebase deploy --only storage"
+    "firebase:deploy:indexes": "firebase deploy --only firestore:indexes"
   },
   "dependencies": {
     "@genkit-ai/google-genai": "^1.20.0",
