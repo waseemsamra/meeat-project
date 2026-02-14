@@ -55,17 +55,42 @@ To connect your Kotlin Android app to the same data source, follow these steps:
     implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("com.google.firebase:firebase-auth-ktx")
+    // Highly recommended for image loading
+    implementation("com.github.bumptech.glide:glide:4.16.0")
   }
   ```
 
-### 3. Troubleshooting Android Access
-If your app cannot access data, check the following:
+### 3. Handling AWS S3 Images (AWS Pics)
+The database stores image paths relative to the bucket root (e.g., `/products/steak.jpg`). You must prepend the base URL in your Android code:
+
+**Base URL**: `https://primemeeat.s3.us-east-1.amazonaws.com`
+
+**Kotlin Helper Example**:
+```kotlin
+fun getImageUrl(path: String?): String {
+    val baseUrl = "https://primemeeat.s3.us-east-1.amazonaws.com"
+    if (path == null) return "https://picsum.photos/seed/placeholder/600/400"
+    if (path.startsWith("http")) return path
+    return if (path.startsWith("/")) "$baseUrl$path" else "$baseUrl/$path"
+}
+
+// Usage with Glide:
+Glide.with(context)
+    .load(getImageUrl(product.images[0]))
+    .into(imageView)
+```
+
+### 4. Troubleshooting Android Access
+If your app cannot access data or images, check the following:
+- **Internet Permission**: Ensure this is in your `AndroidManifest.xml`:
+  ```xml
+  <uses-permission android:name="android.permission.INTERNET" />
+  ```
 - **SHA-1 Fingerprint**: Go to Project Settings in the Firebase Console and add your debug (and release) SHA-1 certificate fingerprints. This is required for many Firebase features.
 - **Package Name**: Ensure the package name in `google-services.json` exactly matches your `applicationId` in `build.gradle`.
 - **Sync Project**: Always "Sync Project with Gradle Files" after adding the JSON file.
-- **Internet Permission**: Ensure `<uses-permission android:name="android.permission.INTERNET" />` is in your `AndroidManifest.xml`.
 
-### 4. Fetching Data (Kotlin Examples)
+### 5. Fetching Data (Kotlin Examples)
 
 **Fetch Featured Products**:
 ```kotlin
@@ -74,9 +99,7 @@ db.collection("products")
     .whereEqualTo("featured", true)
     .get()
     .addOnSuccessListener { documents ->
-        for (document in documents) {
-            Log.d("Firestore", "${document.id} => ${document.data}")
-        }
+        // Handle featured products
     }
 ```
 
