@@ -20,7 +20,7 @@ git push -u origin main
 Before your Android app or web app can access the latest structure and security, you **must** deploy your configuration:
 
 1.  **Login to Firebase**: `npx firebase login`
-2.  **Deploy Everything**: `npm run firebase:deploy` (Deploys Rules, Indexes, and Storage)
+2.  **Deploy Firestore**: `npm run firebase:deploy` (Deploys Rules and Indexes)
 
 ---
 
@@ -33,7 +33,7 @@ Before your Android app or web app can access the latest structure and security,
 - **Download `google-services.json`** and place it in `app/`.
 
 ### 2. ⚠️ BREAKING CHANGE: Handling Localized Data
-We have enabled multi-language support. Fields like `name` and `description` are no longer strings; they are Maps.
+We have enabled multi-language support. Fields like `name` and `description` are no longer strings; they are Maps in Firestore. If your Android app tries to read them as strings, it will fail to show data.
 
 **Kotlin Data Model Example**:
 ```kotlin
