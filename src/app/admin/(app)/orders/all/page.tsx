@@ -97,6 +97,8 @@ export default function AllOrdersPage() {
   }, [allOrders, users]);
 
   const displayLoading = isLoadingOrders || (isLoadingUsers && !allOrders);
+  
+  // Check if the error is specifically about a missing or building index
   const isIndexError = ordersError?.message?.includes('index') || ordersError?.message?.includes('ready');
   
   const handleStatusUpdate = async (order: Order, status: string) => {
@@ -294,8 +296,8 @@ export default function AllOrdersPage() {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
-                    {isIndexError ? "Waiting for database index..." : "No orders found."}
+                  <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                    {isIndexError ? "Waiting for database index to finish building..." : "No orders found."}
                   </TableCell>
                 </TableRow>
               )}
@@ -326,7 +328,7 @@ export default function AllOrdersPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>This will permanently delete the order and related items.</AlertDialogDescription>
+            <AlertDialogDescription>This action will permanently delete the order from the database.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>

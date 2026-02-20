@@ -51,7 +51,7 @@ data class Product(
 ```
 
 ### 3. 📦 Order History (Root Collection)
-Orders are stored in a root collection called `orders`. Each order document contains a `userId` field matching the user's Firebase UID.
+Orders are now stored in a root collection called `orders` to ensure visibility across all platforms. Each order document contains a `userId` field matching the user's Firebase UID.
 
 **Kotlin Query Example**:
 ```kotlin
@@ -83,6 +83,7 @@ fun getImageUrl(path: String?): String {
 1.  **Deploy Check**: Did you run `npm run firebase:deploy`? (This applies the "allow all" testing rules)
 2.  **SHA-1 Fingerprint**: Add your debug SHA-1 to the Firebase Console. This is mandatory for Firestore and Auth.
 3.  **Data Casting**: Ensure you are not casting `name` or `description` directly to `String`. Cast them to `Map<String, String>`.
+4.  **Collection Path**: Ensure you are writing orders to `/orders` (root) and not `/users/{userId}/orders` (subcollection).
 
 ## Architecture Notes
 - **Shared Data**: Both platforms use the same Firestore root collections (`/products`, `/categories`, `/orders`, etc.).
