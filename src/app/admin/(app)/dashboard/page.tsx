@@ -100,13 +100,30 @@ export default function AdminDashboard() {
 
   // Use collectionGroup to fetch all orders (root + legacy subcollections)
   const ordersQuery = useMemo(() => firestore ? query(collectionGroup(firestore, 'orders')) : null, [firestore]);
-  const { data: orders, isLoading: isLoadingOrders } = useCollection<Order>(ordersQuery);
+  const { data: rawOrders, isLoading: isLoadingOrders } = useCollection<Order>(ordersQuery);
 
   const productsQuery = useMemo(() => firestore ? collection(firestore, 'products') : null, [firestore]);
   const { data: products, isLoading: isLoadingProducts } = useCollection<Product>(productsQuery);
 
   const lotsQuery = useMemo(() => firestore ? collection(firestore, 'inventoryLots') : null, [firestore]);
   const { data: lots, isLoading: isLoadingLots } = useCollection<InventoryLot>(lotsQuery);
+
+  // Normalization for mobile orders
+  const orders = useMemo(() => {
+    if (!rawOrders) return [];
+    return rawOrders.map(order => {
+      const o = order as any;
+      let totalValue = typeof o.total === 'number' ? o.total : 0;
+      if (o.Total && typeof o.Total === 'string') {
+        const parsed = parseFloat(o.Total.replace(/[^0-9.]/g, ''));
+        if (!isNaN(parsed)) totalValue = parsed;
+      }
+      return {
+        ...order,
+        total: totalValue,
+      };
+    });
+  }, [rawOrders]);
 
   const lowStockAlerts = useMemo(() => {
     if (!products || !lots) return [];
@@ -192,7 +209,7 @@ export default function AdminDashboard() {
       return Array.from(map.values());
   }, [orders]);
 
-  const totalRevenue = deduplicatedOrdersForStats.reduce((acc, order) => acc + order.total, 0);
+  const totalRevenue = deduplicatedOrdersForStats.reduce((acc, order) => acc + (order.total || 0), 0);
   const totalOrders = deduplicatedOrdersForStats.length;
   const totalCustomers = users?.filter((u) => u.roles?.includes('CUSTOMER')).length ?? 0;
   const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
@@ -315,7 +332,7 @@ export default function AdminDashboard() {
                           <TableCell>
                             <Badge className="capitalize" variant={status === 'delivered' ? 'default' : 'secondary'}>{status}</Badge>
                           </TableCell>
-                          <TableCell className="text-right">{currencySymbol}{order.total.toFixed(2)}</TableCell>
+                          <TableCell className="text-right">{currencySymbol}{(order.total || 0).toFixed(2)}</TableCell>
                         </TableRow>
                       );
                     })}

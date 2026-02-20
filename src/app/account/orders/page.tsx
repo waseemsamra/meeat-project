@@ -15,7 +15,7 @@ import { useCollection, useFirestore, useUser } from '@/firebase';
 import { collection, query, orderBy, where, collectionGroup } from 'firebase/firestore';
 import type { Order } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import Link from 'link';
+import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useMemo } from 'react';
@@ -64,9 +64,23 @@ export default function AccountOrdersPage() {
   const orders = useMemo(() => {
     if (!rawOrders) return [];
     
+    // Normalization logic for mobile orders
+    const normalized = rawOrders.map(order => {
+        const o = order as any;
+        let totalValue = typeof o.total === 'number' ? o.total : 0;
+        if (o.Total && typeof o.Total === 'string') {
+            const parsed = parseFloat(o.Total.replace(/[^0-9.]/g, ''));
+            if (!isNaN(parsed)) totalValue = parsed;
+        }
+        return {
+            ...order,
+            total: totalValue,
+        };
+    });
+
     // Deduplicate by orderNumber or ID
     const map = new Map<string, Order>();
-    rawOrders.forEach(order => {
+    normalized.forEach(order => {
         const key = order.orderNumber || (order as any).Order || order.id;
         const existing = map.get(key);
         if (!existing || new Date(order.updatedAt || 0).getTime() > new Date(existing.updatedAt || 0).getTime()) {
@@ -135,7 +149,7 @@ export default function AccountOrdersPage() {
                           {status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right">{currencySymbol}{order.total.toFixed(2)}</TableCell>
+                      <TableCell className="text-right">{currencySymbol}{(order.total || 0).toFixed(2)}</TableCell>
                       <TableCell className="text-right">
                         <Button asChild variant="outline" size="sm">
                           <Link href={`/account/orders/${order.id}`}>View Details</Link>
