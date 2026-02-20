@@ -80,6 +80,7 @@ export default function SalesReportPage() {
     const endDate = date.to ? endOfDay(date.to) : endOfDay(date.from);
 
     const ordersInDateRange = allOrders.filter(order => {
+        if (!order.createdAt) return false;
         const orderDate = new Date(order.createdAt);
         return orderDate >= startDate && orderDate <= endDate;
     });
@@ -88,6 +89,7 @@ export default function SalesReportPage() {
     const totalOrders = ordersInDateRange.length;
     
     const newCustomers = allUsers.filter(user => {
+        if (!user.createdAt) return false;
         const joinDate = new Date(user.createdAt);
         return joinDate >= startDate && joinDate <= endDate;
     }).length;
@@ -101,6 +103,7 @@ export default function SalesReportPage() {
     });
 
     ordersInDateRange.forEach(order => {
+        if (!order.createdAt) return;
         const day = format(new Date(order.createdAt), 'yyyy-MM-dd');
         if (dailyRevenue[day] !== undefined) {
              dailyRevenue[day] += order.total;

@@ -70,6 +70,7 @@ export default function StockStatusReportPage() {
     });
 
     inventoryLots.forEach(lot => {
+        if (!lot.shipmentDate) return;
         const lotShipmentDate = new Date(lot.shipmentDate);
         if (lotShipmentDate < startDate) {
             const entry = reportMap.get(lot.productId);
@@ -81,6 +82,7 @@ export default function StockStatusReportPage() {
     });
     
     orders.forEach(order => {
+        if (!order.createdAt) return;
         const orderDate = new Date(order.createdAt);
         if (orderDate < startDate) {
             order.orderItemIds.forEach(item => {
@@ -94,6 +96,7 @@ export default function StockStatusReportPage() {
     });
     
     inventoryLots.forEach(lot => {
+        if (!lot.shipmentDate) return;
         const lotShipmentDate = new Date(lot.shipmentDate);
         if (lotShipmentDate >= startDate && lotShipmentDate <= endDate) {
             const entry = reportMap.get(lot.productId);
@@ -105,13 +108,14 @@ export default function StockStatusReportPage() {
     });
     
     orders.forEach(order => {
+        if (!order.createdAt) return;
         const orderDate = new Date(order.createdAt);
         if (orderDate >= startDate && orderDate <= endDate) {
             order.orderItemIds.forEach(item => {
                 const entry = reportMap.get(item.productId);
                 if (entry) {
                     entry.outNo += item.quantity;
-                    entry.outKg -= convertToKg(item.quantity, item.selectedUnit || '');
+                    entry.outKg += convertToKg(item.quantity, item.selectedUnit || '');
                 }
             });
         }

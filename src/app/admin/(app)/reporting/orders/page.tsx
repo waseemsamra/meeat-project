@@ -54,12 +54,13 @@ export default function OrdersReportPage() {
     };
     
     const startDate = startOfDay(date.from);
-    const endDate = date.to ? endOfDay(date.to) : endOfDay(new Date());
+    const endDate = date.to ? endOfDay(date.to) : endOfDay(date.from);
 
     const userMap = new Map(users.map(u => [u.id, u]));
 
     const filtered = orders
         .filter(order => {
+            if (!order.createdAt) return false;
             const orderDate = new Date(order.createdAt);
             const user = userMap.get(order.userId);
 

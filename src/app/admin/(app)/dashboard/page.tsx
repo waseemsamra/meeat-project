@@ -155,9 +155,11 @@ export default function AdminDashboard() {
 
   const sortedOrders = useMemo(() => {
     if (!orders) return [];
-    return [...orders].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    return [...orders]
+      .filter(order => !!order.createdAt)
+      .sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
   }, [orders]);
 
   const recentOrders = useMemo(() => sortedOrders.slice(0, 5), [sortedOrders]);
@@ -167,17 +169,27 @@ export default function AdminDashboard() {
     const monthlyRevenue: { [key: string]: number } = {};
 
     orders.forEach(order => {
-        const month = format(parseISO(order.createdAt), 'MMM yyyy');
-        monthlyRevenue[month] = (monthlyRevenue[month] || 0) + order.total;
+        if (!order.createdAt) return;
+        try {
+            const date = parseISO(order.createdAt);
+            if (isNaN(date.getTime())) return;
+            const monthKey = format(date, 'yyyy-MM');
+            monthlyRevenue[monthKey] = (monthlyRevenue[monthKey] || 0) + order.total;
+        } catch (e) {
+            // Skip invalid dates
+        }
     });
 
     return Object.keys(monthlyRevenue)
-        .map(month => ({
-            name: month.split(' ')[0],
-            revenue: monthlyRevenue[month],
-            sortKey: new Date(month.split(' ')[1], ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].indexOf(month.split(' ')[0]))
-        }))
-        .sort((a,b) => a.sortKey.getTime() - b.sortKey.getTime());
+        .sort()
+        .map(monthKey => {
+            const [year, month] = monthKey.split('-').map(Number);
+            const date = new Date(year, month - 1, 1);
+            return {
+                name: format(date, 'MMM'),
+                revenue: monthlyRevenue[monthKey],
+            };
+        });
   }, [orders]);
 
 
