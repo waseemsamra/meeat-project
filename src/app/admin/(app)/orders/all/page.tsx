@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -79,8 +78,9 @@ export default function AllOrdersPage() {
   
   const allOrdersQuery = useMemo(() => {
     if (!firestore) return null;
-    // Querying all "orders" collections (root and subcollections)
-    return query(collectionGroup(firestore, "orders"), orderBy("createdAt", "desc"));
+    // Removing orderBy to allow documents missing 'createdAt' (like those from mobile) to appear.
+    // We will sort in-memory after normalization.
+    return query(collectionGroup(firestore, "orders"));
   }, [firestore]);
   
   const { data: allOrders, isLoading: isLoadingOrders, error: ordersError } = useCollection<Order>(allOrdersQuery);
@@ -88,17 +88,50 @@ export default function AllOrdersPage() {
   const enrichedOrders = useMemo(() => {
     if (allOrders && users) {
       const userMap = new Map(users.map(u => [u.id, u]));
-      return allOrders.map(order => ({
-          ...order,
-          customer: userMap.get(order.userId),
-      }));
+      const normalized = allOrders.map(order => {
+          const o = order as any;
+          // Normalization logic for mobile orders
+          let totalValue = typeof o.total === 'number' ? o.total : 0;
+          if (o.Total && typeof o.Total === 'string') {
+              const parsed = parseFloat(o.Total.replace(/[^0-9.]/g, ''));
+              if (!isNaN(parsed)) totalValue = parsed;
+          }
+
+          let status = o.fulfillmentStatus || 'processing';
+          if (o.Status && typeof o.Status === 'string') {
+              status = o.Status.toLowerCase();
+          }
+
+          let created = o.createdAt;
+          if (!created && (o.date || o.Date)) {
+              try {
+                  created = new Date(o.date || o.Date).toISOString();
+              } catch (e) {
+                  created = new Date().toISOString();
+              }
+          }
+
+          return {
+              ...order,
+              total: totalValue,
+              fulfillmentStatus: status,
+              createdAt: created || new Date(0).toISOString(),
+              customer: userMap.get(order.userId),
+          };
+      });
+
+      // Sort in memory by createdAt descending
+      return normalized.sort((a, b) => {
+          const dateA = new Date(a.createdAt).getTime();
+          const dateB = new Date(b.createdAt).getTime();
+          return dateB - dateA;
+      });
     }
     return allOrders || [];
   }, [allOrders, users]);
 
   const displayLoading = isLoadingOrders || (isLoadingUsers && !allOrders);
   
-  // Check if the error is specifically about a missing or building index
   const isIndexError = ordersError?.message?.includes('index') || ordersError?.message?.includes('ready');
   
   const handleStatusUpdate = async (order: Order, status: string) => {
@@ -122,7 +155,7 @@ export default function AllOrdersPage() {
                 customerAddress: address ? `${address.street}, ${address.city}` : customer.deliveryAddress || 'N/A',
                 customerEmail: customer.email,
                 customerPhoneNumber: customer.telephone,
-                orderItemsText: order.orderItemIds.map(item => `${item.product?.name?.en || 'Item'} x${item.quantity}`).join('\n'),
+                orderItemsText: (order.orderItemIds || []).map(item => `${item.product?.name?.en || 'Item'} x${item.quantity}`).join('\n'),
                 total: order.total
             });
 
@@ -217,11 +250,6 @@ export default function AllOrdersPage() {
                 ) : (
                     ordersError.message
                 )}
-                {!isIndexError && ordersError.message.includes('index') && (
-                    <div className="mt-2">
-                        <strong>Note:</strong> CollectionGroup queries require indexes. Please run <code>npm run firebase:deploy</code> to apply them.
-                    </div>
-                )}
             </AlertDescription>
         </Alert>
       )}
@@ -252,15 +280,16 @@ export default function AllOrdersPage() {
               ) : enrichedOrders.length > 0 ? (
                 enrichedOrders.slice(0, visibleCount).map((order) => {
                     const customer = order.customer;
+                    const orderIdDisplay = order.orderNumber || order.id.substring(0, 8);
                     return (
                         <TableRow key={order.id}>
-                        <TableCell className="font-medium text-xs">#{order.id.substring(0, 8)}</TableCell>
+                        <TableCell className="font-medium text-xs">#{orderIdDisplay}</TableCell>
                         <TableCell>
                             <div className="font-medium">{customer?.name || 'Guest'}</div>
                             <div className="text-sm text-muted-foreground">{customer?.email || order.userId}</div>
                         </TableCell>
                         <TableCell>
-                            <Badge variant={order.orderType === 'ONLINE' ? 'outline' : 'secondary'}>{order.orderType}</Badge>
+                            <Badge variant={order.orderType === 'ONLINE' ? 'outline' : 'secondary'}>{order.orderType || 'MOBILE'}</Badge>
                         </TableCell>
                         <TableCell>
                             <Badge className="capitalize">{order.fulfillmentStatus}</Badge>
@@ -297,7 +326,7 @@ export default function AllOrdersPage() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                    {isIndexError ? "Waiting for database index to finish building..." : "No orders found."}
+                    No orders found.
                   </TableCell>
                 </TableRow>
               )}

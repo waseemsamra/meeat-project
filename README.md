@@ -37,27 +37,42 @@ data class Product(
 }
 ```
 
-### 3. 📦 Orders (Root Collection)
-To ensure orders show up in the Admin Dashboard, the Android app **must** write to the root `orders` collection.
+### 3. 📦 Orders (Mobile Synchronization Checklist)
+To ensure orders show up correctly in the Admin Dashboard, the Android app **must** follow this schema when writing to the root `orders` collection.
+
+**CRITICAL FIELDS**:
+- `userId`: String (Firebase Auth UID). Required for filtering in the "My Orders" area.
+- `createdAt`: ISO String or Timestamp. Required for sorting.
+- `orderType`: "ONLINE" (String). Required for filtering.
+- `fulfillmentStatus`: "processing" (String).
+- `total`: Number (Double). Avoid putting currency symbols in the data.
+- `orderItemIds`: Array of maps containing `productId`, `quantity`, and `price`.
 
 **Kotlin Save Order Example**:
 ```kotlin
 val orderData = hashMapOf(
-    "userId" to currentUserId,
-    "total" to 150.0,
-    "orderType" to "ONLINE", // Required for filtering
+    "userId" to currentUserId, // CRITICAL: Link to authenticated user
+    "total" to 135.0, // Use number, not string
+    "orderType" to "ONLINE",
     "fulfillmentStatus" to "processing",
-    "createdAt" to FieldValue.serverTimestamp(),
-    "orderItemIds" to listOf(...) // Simplified list of items
+    "paymentStatus" to "pending",
+    "createdAt" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").format(Date()),
+    "orderItemIds" to listOf(
+        hashMapOf(
+            "productId" to "product_id_here",
+            "quantity" to 1,
+            "price" to 125.0
+        )
+    )
 )
 
 db.collection("orders").add(orderData)
 ```
 
-### 4. 🔍 Mobile Sync Checklist
-1.  **Collection Path**: Verify you are writing to `db.collection("orders")` and NOT a subcollection.
-2.  **Required Fields**: Ensure you include `userId`, `orderType`, and `createdAt`.
-3.  **Indexes**: If you see an error in your Android logs about a missing index, click the link in the log to create it.
+### 4. 🔍 Troubleshooting Mobile Sync
+1.  **Missing Orders**: If orders don't show up, check that the `userId` field exactly matches the UID of the logged-in user in the web app.
+2.  **Sorting Issues**: Ensure `createdAt` is a valid ISO date string.
+3.  **Permissions**: If you get a "permission-denied" error, ensure you have run `npm run firebase:deploy`.
 
 ## Architecture Notes
 - **Shared Data**: Both platforms use the same Firestore root collections (`/products`, `/categories`, `/orders`, etc.).

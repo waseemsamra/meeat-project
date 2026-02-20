@@ -102,7 +102,31 @@ export default function AdminOrderDetailsPage() {
       }
       setIsLoadingItems(true);
       try {
-        const productIds = [...new Set(order.orderItemIds.map((item: any) => item.productId))];
+        const o = order as any;
+        // Compatibility: Mobile app uses 'items', Web app uses 'orderItemIds'
+        const rawItems = o.orderItemIds || o.items || [];
+        
+        // If items are in mobile format (with embedded product data)
+        if (o.items && !o.orderItemIds) {
+             const mappedItems = o.items.map((item: any, index: number) => ({
+                 id: `mobile-item-${index}`,
+                 productId: item.productId || 'N/A',
+                 quantity: item.Quantity || item.quantity || 1,
+                 price: item.Price || item.price || 0,
+                 selectedUnit: item.unit || 'Unit',
+                 product: {
+                     name: { en: item.Name || item.name || 'Unknown' },
+                     images: [item.imageUrl || ''],
+                     category: item.category || '',
+                     cutType: item.cutType || '',
+                 }
+             }));
+             setOrderItems(mappedItems);
+             setIsLoadingItems(false);
+             return;
+        }
+
+        const productIds = [...new Set(rawItems.map((item: any) => item.productId))];
         if (productIds.length > 0) {
             const productsRef = collection(firestore, 'products');
             const productsQuery = query(productsRef, where(documentId(), 'in', productIds));
@@ -111,14 +135,14 @@ export default function AdminOrderDetailsPage() {
               (d) => ({ ...d.data(), id: d.id } as Product)
             );
             
-            const itemsWithProducts = order.orderItemIds.map((item: any) => ({
+            const itemsWithProducts = rawItems.map((item: any) => ({
                 ...item,
                 product: productsData.find(p => p.id === item.productId)
             }));
 
             setOrderItems(itemsWithProducts as OrderItem[]);
         } else {
-             setOrderItems(order.orderItemIds as OrderItem[]);
+             setOrderItems(rawItems as OrderItem[]);
         }
 
       } catch (error) {
@@ -160,6 +184,10 @@ export default function AdminOrderDetailsPage() {
     return notFound();
   }
 
+  const o = order as any;
+  const totalDisplay = typeof o.total === 'number' ? o.total : (o.Total ? parseFloat(o.Total.replace(/[^0-9.]/g, '')) : 0);
+  const statusDisplay = o.fulfillmentStatus || (o.Status ? o.Status.toLowerCase() : 'processing');
+  const dateDisplay = o.createdAt || o.date || o.Date;
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -167,8 +195,8 @@ export default function AdminOrderDetailsPage() {
         <div>
           <h1 className="text-4xl font-bold font-headline">Order Details</h1>
           <p className="text-muted-foreground text-sm">
-            Order #{order.id.substring(0, 8)} &bull; Placed on{' '}
-            {new Date(order.createdAt).toLocaleDateString()}
+            Order #{o.orderNumber || order.id.substring(0, 8)} &bull; Placed on{' '}
+            {dateDisplay ? new Date(dateDisplay).toLocaleDateString() : 'N/A'}
           </p>
         </div>
          <div className="flex items-center gap-4">
@@ -176,7 +204,7 @@ export default function AdminOrderDetailsPage() {
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back
             </Button>
-            <Badge variant={order.fulfillmentStatus === 'delivered' ? 'default' : 'secondary'} className="capitalize">{order.fulfillmentStatus}</Badge>
+            <Badge variant={statusDisplay === 'delivered' ? 'default' : 'secondary'} className="capitalize">{statusDisplay}</Badge>
             <Button onClick={handlePrint} variant="outline">
                 <Printer className="mr-2 h-4 w-4" />
                 Print Order
@@ -202,12 +230,12 @@ export default function AdminOrderDetailsPage() {
                     </TableRow>
                     </TableHeader>
                     <TableBody>
-                    {orderItems.map((item) => (
-                        <TableRow key={item.id}>
+                    {orderItems.map((item, index) => (
+                        <TableRow key={item.id || index}>
                         <TableCell>
                             <div className="flex items-center gap-4">
                                 <div className="relative hidden sm:block bg-muted w-16 h-16 rounded-md flex-shrink-0">
-                                {item.product && item.product.images && (
+                                {item.product && item.product.images && item.product.images[0] && (
                                     <Image
                                         src={getPlaceholderImage(item.product.images[0])}
                                         alt={t(item.product.name)}
@@ -220,8 +248,8 @@ export default function AdminOrderDetailsPage() {
                             <div>
                                 <p className="font-medium">
                                     {item.product ? (
-                                        <Link href={`/products/${item.product.slug}`} className="hover:underline">{t(item.product.name)}</Link>
-                                    ) : 'Product not found'}
+                                        <span className="font-semibold">{t(item.product.name)}</span>
+                                    ) : 'Product information unavailable'}
                                 </p>
                                 <div className="text-sm text-muted-foreground">
                                     <p>{item.selectedUnit}</p>
@@ -252,7 +280,7 @@ export default function AdminOrderDetailsPage() {
                 <CardContent className="space-y-2">
                 <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span>${order.total.toFixed(2)}</span>
+                    <span>${totalDisplay.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                     <span className="text-muted-foreground">Shipping</span>
@@ -265,7 +293,7 @@ export default function AdminOrderDetailsPage() {
                 <Separator className="my-2" />
                 <div className="flex justify-between font-bold text-lg">
                     <span>Total</span>
-                    <span>${order.total.toFixed(2)}</span>
+                    <span>${totalDisplay.toFixed(2)}</span>
                 </div>
                 </CardContent>
             </Card>
@@ -284,7 +312,7 @@ export default function AdminOrderDetailsPage() {
                     </p>
                     <p>{order.shippingAddress.country}</p>
                     </div>
-                ) : "No address provided."}
+                ) : <p className="text-muted-foreground text-sm italic">No address provided.</p>}
                 </CardContent>
             </Card>
             </div>

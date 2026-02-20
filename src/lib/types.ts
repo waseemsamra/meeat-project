@@ -115,6 +115,13 @@ export type Order = {
   customer?: User;
   description?: string | null;
   __path?: string;
+  // Support for mobile-created fields (normalization)
+  orderNumber?: string;
+  Status?: string;
+  Total?: string;
+  date?: string;
+  Date?: string;
+  items?: any[];
 };
 
 export type OrderItem = {
