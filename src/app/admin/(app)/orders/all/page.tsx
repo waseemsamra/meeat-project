@@ -121,8 +121,32 @@ export default function AllOrdersPage() {
           };
       });
 
+      // Deduplicate orders by ID (handling cases where mobile app writes to both root and subcollection)
+      const deduplicated = new Map<string, any>();
+      normalized.forEach(order => {
+          const existing = deduplicated.get(order.id);
+          if (!existing) {
+              deduplicated.set(order.id, order);
+          } else {
+              // Prefer the one with more advanced status or the root document (shorter path)
+              const existingPathLength = existing.__path?.split('/').length || 10;
+              const currentPathLength = order.__path?.split('/').length || 10;
+              
+              if (currentPathLength < existingPathLength) {
+                  deduplicated.set(order.id, order);
+              } else if (currentPathLength === existingPathLength) {
+                  // If same path depth, prefer newer update
+                  const existingDate = new Date(existing.updatedAt || 0).getTime();
+                  const currentDate = new Date(order.updatedAt || 0).getTime();
+                  if (currentDate > existingDate) {
+                      deduplicated.set(order.id, order);
+                  }
+              }
+          }
+      });
+
       // Sort in memory by createdAt descending
-      return normalized.sort((a, b) => {
+      return Array.from(deduplicated.values()).sort((a, b) => {
           const dateA = new Date(a.createdAt).getTime();
           const dateB = new Date(b.createdAt).getTime();
           return dateB - dateA;

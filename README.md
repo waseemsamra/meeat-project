@@ -40,6 +40,9 @@ data class Product(
 ### 3. 📦 Orders (Mobile Synchronization Checklist)
 To ensure orders show up correctly in the Admin Dashboard, the Android app **must** follow this schema when writing to the root `orders` collection.
 
+**CRITICAL: STOP WRITING TO SUBCOLLECTIONS**
+The Android app should ONLY write to the top-level `/orders` collection. Do NOT write to `/users/{userId}/orders`. Writing to both locations will cause duplicate orders to appear in the dashboard.
+
 **CRITICAL FIELDS**:
 - `userId`: String (Firebase Auth UID). Required for filtering in the "My Orders" area.
 - `createdAt`: ISO String or Timestamp. Required for sorting.
@@ -68,14 +71,14 @@ val orderData = hashMapOf(
     )
 )
 
+// ONLY WRITE TO THE ROOT COLLECTION
 db.collection("orders").add(orderData)
 ```
 
 ### 4. 🔍 Troubleshooting Mobile Sync
-1.  **Missing Orders**: If orders don't show up, check that the `userId` field exactly matches the UID of the logged-in user in the web app.
-2.  **Status Sync**: The Web Admin Dashboard updates both `fulfillmentStatus` (lowercase) and `Status` (Capitalized). Ensure your mobile app filters use one of these.
-3.  **Sorting Issues**: Ensure `createdAt` is a valid ISO date string.
-4.  **Permissions**: If you get a "permission-denied" error, ensure you have run `npm run firebase:deploy`.
+1.  **Duplicate Orders**: If orders appear twice, your Android app is likely writing to both `/orders` and `/users/{uid}/orders`. Delete the subcollection write.
+2.  **Missing Orders**: Check that the `userId` field exactly matches the UID of the logged-in user.
+3.  **Status Sync**: The Dashboard updates both `fulfillmentStatus` (lowercase) and `Status` (Capitalized). Ensure your mobile app filters use one of these.
 
 ## Architecture Notes
 - **Shared Data**: Both platforms use the same Firestore root collections (`/products`, `/categories`, `/orders`, etc.).

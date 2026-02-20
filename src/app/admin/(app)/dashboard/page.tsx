@@ -99,7 +99,7 @@ export default function AdminDashboard() {
   const { data: users, isLoading: isLoadingUsers } = useCollection<User>(usersQuery);
 
   // Use collectionGroup to fetch all orders (root + legacy subcollections)
-  const ordersQuery = useMemo(() => firestore ? query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc')) : null, [firestore]);
+  const ordersQuery = useMemo(() => firestore ? query(collectionGroup(firestore, 'orders')) : null, [firestore]);
   const { data: orders, isLoading: isLoadingOrders } = useCollection<Order>(ordersQuery);
 
   const productsQuery = useMemo(() => firestore ? collection(firestore, 'products') : null, [firestore]);
@@ -125,14 +125,35 @@ export default function AdminDashboard() {
 
   const recentOrders = useMemo(() => {
     if (!orders) return [];
-    return orders.slice(0, 5);
+    
+    // Deduplicate orders by ID
+    const deduplicated = new Map<string, Order>();
+    orders.forEach(order => {
+        const existing = deduplicated.get(order.id);
+        if (!existing || (new Date(order.updatedAt || 0).getTime() > new Date(existing.updatedAt || 0).getTime())) {
+            deduplicated.set(order.id, order);
+        }
+    });
+
+    return Array.from(deduplicated.values())
+        .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+        .slice(0, 5);
   }, [orders]);
 
   const chartData = useMemo(() => {
     if (!orders) return [];
     const monthlyRevenue: { [key: string]: number } = {};
 
+    // Use deduplicated orders for chart to avoid double counting
+    const deduplicated = new Map<string, Order>();
     orders.forEach(order => {
+        const existing = deduplicated.get(order.id);
+        if (!existing || (new Date(order.updatedAt || 0).getTime() > new Date(existing.updatedAt || 0).getTime())) {
+            deduplicated.set(order.id, order);
+        }
+    });
+
+    deduplicated.forEach(order => {
         if (!order.createdAt) return;
         try {
             const date = parseISO(order.createdAt);
@@ -159,8 +180,20 @@ export default function AdminDashboard() {
 
   const isLoading = isLoadingUsers || isLoadingOrders || isLoadingProducts || isLoadingLots;
 
-  const totalRevenue = orders?.reduce((acc, order) => acc + order.total, 0) ?? 0;
-  const totalOrders = orders?.length ?? 0;
+  // Deduplicate for summary stats
+  const deduplicatedOrdersForStats = useMemo(() => {
+      const map = new Map<string, Order>();
+      orders?.forEach(o => {
+          const existing = map.get(o.id);
+          if (!existing || (new Date(o.updatedAt || 0).getTime() > new Date(existing.updatedAt || 0).getTime())) {
+              map.set(o.id, o);
+          }
+      });
+      return Array.from(map.values());
+  }, [orders]);
+
+  const totalRevenue = deduplicatedOrdersForStats.reduce((acc, order) => acc + order.total, 0);
+  const totalOrders = deduplicatedOrdersForStats.length;
   const totalCustomers = users?.filter((u) => u.roles?.includes('CUSTOMER')).length ?? 0;
   const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
   
@@ -272,6 +305,7 @@ export default function AdminDashboard() {
                   {!isLoading &&
                     recentOrders?.map((order) => {
                       const customer = users?.find((u) => u.id === order.userId);
+                      const status = order.fulfillmentStatus || (order as any).Status?.toLowerCase() || 'processing';
                       return (
                         <TableRow key={order.id}>
                           <TableCell>
@@ -279,7 +313,7 @@ export default function AdminDashboard() {
                             <div className="text-sm text-muted-foreground">{customer?.email || order.userId}</div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={order.fulfillmentStatus === 'delivered' ? 'default' : 'secondary'}>{order.fulfillmentStatus}</Badge>
+                            <Badge className="capitalize" variant={status === 'delivered' ? 'default' : 'secondary'}>{status}</Badge>
                           </TableCell>
                           <TableCell className="text-right">{currencySymbol}{order.total.toFixed(2)}</TableCell>
                         </TableRow>
