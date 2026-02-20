@@ -38,25 +38,25 @@ data class Product(
 ```
 
 ### 3. 📦 Orders (Mobile Synchronization Checklist)
-To ensure orders show up correctly in the Admin Dashboard, the Android app **must** follow this schema when writing to the root `orders` collection.
+To ensure orders show up correctly in the Admin Dashboard and sync back to the mobile client, the Android app **must** follow this schema.
 
 **CRITICAL: STOP WRITING TO SUBCOLLECTIONS**
-The Android app should ONLY write to the top-level `/orders` collection. Do NOT write to `/users/{userId}/orders`. Writing to both locations will cause duplicate orders to appear in the dashboard.
+The Android app should ONLY write to the top-level `/orders` collection. Do NOT write to `/users/{userId}/orders`. Writing to both locations causes sync delays.
 
-**CRITICAL FIELDS**:
-- `userId`: String (Firebase Auth UID). Required for filtering in the "My Orders" area.
+**CRITICAL FIELDS FOR MOBILE SYNC**:
+- `userId`: String (Firebase Auth UID). **REQUIRED** for the mobile app to find its own orders.
 - `createdAt`: ISO String or Timestamp. Required for sorting.
-- `orderType`: "ONLINE" (String). Required for filtering.
-- `fulfillmentStatus`: "processing" (String).
-- `Status`: "Processing" (Capitalized, used for legacy mobile filtering).
-- `total`: Number (Double). Avoid putting currency symbols in the data.
+- `orderType`: "ONLINE" (String). 
+- `fulfillmentStatus`: "processing" (String, lowercase).
+- `Status`: "Processing" (String, Capitalized). **REQUIRED** for current mobile filters.
+- `total`: Number (Double). Avoid putting currency symbols like "DH" inside the data; use a number.
 - `orderItemIds`: Array of maps containing `productId`, `quantity`, and `price`.
 
 **Kotlin Save Order Example**:
 ```kotlin
 val orderData = hashMapOf(
-    "userId" to currentUserId, // CRITICAL: Link to authenticated user
-    "total" to 135.0, // Use number, not string
+    "userId" to currentUserId, // CRITICAL: Link to authenticated user UID
+    "total" to 135.0, // Use number, not string like "DH135"
     "orderType" to "ONLINE",
     "fulfillmentStatus" to "processing",
     "Status" to "Processing",

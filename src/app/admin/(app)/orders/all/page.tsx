@@ -52,7 +52,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { MoreHorizontal, AlertCircle, Loader2, CheckCircle2 } from "lucide-react"
 import { useCollection, useFirestore, errorEmitter, FirestorePermissionError } from "@/firebase";
-import { collection, query, orderBy, doc, deleteDoc, writeBatch, updateDoc, collectionGroup } from "firebase/firestore";
+import { collection, query, orderBy, doc, deleteDoc, writeBatch, updateDoc, collectionGroup, getDocs, where } from "firebase/firestore";
 import type { Order, User } from "@/lib/types";
 import { useMemo, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -121,25 +121,27 @@ export default function AllOrdersPage() {
           };
       });
 
-      // Deduplicate orders by ID (handling cases where mobile app writes to both root and subcollection)
+      // Deduplicate orders by orderNumber OR id (handling cases where mobile app writes to both root and subcollection)
       const deduplicated = new Map<string, any>();
       normalized.forEach(order => {
-          const existing = deduplicated.get(order.id);
+          const orderKey = order.orderNumber || order.Order || order.id;
+          const existing = deduplicated.get(orderKey);
+          
           if (!existing) {
-              deduplicated.set(order.id, order);
+              deduplicated.set(orderKey, order);
           } else {
               // Prefer the one with more advanced status or the root document (shorter path)
               const existingPathLength = existing.__path?.split('/').length || 10;
               const currentPathLength = order.__path?.split('/').length || 10;
               
               if (currentPathLength < existingPathLength) {
-                  deduplicated.set(order.id, order);
+                  deduplicated.set(orderKey, order);
               } else if (currentPathLength === existingPathLength) {
                   // If same path depth, prefer newer update
                   const existingDate = new Date(existing.updatedAt || 0).getTime();
                   const currentDate = new Date(order.updatedAt || 0).getTime();
                   if (currentDate > existingDate) {
-                      deduplicated.set(order.id, order);
+                      deduplicated.set(orderKey, order);
                   }
               }
           }
@@ -160,13 +162,23 @@ export default function AllOrdersPage() {
   const isIndexError = ordersError?.message?.includes('index') || ordersError?.message?.includes('ready');
   
   const handleStatusUpdate = async (order: Order, status: string) => {
-    if (!firestore || !order.__path) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not update status. Invalid order data path.' });
-        return;
-    }
-    const orderDocRef = doc(firestore, order.__path);
+    if (!firestore) return;
     
-    // Sync EVERY possible variation of status fields to ensure mobile app sees the change
+    // We want to update EVERY document that matches this order's ID or Number to ensure mobile sync
+    const orderKey = order.orderNumber || (order as any).Order || order.id;
+    
+    // 1. Find all documents across root and subcollections with this identifier
+    const qRoot = query(collection(firestore, 'orders'), where('orderNumber', '==', orderKey));
+    const qSub = query(collectionGroup(firestore, 'orders'), where('orderNumber', '==', orderKey));
+    const qLegacy = query(collectionGroup(firestore, 'orders'), where('Order', '==', orderKey));
+    
+    const [rootSnap, subSnap, legacySnap] = await Promise.all([
+        getDocs(qRoot),
+        getDocs(qSub),
+        getDocs(legacySnap)
+    ]);
+
+    const batch = writeBatch(firestore);
     const updateData: { [key: string]: any } = { 
         fulfillmentStatus: status, // Web standard
         Status: status.charAt(0).toUpperCase() + status.slice(1), // Mobile standard (e.g., "Delivered")
@@ -174,6 +186,17 @@ export default function AllOrdersPage() {
         orderStatus: status, // Common fallback
         updatedAt: new Date().toISOString() 
     };
+
+    // Collect all unique document paths
+    const pathsToUpdate = new Set<string>();
+    if (order.__path) pathsToUpdate.add(order.__path);
+    rootSnap.docs.forEach(d => pathsToUpdate.add(d.ref.path));
+    subSnap.docs.forEach(d => pathsToUpdate.add(d.ref.path));
+    legacySnap.docs.forEach(d => pathsToUpdate.add(d.ref.path));
+
+    pathsToUpdate.forEach(path => {
+        batch.update(doc(firestore, path), updateData);
+    });
 
     if (status === 'shipped' || status === 'ready_for_pickup') {
         const customer = users?.find(u => u.id === order.userId);
@@ -190,24 +213,24 @@ export default function AllOrdersPage() {
             });
 
             if (shipdayResult.success && shipdayResult.shipdayOrderId) {
-                updateData.shipdayOrderId = shipdayResult.shipdayOrderId;
+                // Add shipday ID to the batch for all documents
+                pathsToUpdate.forEach(path => {
+                    batch.update(doc(firestore, path), { shipdayOrderId: shipdayResult.shipdayOrderId });
+                });
                 toast({ title: 'Shipday Order Created', description: `Order successfully dispatched to Shipday ID: ${shipdayResult.shipdayOrderId}` });
-            } else {
-                 toast({ variant: 'destructive', title: 'Shipday Dispatch Failed', description: shipdayResult.errorMessage || 'An unknown error occurred.' });
             }
         }
     }
 
     try {
-        await updateDoc(orderDocRef, updateData);
+        await batch.commit();
         toast({ 
             title: 'Status Updated', 
-            description: `Order status updated to ${status}. Changes synced for mobile.`,
+            description: `Order status updated to ${status} across ${pathsToUpdate.size} records.`,
             icon: <CheckCircle2 className="h-4 w-4 text-green-500" />
         });
     } catch (e: any) {
-        const contextualError = await FirestorePermissionError.create({ path: orderDocRef.path, operation: 'update', requestResourceData: updateData });
-        errorEmitter.emit('permission-error', contextualError);
+        toast({ variant: 'destructive', title: 'Update Failed', description: 'Permission denied or database error.' });
     }
   }
 
@@ -314,7 +337,7 @@ export default function AllOrdersPage() {
               ) : enrichedOrders.length > 0 ? (
                 enrichedOrders.slice(0, visibleCount).map((order) => {
                     const customer = order.customer;
-                    const orderIdDisplay = order.orderNumber || order.id.substring(0, 8);
+                    const orderIdDisplay = order.orderNumber || (order as any).Order || order.id.substring(0, 8);
                     const status = order.fulfillmentStatus;
                     return (
                         <TableRow key={order.id}>

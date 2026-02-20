@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -14,7 +15,7 @@ import { useCollection, useFirestore, useUser } from '@/firebase';
 import { collection, query, orderBy, where, collectionGroup } from 'firebase/firestore';
 import type { Order } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import Link from 'next/link';
+import Link from 'link';
 import { ArrowRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useMemo } from 'react';
@@ -58,7 +59,23 @@ export default function AccountOrdersPage() {
     );
   }, [firestore, user]);
 
-  const { data: orders, isLoading: isLoadingOrders } = useCollection<Order>(ordersQuery);
+  const { data: rawOrders, isLoading: isLoadingOrders } = useCollection<Order>(ordersQuery);
+
+  const orders = useMemo(() => {
+    if (!rawOrders) return [];
+    
+    // Deduplicate by orderNumber or ID
+    const map = new Map<string, Order>();
+    rawOrders.forEach(order => {
+        const key = order.orderNumber || (order as any).Order || order.id;
+        const existing = map.get(key);
+        if (!existing || new Date(order.updatedAt || 0).getTime() > new Date(existing.updatedAt || 0).getTime()) {
+            map.set(key, order);
+        }
+    });
+    
+    return Array.from(map.values()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [rawOrders]);
 
   const isLoading = isUserLoading || isLoadingOrders;
 
@@ -100,30 +117,33 @@ export default function AccountOrdersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {orders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell className="font-medium text-sm">
-                      #{order.id.substring(0, 8)}
-                    </TableCell>
-                    <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          order.fulfillmentStatus === 'shipped' ? 'default' : 'secondary'
-                        }
-                        className="capitalize"
-                      >
-                        {order.fulfillmentStatus}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">{currencySymbol}{order.total.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">
-                      <Button asChild variant="outline" size="sm">
-                        <Link href={`/account/orders/${order.id}`}>View Details</Link>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {orders.map((order) => {
+                  const status = order.fulfillmentStatus || (order as any).Status?.toLowerCase() || 'processing';
+                  return (
+                    <TableRow key={order.id}>
+                      <TableCell className="font-medium text-sm">
+                        #{order.orderNumber || (order as any).Order || order.id.substring(0, 8)}
+                      </TableCell>
+                      <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            status === 'delivered' ? 'default' : 'secondary'
+                          }
+                          className="capitalize"
+                        >
+                          {status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">{currencySymbol}{order.total.toFixed(2)}</TableCell>
+                      <TableCell className="text-right">
+                        <Button asChild variant="outline" size="sm">
+                          <Link href={`/account/orders/${order.id}`}>View Details</Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           </CardContent>
