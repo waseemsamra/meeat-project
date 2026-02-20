@@ -98,7 +98,7 @@ export default function AdminDashboard() {
   const usersQuery = useMemo(() => firestore ? collection(firestore, 'users') : null, [firestore]);
   const { data: users, isLoading: isLoadingUsers } = useCollection<User>(usersQuery);
 
-  // Use collectionGroup to fetch all orders (root + legacy)
+  // Use collectionGroup to fetch all orders (root + legacy subcollections)
   const ordersQuery = useMemo(() => firestore ? query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc')) : null, [firestore]);
   const { data: orders, isLoading: isLoadingOrders } = useCollection<Order>(ordersQuery);
 
