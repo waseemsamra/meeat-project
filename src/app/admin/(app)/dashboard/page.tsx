@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -17,13 +17,9 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { DollarSign, ShoppingCart, Users, BarChart, AlertTriangle } from 'lucide-react';
-import { useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
+import { useFirestore, useCollection } from '@/firebase';
 import {
   collection,
-  query,
-  onSnapshot,
-  orderBy,
-  FirestoreError,
 } from 'firebase/firestore';
 import type { Order, User, Product, InventoryLot } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -33,7 +29,6 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
   ResponsiveContainer,
 } from 'recharts';
 import {
@@ -96,46 +91,17 @@ export default function AdminDashboard() {
   const currencySymbol = defaultCurrency?.symbol || '$';
   const { t } = useTranslation();
 
-  const [users, setUsers] = useState<User[] | null>(null);
-  const [orders, setOrders] = useState<Order[] | null>(null);
-  const [products, setProducts] = useState<Product[] | null>(null);
-  const [lots, setLots] = useState<InventoryLot[] | null>(null);
-  
-  const [isLoadingUsers, setIsLoadingUsers] = useState(true);
-  const [isLoadingOrders, setIsLoadingOrders] = useState(true);
-  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
-  const [isLoadingLots, setIsLoadingLots] = useState(true);
+  const usersQuery = useMemo(() => firestore ? collection(firestore, 'users') : null, [firestore]);
+  const { data: users, isLoading: isLoadingUsers } = useCollection<User>(usersQuery);
 
-  useEffect(() => {
-    if (!firestore) return;
+  const ordersQuery = useMemo(() => firestore ? collection(firestore, 'orders') : null, [firestore]);
+  const { data: orders, isLoading: isLoadingOrders } = useCollection<Order>(ordersQuery);
 
-    const unsubscribeUsers = onSnapshot(collection(firestore, 'users'), (snapshot) => {
-      setUsers(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User)));
-      setIsUserLoading(false);
-    });
+  const productsQuery = useMemo(() => firestore ? collection(firestore, 'products') : null, [firestore]);
+  const { data: products, isLoading: isLoadingProducts } = useCollection<Product>(productsQuery);
 
-    const unsubscribeOrders = onSnapshot(query(collection(firestore, 'orders')), (snapshot) => {
-      setOrders(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Order)));
-      setIsLoadingOrders(false);
-    });
-
-    const unsubscribeProducts = onSnapshot(collection(firestore, 'products'), (snapshot) => {
-      setProducts(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Product)));
-      setIsLoadingProducts(false);
-    });
-
-    const unsubscribeLots = onSnapshot(collection(firestore, 'inventoryLots'), (snapshot) => {
-      setLots(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as InventoryLot)));
-      setIsLoadingLots(false);
-    });
-
-    return () => {
-      unsubscribeUsers();
-      unsubscribeOrders();
-      unsubscribeProducts();
-      unsubscribeLots();
-    };
-  }, [firestore]);
+  const lotsQuery = useMemo(() => firestore ? collection(firestore, 'inventoryLots') : null, [firestore]);
+  const { data: lots, isLoading: isLoadingLots } = useCollection<InventoryLot>(lotsQuery);
 
   const lowStockAlerts = useMemo(() => {
     if (!products || !lots) return [];

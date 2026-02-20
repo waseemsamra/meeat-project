@@ -20,7 +20,9 @@ git push -u origin main
 Before your Android app or web app can access the latest structure and security, you **must** deploy your configuration:
 
 1.  **Login to Firebase**: `npx firebase login`
-2.  **Deploy Firestore**: `npm run firebase:deploy` (Deploys Rules and Indexes)
+2.  **Deploy Rules and Indexes**: `npm run firebase:deploy`
+
+**Note:** If you get a "Missing or insufficient permissions" error in the browser or Android app, it means these rules haven't been deployed to your project yet.
 
 ---
 
@@ -79,8 +81,8 @@ fun getImageUrl(path: String?): String {
 ```
 
 ### 5. 🔍 Checklist for Data Visibility
-1.  **Deploy Check**: Did you run `npm run firebase:deploy`?
-2.  **SHA-1 Fingerprint**: Add your debug SHA-1 to the Firebase Console. This is mandatory for Firestore and Auth.
+1.  **Deploy Check**: Did you run `npm run firebase:deploy`? This is the #1 reason for "Permission Denied" errors.
+2.  **SHA-1 Fingerprint**: Add your debug SHA-1 to the Firebase Console. This is mandatory for Firestore and Auth on Android.
 3.  **Data Casting**: Ensure you are not casting `name` or `description` directly to `String`. Cast them to `Map<String, String>`.
 
 ## Architecture Notes
