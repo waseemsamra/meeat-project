@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -51,9 +50,10 @@ export default function AccountOrdersPage() {
 
   const ordersQuery = useMemo(() => {
     if (!firestore || !user) return null;
-    // Query the subcollection for the current user's orders
+    // Query the root orders collection filtered by userId
     return query(
-        collection(firestore, `users/${user.id}/orders`), 
+        collection(firestore, 'orders'),
+        where('userId', '==', user.id),
         orderBy('createdAt', 'desc')
     );
   }, [firestore, user]);

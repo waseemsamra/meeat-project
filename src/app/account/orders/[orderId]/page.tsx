@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useParams, notFound } from 'next/navigation';
@@ -54,8 +53,8 @@ export default function OrderDetailsPage() {
   const { t } = useTranslation();
 
   const orderRef = useMemo(
-    () => (firestore && user?.id && orderId ? doc(firestore, `users/${user.id}/orders`, orderId) : null),
-    [firestore, user?.id, orderId]
+    () => (firestore && orderId ? doc(firestore, 'orders', orderId) : null),
+    [firestore, orderId]
   );
   const { data: order, isLoading: isLoadingOrder, error } = useDoc<Order>(orderRef);
   
@@ -102,6 +101,11 @@ export default function OrderDetailsPage() {
     notFound();
   }
   
+  // Security check: Only owner or admin should see this
+  if (order && user && order.userId !== user.id && !user.roles?.includes('ADMIN')) {
+      notFound();
+  }
+
   const handlePrint = () => {
     printJS({
       printable: 'order-details-to-print',

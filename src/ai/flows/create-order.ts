@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview A server-side flow for creating customer orders and dispatching to Shipday.
@@ -82,8 +81,8 @@ const createOrderFlow = ai.defineFlow(
 
     const batch = writeBatch(firestore);
 
-    // 1. Pre-generate Order ID
-    const orderRef = doc(collection(firestore, `users/${userId}/orders`));
+    // 1. Pre-generate Order ID in root /orders collection
+    const orderRef = doc(collection(firestore, 'orders'));
     const orderId = orderRef.id;
     
     // 2. Process cart items and add them to the batch
@@ -146,7 +145,7 @@ const createOrderFlow = ai.defineFlow(
       description: orderNotes || null,
     };
     
-    // 4. Add the Order document to the batch
+    // 4. Add the Order document to the batch in root collection
     batch.set(orderRef, { ...orderData, id: orderId });
     
     // 5. Atomically commit all writes

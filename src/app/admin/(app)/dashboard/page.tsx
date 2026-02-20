@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -23,7 +22,7 @@ import {
   collection,
   query,
   onSnapshot,
-  collectionGroup,
+  orderBy,
   FirestoreError,
 } from 'firebase/firestore';
 import type { Order, User, Product, InventoryLot } from '@/lib/types';
@@ -112,10 +111,10 @@ export default function AdminDashboard() {
 
     const unsubscribeUsers = onSnapshot(collection(firestore, 'users'), (snapshot) => {
       setUsers(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User)));
-      setIsLoadingUsers(false);
+      setIsUserLoading(false);
     });
 
-    const unsubscribeOrders = onSnapshot(query(collectionGroup(firestore, 'orders')), (snapshot) => {
+    const unsubscribeOrders = onSnapshot(query(collection(firestore, 'orders')), (snapshot) => {
       setOrders(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Order)));
       setIsLoadingOrders(false);
     });
@@ -312,7 +311,7 @@ export default function AdminDashboard() {
                         <TableRow key={order.id}>
                           <TableCell>
                             <div className="font-medium">{customer?.name || 'Guest'}</div>
-                            <div className="text-sm text-muted-foreground">{customer?.email}</div>
+                            <div className="text-sm text-muted-foreground">{customer?.email || order.userId}</div>
                           </TableCell>
                           <TableCell>
                             <Badge variant={order.fulfillmentStatus === 'delivered' ? 'default' : 'secondary'}>{order.fulfillmentStatus}</Badge>

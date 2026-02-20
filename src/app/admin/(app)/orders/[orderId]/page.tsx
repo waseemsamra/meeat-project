@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useParams, notFound, useSearchParams, useRouter } from 'next/navigation';
@@ -58,16 +57,15 @@ export default function AdminOrderDetailsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const orderId = params.orderId as string;
-  const userId = searchParams.get('userId');
   const fromCustomerReport = searchParams.get('from') === 'customer-report';
   const firestore = useFirestore();
   const { t } = useTranslation();
   const { toast } = useToast();
 
   const orderRef = useMemo(() => {
-    if (!firestore || !orderId || !userId) return null;
-    return doc(firestore, `users/${userId}/orders`, orderId);
-  }, [firestore, orderId, userId]);
+    if (!firestore || !orderId) return null;
+    return doc(firestore, 'orders', orderId);
+  }, [firestore, orderId]);
   
   const { data: order, isLoading: isLoadingOrder, error } = useDoc<Order>(orderRef);
 
@@ -147,20 +145,7 @@ export default function AdminOrderDetailsPage() {
   };
   
   const handleGoBack = () => {
-    if (userId) {
-        router.push(`/admin/reporting/customers/${userId}`);
-    } else {
-        router.back();
-    }
-  }
-
-  if (!userId && !isLoading) {
-    return (
-        <div className="container mx-auto px-4 py-12 text-center">
-            <h1 className="text-2xl font-bold">Invalid Order Link</h1>
-            <p className="text-muted-foreground mt-2">The user ID is missing from the URL. Please go back to the orders list and try again.</p>
-        </div>
-    )
+    router.back();
   }
 
   if (isLoading) {
@@ -172,7 +157,6 @@ export default function AdminOrderDetailsPage() {
   }
 
   if (!order) {
-    // If there was a docRef but no order and not loading, it's a 404
     return notFound();
   }
 
@@ -190,7 +174,7 @@ export default function AdminOrderDetailsPage() {
          <div className="flex items-center gap-4">
             <Button onClick={handleGoBack} variant="outline">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Report
+                Back
             </Button>
             <Badge variant={order.fulfillmentStatus === 'delivered' ? 'default' : 'secondary'} className="capitalize">{order.fulfillmentStatus}</Badge>
             <Button onClick={handlePrint} variant="outline">

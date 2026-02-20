@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -52,7 +51,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { MoreHorizontal } from "lucide-react"
 import { useCollection, useFirestore, errorEmitter, FirestorePermissionError } from "@/firebase";
-import { collection, collectionGroup, query, doc, deleteDoc, writeBatch, updateDoc } from "firebase/firestore";
+import { collection, query, orderBy, doc, deleteDoc, writeBatch, updateDoc } from "firebase/firestore";
 import type { Order, User } from "@/lib/types";
 import { useMemo, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -78,7 +77,8 @@ export default function AllOrdersPage() {
   
   const allOrdersQuery = useMemo(() => {
     if (!firestore) return null;
-    return query(collectionGroup(firestore, "orders"));
+    // Query root collection directly
+    return query(collection(firestore, "orders"), orderBy("createdAt", "desc"));
   }, [firestore]);
   const { data: allOrders, isLoading: isLoadingOrders, error: ordersError } = useCollection<Order>(allOrdersQuery);
   
@@ -89,8 +89,6 @@ export default function AllOrdersPage() {
           ...order,
           customer: userMap.get(order.userId),
       }));
-      // Client-side sorting
-      enriched.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       return enriched;
     }
     return [];
@@ -100,11 +98,11 @@ export default function AllOrdersPage() {
   const displayLoading = isLoadingOrders || isLoadingUsers;
   
   const handleStatusUpdate = async (order: Order, status: string) => {
-    if (!firestore || !order.userId) {
+    if (!firestore) {
         toast({ variant: 'destructive', title: 'Error', description: 'Could not update status. Invalid order data.' });
         return;
     }
-    const orderDocRef = doc(firestore, `users/${order.userId}/orders`, order.id);
+    const orderDocRef = doc(firestore, 'orders', order.id);
     const updateData: { [key: string]: any } = { 
         fulfillmentStatus: status,
         updatedAt: new Date().toISOString() 
@@ -157,12 +155,12 @@ export default function AllOrdersPage() {
   }
 
   const handleLinkShipdayOrder = async () => {
-    if (!firestore || !selectedOrder || !selectedOrder.userId || !shipdayIdInput) {
+    if (!firestore || !selectedOrder || !shipdayIdInput) {
         toast({ variant: 'destructive', title: 'Error', description: 'Missing information to link order.' });
         return;
     }
 
-    const orderDocRef = doc(firestore, `users/${selectedOrder.userId}/orders`, selectedOrder.id);
+    const orderDocRef = doc(firestore, 'orders', selectedOrder.id);
     const shipdayOrderId = parseInt(shipdayIdInput, 10);
 
     if (isNaN(shipdayOrderId)) {
@@ -181,7 +179,7 @@ export default function AllOrdersPage() {
   }
 
   const handleDelete = async () => {
-    if (!firestore || !selectedOrder || !selectedOrder.userId) {
+    if (!firestore || !selectedOrder) {
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -196,7 +194,7 @@ export default function AllOrdersPage() {
     try {
       const batch = writeBatch(firestore);
       
-      const orderDocRef = doc(firestore, `users/${orderToDelete.userId}/orders`, orderToDelete.id);
+      const orderDocRef = doc(firestore, 'orders', orderToDelete.id);
       batch.delete(orderDocRef);
       
       if (orderToDelete.orderItemIds && Array.isArray(orderToDelete.orderItemIds)) {
@@ -218,7 +216,7 @@ export default function AllOrdersPage() {
     } catch (error: any) {
       console.error('Failed to delete order:', error);
       const contextualError = await FirestorePermissionError.create({
-        path: `users/${orderToDelete.userId}/orders/${orderToDelete.id}`,
+        path: `orders/${orderToDelete.id}`,
         operation: 'delete',
       });
       errorEmitter.emit('permission-error', contextualError);
@@ -270,8 +268,8 @@ export default function AllOrdersPage() {
                 <TableRow key={order.id}>
                   <TableCell className="font-medium text-xs">#{order.id.substring(0, 8)}</TableCell>
                   <TableCell>
-                    <div className="font-medium">{customer?.name}</div>
-                    <div className="text-sm text-muted-foreground">{customer?.email}</div>
+                    <div className="font-medium">{customer?.name || 'Guest'}</div>
+                    <div className="text-sm text-muted-foreground">{customer?.email || order.userId}</div>
                   </TableCell>
                   <TableCell>
                     <Badge variant={order.orderType === 'ONLINE' ? 'outline' : 'secondary'}>{order.orderType}</Badge>
@@ -298,11 +296,11 @@ export default function AllOrdersPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuItem asChild>
-                            <Link href={`/admin/orders/${order.id}?userId=${order.userId}`}>View Details</Link>
+                            <Link href={`/admin/orders/${order.id}`}>View Details</Link>
                         </DropdownMenuItem>
                         {order.shipdayOrderId && (
                             <DropdownMenuItem asChild>
-                                <Link href={`/admin/orders/${order.id}?userId=${order.userId}`}>View Shipping Details</Link>
+                                <Link href={`/admin/orders/${order.id}`}>View Shipping Details</Link>
                             </DropdownMenuItem>
                         )}
                         <DropdownMenuItem onClick={() => handleOpenLinkModal(order)} disabled={!!order.shipdayOrderId}>

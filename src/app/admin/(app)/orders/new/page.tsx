@@ -129,7 +129,8 @@ export default function NewSalesOrderPage() {
     try {
         const batch = writeBatch(firestore);
         
-        const orderRef = doc(collection(firestore, `users/${data.customerId}/orders`));
+        // Write to root /orders collection
+        const orderRef = doc(collection(firestore, 'orders'));
         
         const orderItemsData = data.lineItems.map((item) => {
             const orderItemRef = doc(collection(firestore, 'orders_items'));
@@ -183,7 +184,7 @@ export default function NewSalesOrderPage() {
     } catch (e: any) {
         console.error("Failed to save sales order:", e);
         const contextualError = await FirestorePermissionError.create({
-            path: `users/${data.customerId}/orders`,
+            path: 'orders',
             operation: 'create',
             requestResourceData: data,
         });

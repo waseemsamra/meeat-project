@@ -49,7 +49,24 @@ data class Product(
 }
 ```
 
-### 3. Handling AWS S3 Images
+### 3. 📦 Order History (Root Collection)
+Orders are stored in a root collection called `orders`. Each order document contains a `userId` field matching the user's Firebase UID.
+
+**Kotlin Query Example**:
+```kotlin
+val ordersRef = db.collection("orders")
+val query = ordersRef.whereEqualTo("userId", currentUserId)
+    .orderBy("createdAt", Query.Direction.DESCENDING)
+
+query.get().addOnSuccessListener { documents ->
+    for (document in documents) {
+        val order = document.toObject(Order::class.java)
+        // Add to your list
+    }
+}
+```
+
+### 4. Handling AWS S3 Images
 The database stores relative paths. Prepend the base URL in your UI code:
 **Base URL**: `https://primemeeat.s3.us-east-1.amazonaws.com`
 
@@ -61,11 +78,11 @@ fun getImageUrl(path: String?): String {
 }
 ```
 
-### 4. 🔍 Checklist for Data Visibility
+### 5. 🔍 Checklist for Data Visibility
 1.  **Deploy Check**: Did you run `npm run firebase:deploy`?
 2.  **SHA-1 Fingerprint**: Add your debug SHA-1 to the Firebase Console. This is mandatory for Firestore and Auth.
 3.  **Data Casting**: Ensure you are not casting `name` or `description` directly to `String`. Cast them to `Map<String, String>`.
 
 ## Architecture Notes
-- **Shared Data**: Both platforms use the same Firestore root collections (`/products`, `/categories`, etc.).
+- **Shared Data**: Both platforms use the same Firestore root collections (`/products`, `/categories`, `/orders`, etc.).
 - **Authorization Independence**: The `userId` field is denormalized into order items and orders to allow mobile clients to perform fast, secure queries.

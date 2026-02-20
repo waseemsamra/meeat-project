@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo } from 'react';
@@ -66,9 +65,9 @@ export function ConfirmationPage() {
   const currencySymbol = defaultCurrency?.symbol || '$';
 
   const orderRef = useMemo(() => {
-    if (!firestore || !user?.id || !orderId) return null;
-    return doc(firestore, `users/${user.id}/orders`, orderId);
-  }, [firestore, user?.id, orderId]);
+    if (!firestore || !orderId) return null;
+    return doc(firestore, 'orders', orderId);
+  }, [firestore, orderId]);
 
   const { data: order, isLoading } = useDoc<Order>(orderRef);
   const shippingFee = 10.00; // As per design
@@ -131,7 +130,7 @@ export function ConfirmationPage() {
             {order.orderItemIds.map(item => (
                 <div key={item.id} className="flex justify-between items-start py-4 border-t text-muted-foreground">
                     <div>
-                        <p className="text-foreground">{item.product?.name || `Item ID: ${item.productId}`} &times; {item.quantity}</p>
+                        <p className="text-foreground">{item.product?.name?.en || `Item ID: ${item.productId}`} &times; {item.quantity}</p>
                         <div className="text-xs">
                             {item.selectedUnit && <p>Unit: {item.selectedUnit}</p>}
                             {item.selectedStyle && <p>Style: {item.selectedStyle}</p>}
