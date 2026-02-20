@@ -1,5 +1,3 @@
-
-
 export type Role = 'CUSTOMER' | 'CONTENT_MANAGER' | 'ADMIN' | 'STAFF' | 'ACCOUNTANT';
 
 export type User = {
@@ -23,6 +21,7 @@ export type User = {
   // Denormalized for convenience
   groups?: Group[];
   roles?: Role[];
+  __path?: string;
 };
 
 export type Group = {
@@ -43,6 +42,7 @@ export type InventoryLot = {
   shipmentId: string;
   purchaseDate: string; // ISO string
   shipmentDate: string; // ISO string
+  __path?: string;
 };
 
 export type MediaItem = {
@@ -84,6 +84,7 @@ export type Product = {
   points?: number;
   createdAt: string;
   updatedAt:string;
+  __path?: string;
 };
 
 export type Order = {
@@ -113,6 +114,7 @@ export type Order = {
   // Denormalized for convenience
   customer?: User;
   description?: string | null;
+  __path?: string;
 };
 
 export type OrderItem = {
@@ -126,6 +128,7 @@ export type OrderItem = {
   selectedRub?: string | null;
   // Denormalized for convenience
   product?: { name: LocalizedString; images: string[]; category: string; cutType: string; slug: string; };
+  __path?: string;
 };
 
 export type Address = {
@@ -138,6 +141,7 @@ export type Address = {
   zipCode: string;
   country: string;
   isDefault: boolean;
+  __path?: string;
 };
 
 export type CartItem = {
@@ -165,6 +169,7 @@ export type AnyCartItem = CartItem | BoxCartItem;
 export interface Attribute {
   id: string;
   name: LocalizedString;
+  __path?: string;
 }
 
 export interface Language extends Attribute {
@@ -196,27 +201,32 @@ export interface Currency {
     isDefault?: boolean;
     conversionRate?: number;
     status?: 'enabled' | 'disabled';
+    __path?: string;
 }
 
 export interface MeasurementUnit {
     id: string;
     name: string;
     symbol: string;
+    __path?: string;
 }
 
 export interface Style {
     id: string;
     name: string;
+    __path?: string;
 }
 
 export interface Rub {
     id: string;
     name: string;
+    __path?: string;
 }
 
 export interface Temperature {
     id: string;
     name: string;
+    __path?: string;
 }
 
 
@@ -228,6 +238,7 @@ export interface Vendor {
   address?: string;
   country: string;
   type: 'Local Supplier' | 'Foreign Supplier';
+  __path?: string;
 }
 
 export interface DeliveryChallan {
@@ -239,6 +250,7 @@ export interface DeliveryChallan {
   status: 'dispatched' | 'in_transit' | 'delivered';
   name: string; // For compatibility with AttributeManagementPage
   description?: string;
+  __path?: string;
 }
 
 export interface Invoice {
@@ -250,6 +262,7 @@ export interface Invoice {
   status: 'draft' | 'sent' | 'paid' | 'overdue' | 'unpaid';
   name: string; // For compatibility with AttributeManagementPage
   order?: Order;
+  __path?: string;
 }
 
 export type PaymentType = 'Cash' | 'Cheque';
@@ -265,6 +278,7 @@ export interface Payment {
     payeeName?: string;
     bankName?: string;
     chequeNumber?: string;
+    __path?: string;
 }
 
 export interface CreditNote {
@@ -274,6 +288,7 @@ export interface CreditNote {
     reason: string;
     issueDate: string;
     name?: string; // For compatibility
+    __path?: string;
 }
 
 export interface DebitNote {
@@ -283,6 +298,7 @@ export interface DebitNote {
     reason: string;
     issueDate: string;
     name?: string; // For compatibility
+    __path?: string;
 }
 
 export interface HomepageSection {
@@ -294,6 +310,7 @@ export interface HomepageSection {
     category: string;
     countryOfOrigin?: string;
     name?: string;
+    __path?: string;
 }
 
 export interface HeroSettings {
@@ -305,6 +322,7 @@ export interface HeroSettings {
     titleAlignment?: 'left' | 'center' | 'right';
     subtitleAlignment?: 'left' | 'center' | 'right';
     buttonAlignment?: 'left' | 'center' | 'right';
+    __path?: string;
 }
 
 export interface PromiseSettings {
@@ -313,6 +331,7 @@ export interface PromiseSettings {
     ethicallyRearedPromise?: LocalizedString | null;
     sustainableFarmingPromise?: LocalizedString | null;
     description?: LocalizedString | null;
+    __path?: string;
 }
 
 export interface BoxOption {
@@ -325,6 +344,7 @@ export interface BoxOption {
   description: string;
   order: number;
   points: number;
+  __path?: string;
 }
 
 export type SocialPostPlatform = 'Facebook' | 'Instagram';
@@ -337,6 +357,7 @@ export interface SocialPost {
     imageUrl: string;
     platform: SocialPostPlatform;
     createdAt: string;
+    __path?: string;
 }
 
 export interface ChooseBoxStep {
@@ -347,6 +368,7 @@ export interface ChooseBoxStep {
   imageId: string;
   imageHint?: string;
   name: string; // for compatibility with AttributeManagementPage
+  __path?: string;
 }
 
 export interface ExploreRangeItem {
@@ -355,6 +377,7 @@ export interface ExploreRangeItem {
   name: LocalizedString;
   imageUrl: string;
   link: string;
+  __path?: string;
 }
 
 export interface ShipdayOrderDetails {
@@ -396,5 +419,5 @@ export interface ShipdayOrderDetails {
 export interface MeasuringGuideSettings {
     imageUrl?: string | null;
     description?: LocalizedString | null;
+    __path?: string;
 }
-    

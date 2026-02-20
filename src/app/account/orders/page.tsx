@@ -11,7 +11,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useCollection, useFirestore, useUser } from '@/firebase';
-import { collection, query, orderBy, where } from 'firebase/firestore';
+import { collection, query, orderBy, where, collectionGroup } from 'firebase/firestore';
 import type { Order } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
@@ -50,9 +50,9 @@ export default function AccountOrdersPage() {
 
   const ordersQuery = useMemo(() => {
     if (!firestore || !user) return null;
-    // Query the root orders collection filtered by userId
+    // Use collectionGroup to find orders for the user across root and potential legacy subcollections
     return query(
-        collection(firestore, 'orders'),
+        collectionGroup(firestore, 'orders'),
         where('userId', '==', user.id),
         orderBy('createdAt', 'desc')
     );

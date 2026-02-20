@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -76,7 +75,7 @@ export default function SalesOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [visibleCount, setVisibleCount] = useState(20);
 
-  // Fetch ALL orders
+  // Fetch ALL orders using collectionGroup to find both root and legacy subcollection orders
   const allOrdersQuery = useMemo(() => 
     firestore ? query(collectionGroup(firestore, "orders")) : null
   , [firestore]);
@@ -147,9 +146,9 @@ export default function SalesOrdersPage() {
   }
   
   const updatePaymentStatus = async (order: Order, newStatus: 'paid' | 'unpaid') => {
-    if (!firestore || !order.userId) return;
+    if (!firestore || !order.__path) return;
 
-    const orderRef = doc(firestore, `users/${order.userId}/orders`, order.id);
+    const orderRef = doc(firestore, order.__path);
     const updateData = { 
         paymentStatus: newStatus,
         updatedAt: new Date().toISOString(),
@@ -177,11 +176,11 @@ export default function SalesOrdersPage() {
   };
 
   const handleDelete = async () => {
-    if (!firestore || !selectedOrder || !selectedOrder.userId) {
+    if (!firestore || !selectedOrder || !selectedOrder.__path) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Cannot delete order. Invalid data.',
+        description: 'Cannot delete order. Invalid data path.',
       });
       setIsAlertOpen(false);
       return;
@@ -191,8 +190,8 @@ export default function SalesOrdersPage() {
     try {
       const batch = writeBatch(firestore);
 
-      // 1. Delete the order document itself
-      const orderDocRef = doc(firestore, `users/${orderToDelete.userId}/orders`, orderToDelete.id);
+      // 1. Delete the order document itself using its full path
+      const orderDocRef = doc(firestore, orderToDelete.__path);
       batch.delete(orderDocRef);
       
       // 2. Delete associated order items
@@ -216,7 +215,7 @@ export default function SalesOrdersPage() {
     } catch (error) {
       console.error('Failed to delete order:', error);
       const contextualError = await FirestorePermissionError.create({
-        path: `users/${orderToDelete.userId}/orders/${orderToDelete.id}`,
+        path: orderToDelete.__path,
         operation: 'delete',
       });
       errorEmitter.emit('permission-error', contextualError);

@@ -51,7 +51,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { MoreHorizontal } from "lucide-react"
 import { useCollection, useFirestore, errorEmitter, FirestorePermissionError } from "@/firebase";
-import { collection, query, orderBy, doc, deleteDoc, writeBatch, updateDoc } from "firebase/firestore";
+import { collection, query, orderBy, doc, deleteDoc, writeBatch, updateDoc, collectionGroup } from "firebase/firestore";
 import type { Order, User } from "@/lib/types";
 import { useMemo, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -77,8 +77,8 @@ export default function AllOrdersPage() {
   
   const allOrdersQuery = useMemo(() => {
     if (!firestore) return null;
-    // Query root collection directly
-    return query(collection(firestore, "orders"), orderBy("createdAt", "desc"));
+    // Use collectionGroup to find orders in both root and subcollections for visibility
+    return query(collectionGroup(firestore, "orders"), orderBy("createdAt", "desc"));
   }, [firestore]);
   const { data: allOrders, isLoading: isLoadingOrders, error: ordersError } = useCollection<Order>(allOrdersQuery);
   
@@ -98,11 +98,11 @@ export default function AllOrdersPage() {
   const displayLoading = isLoadingOrders || isLoadingUsers;
   
   const handleStatusUpdate = async (order: Order, status: string) => {
-    if (!firestore) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not update status. Invalid order data.' });
+    if (!firestore || !order.__path) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not update status. Invalid order data path.' });
         return;
     }
-    const orderDocRef = doc(firestore, 'orders', order.id);
+    const orderDocRef = doc(firestore, order.__path);
     const updateData: { [key: string]: any } = { 
         fulfillmentStatus: status,
         updatedAt: new Date().toISOString() 
@@ -155,12 +155,12 @@ export default function AllOrdersPage() {
   }
 
   const handleLinkShipdayOrder = async () => {
-    if (!firestore || !selectedOrder || !shipdayIdInput) {
+    if (!firestore || !selectedOrder || !shipdayIdInput || !selectedOrder.__path) {
         toast({ variant: 'destructive', title: 'Error', description: 'Missing information to link order.' });
         return;
     }
 
-    const orderDocRef = doc(firestore, 'orders', selectedOrder.id);
+    const orderDocRef = doc(firestore, selectedOrder.__path);
     const shipdayOrderId = parseInt(shipdayIdInput, 10);
 
     if (isNaN(shipdayOrderId)) {
@@ -179,11 +179,11 @@ export default function AllOrdersPage() {
   }
 
   const handleDelete = async () => {
-    if (!firestore || !selectedOrder) {
+    if (!firestore || !selectedOrder || !selectedOrder.__path) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Cannot delete order. Invalid data.',
+        description: 'Cannot delete order. Invalid data path.',
       });
       setIsAlertOpen(false);
       return;
@@ -194,12 +194,13 @@ export default function AllOrdersPage() {
     try {
       const batch = writeBatch(firestore);
       
-      const orderDocRef = doc(firestore, 'orders', orderToDelete.id);
+      const orderDocRef = doc(firestore, orderToDelete.__path);
       batch.delete(orderDocRef);
       
       if (orderToDelete.orderItemIds && Array.isArray(orderToDelete.orderItemIds)) {
         orderToDelete.orderItemIds.forEach(item => {
           if (typeof item === 'object' && item.id) {
+            // We assume order items are in root /orders_items as per the new creation logic
             const itemDocRef = doc(firestore, 'orders_items', item.id);
             batch.delete(itemDocRef);
           }
@@ -216,7 +217,7 @@ export default function AllOrdersPage() {
     } catch (error: any) {
       console.error('Failed to delete order:', error);
       const contextualError = await FirestorePermissionError.create({
-        path: `orders/${orderToDelete.id}`,
+        path: orderToDelete.__path,
         operation: 'delete',
       });
       errorEmitter.emit('permission-error', contextualError);
@@ -296,7 +297,7 @@ export default function AllOrdersPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuItem asChild>
-                            <Link href={`/admin/orders/${order.id}`}>View Details</Link>
+                            <Link href={`/admin/orders/${order.id}?userId=${order.userId}`}>View Details</Link>
                         </DropdownMenuItem>
                         {order.shipdayOrderId && (
                             <DropdownMenuItem asChild>

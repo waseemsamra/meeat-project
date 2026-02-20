@@ -12,15 +12,15 @@ import {
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 
-/** Utility type to add an 'id' field to a given type T. */
-export type WithId<T> = T & { id: string };
+/** Utility type to add an 'id' field and '__path' to a given type T. */
+export type WithId<T> = T & { id: string; __path: string };
 
 /**
  * Interface for the return value of the useCollection hook.
  * @template T Type of the document data.
  */
 export interface UseCollectionResult<T> {
-  data: WithId<T>[] | null; // Document data with ID, or null.
+  data: WithId<T>[] | null; // Document data with ID and path, or null.
   isLoading: boolean;       // True if loading.
   error: FirestoreError | Error | null; // Error object, or null.
 }
@@ -62,7 +62,7 @@ export function useCollection<T = any>(
     if (!memoizedTargetRefOrQuery) {
       setData(null);
       setError(null);
-      setIsLoading(true); // Set to true as we are "loading" a non-existent query
+      setIsLoading(false);
       return;
     }
     
@@ -75,6 +75,7 @@ export function useCollection<T = any>(
         const results: ResultItemType[] = snapshot.docs.map(doc => ({
           ...(doc.data() as T),
           id: doc.id,
+          __path: doc.ref.path,
         }));
         
         setData(results);
