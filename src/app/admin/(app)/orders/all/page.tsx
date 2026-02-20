@@ -124,7 +124,7 @@ export default function AllOrdersPage() {
       // Deduplicate orders by orderNumber OR id (handling cases where mobile app writes to both root and subcollection)
       const deduplicated = new Map<string, any>();
       normalized.forEach(order => {
-          const orderKey = order.orderNumber || order.Order || order.id;
+          const orderKey = order.orderNumber || (order as any).Order || order.id;
           const existing = deduplicated.get(orderKey);
           
           if (!existing) {
@@ -165,10 +165,9 @@ export default function AllOrdersPage() {
     if (!firestore) return;
     
     try {
-        // We want to update EVERY document that matches this order's ID or Number to ensure mobile sync
         const orderKey = order.orderNumber || (order as any).Order || order.id;
         
-        // 1. Find all documents across root and subcollections with this identifier
+        // Find all documents across root and subcollections with this identifier
         const qRoot = query(collection(firestore, 'orders'), where('orderNumber', '==', orderKey));
         const qSub = query(collectionGroup(firestore, 'orders'), where('orderNumber', '==', orderKey));
         const qLegacy = query(collectionGroup(firestore, 'orders'), where('Order', '==', orderKey));
@@ -188,7 +187,6 @@ export default function AllOrdersPage() {
             updatedAt: new Date().toISOString() 
         };
 
-        // Collect all unique document paths
         const pathsToUpdate = new Set<string>();
         if (order.__path) pathsToUpdate.add(order.__path);
         rootSnap.docs.forEach(d => pathsToUpdate.add(d.ref.path));
@@ -214,7 +212,6 @@ export default function AllOrdersPage() {
                 });
 
                 if (shipdayResult.success && shipdayResult.shipdayOrderId) {
-                    // Add shipday ID to the batch for all documents
                     pathsToUpdate.forEach(path => {
                         batch.update(doc(firestore, path), { shipdayOrderId: shipdayResult.shipdayOrderId });
                     });
@@ -231,7 +228,7 @@ export default function AllOrdersPage() {
         });
     } catch (e: any) {
         console.error("Failed to update status:", e);
-        if (e.message?.includes('index')) {
+        if (e.message?.includes('index') || e.message?.includes('ready')) {
             toast({ 
                 variant: 'destructive', 
                 title: 'Index Building', 
@@ -366,7 +363,7 @@ export default function AllOrdersPage() {
                         <TableCell>
                             {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
                         </TableCell>
-                        <TableCell className="text-right">{currencySymbol}{order.total.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">{currencySymbol}{(order.total || 0).toFixed(2)}</TableCell>
                         <TableCell>
                             <DropdownMenu>
                             <DropdownMenuTrigger asChild>
