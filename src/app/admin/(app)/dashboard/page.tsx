@@ -20,6 +20,8 @@ import { DollarSign, ShoppingCart, Users, BarChart, AlertTriangle } from 'lucide
 import { useFirestore, useCollection } from '@/firebase';
 import {
   collection,
+  query,
+  orderBy,
 } from 'firebase/firestore';
 import type { Order, User, Product, InventoryLot } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -36,7 +38,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isValid } from 'date-fns';
 import { useSettings } from '@/hooks/useSettings';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -94,7 +96,7 @@ export default function AdminDashboard() {
   const usersQuery = useMemo(() => firestore ? collection(firestore, 'users') : null, [firestore]);
   const { data: users, isLoading: isLoadingUsers } = useCollection<User>(usersQuery);
 
-  const ordersQuery = useMemo(() => firestore ? collection(firestore, 'orders') : null, [firestore]);
+  const ordersQuery = useMemo(() => firestore ? query(collection(firestore, 'orders'), orderBy('createdAt', 'desc')) : null, [firestore]);
   const { data: orders, isLoading: isLoadingOrders } = useCollection<Order>(ordersQuery);
 
   const productsQuery = useMemo(() => firestore ? collection(firestore, 'products') : null, [firestore]);
@@ -118,16 +120,10 @@ export default function AdminDashboard() {
     }));
   }, [products, lots, t]);
 
-  const sortedOrders = useMemo(() => {
+  const recentOrders = useMemo(() => {
     if (!orders) return [];
-    return [...orders]
-      .filter(order => !!order.createdAt)
-      .sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
+    return orders.slice(0, 5);
   }, [orders]);
-
-  const recentOrders = useMemo(() => sortedOrders.slice(0, 5), [sortedOrders]);
 
   const chartData = useMemo(() => {
     if (!orders) return [];
@@ -137,7 +133,7 @@ export default function AdminDashboard() {
         if (!order.createdAt) return;
         try {
             const date = parseISO(order.createdAt);
-            if (isNaN(date.getTime())) return;
+            if (!isValid(date)) return;
             const monthKey = format(date, 'yyyy-MM');
             monthlyRevenue[monthKey] = (monthlyRevenue[monthKey] || 0) + order.total;
         } catch (e) {
