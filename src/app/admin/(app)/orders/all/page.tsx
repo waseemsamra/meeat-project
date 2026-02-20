@@ -164,65 +164,65 @@ export default function AllOrdersPage() {
   const handleStatusUpdate = async (order: Order, status: string) => {
     if (!firestore) return;
     
-    // We want to update EVERY document that matches this order's ID or Number to ensure mobile sync
-    const orderKey = order.orderNumber || (order as any).Order || order.id;
-    
-    // 1. Find all documents across root and subcollections with this identifier
-    const qRoot = query(collection(firestore, 'orders'), where('orderNumber', '==', orderKey));
-    const qSub = query(collectionGroup(firestore, 'orders'), where('orderNumber', '==', orderKey));
-    const qLegacy = query(collectionGroup(firestore, 'orders'), where('Order', '==', orderKey));
-    
-    const [rootSnap, subSnap, legacySnap] = await Promise.all([
-        getDocs(qRoot),
-        getDocs(qSub),
-        getDocs(qLegacy)
-    ]);
+    try {
+        // We want to update EVERY document that matches this order's ID or Number to ensure mobile sync
+        const orderKey = order.orderNumber || (order as any).Order || order.id;
+        
+        // 1. Find all documents across root and subcollections with this identifier
+        const qRoot = query(collection(firestore, 'orders'), where('orderNumber', '==', orderKey));
+        const qSub = query(collectionGroup(firestore, 'orders'), where('orderNumber', '==', orderKey));
+        const qLegacy = query(collectionGroup(firestore, 'orders'), where('Order', '==', orderKey));
+        
+        const [rootSnap, subSnap, legacySnap] = await Promise.all([
+            getDocs(qRoot),
+            getDocs(qSub),
+            getDocs(qLegacy)
+        ]);
 
-    const batch = writeBatch(firestore);
-    const updateData: { [key: string]: any } = { 
-        fulfillmentStatus: status, // Web standard
-        Status: status.charAt(0).toUpperCase() + status.slice(1), // Mobile standard (e.g., "Delivered")
-        status: status, // Lowercase standard
-        orderStatus: status, // Common fallback
-        updatedAt: new Date().toISOString() 
-    };
+        const batch = writeBatch(firestore);
+        const updateData: { [key: string]: any } = { 
+            fulfillmentStatus: status, // Web standard
+            Status: status.charAt(0).toUpperCase() + status.slice(1), // Mobile standard (e.g., "Delivered")
+            status: status, // Lowercase standard
+            orderStatus: status, // Common fallback
+            updatedAt: new Date().toISOString() 
+        };
 
-    // Collect all unique document paths
-    const pathsToUpdate = new Set<string>();
-    if (order.__path) pathsToUpdate.add(order.__path);
-    rootSnap.docs.forEach(d => pathsToUpdate.add(d.ref.path));
-    subSnap.docs.forEach(d => pathsToUpdate.add(d.ref.path));
-    legacySnap.docs.forEach(d => pathsToUpdate.add(d.ref.path));
+        // Collect all unique document paths
+        const pathsToUpdate = new Set<string>();
+        if (order.__path) pathsToUpdate.add(order.__path);
+        rootSnap.docs.forEach(d => pathsToUpdate.add(d.ref.path));
+        subSnap.docs.forEach(d => pathsToUpdate.add(d.ref.path));
+        legacySnap.docs.forEach(d => pathsToUpdate.add(d.ref.path));
 
-    pathsToUpdate.forEach(path => {
-        batch.update(doc(firestore, path), updateData);
-    });
+        pathsToUpdate.forEach(path => {
+            batch.update(doc(firestore, path), updateData);
+        });
 
-    if (status === 'shipped' || status === 'ready_for_pickup') {
-        const customer = users?.find(u => u.id === order.userId);
-        const address = order.shippingAddress;
-        if (customer) {
-            const shipdayResult = await createShipdayOrder({
-                orderId: order.id,
-                customerName: customer.name || 'N/A',
-                customerAddress: address ? `${address.street}, ${address.city}` : customer.deliveryAddress || 'N/A',
-                customerEmail: customer.email,
-                customerPhoneNumber: customer.telephone,
-                orderItemsText: (order.orderItemIds || []).map(item => `${item.product?.name?.en || 'Item'} x${item.quantity}`).join('\n'),
-                total: order.total
-            });
-
-            if (shipdayResult.success && shipdayResult.shipdayOrderId) {
-                // Add shipday ID to the batch for all documents
-                pathsToUpdate.forEach(path => {
-                    batch.update(doc(firestore, path), { shipdayOrderId: shipdayResult.shipdayOrderId });
+        if (status === 'shipped' || status === 'ready_for_pickup') {
+            const customer = users?.find(u => u.id === order.userId);
+            const address = order.shippingAddress;
+            if (customer) {
+                const shipdayResult = await createShipdayOrder({
+                    orderId: order.id,
+                    customerName: customer.name || 'N/A',
+                    customerAddress: address ? `${address.street}, ${address.city}` : customer.deliveryAddress || 'N/A',
+                    customerEmail: customer.email,
+                    customerPhoneNumber: customer.telephone,
+                    orderItemsText: (order.orderItemIds || []).map(item => `${item.product?.name?.en || 'Item'} x${item.quantity}`).join('\n'),
+                    total: order.total
                 });
-                toast({ title: 'Shipday Order Created', description: `Order successfully dispatched to Shipday ID: ${shipdayResult.shipdayOrderId}` });
+
+                if (shipdayResult.success && shipdayResult.shipdayOrderId) {
+                    // Add shipday ID to the batch for all documents
+                    pathsToUpdate.forEach(path => {
+                        batch.update(doc(firestore, path), { shipdayOrderId: shipdayResult.shipdayOrderId });
+                    });
+                    toast({ title: 'Shipday Order Created', description: `Order successfully dispatched to Shipday ID: ${shipdayResult.shipdayOrderId}` });
+                }
             }
         }
-    }
 
-    try {
         await batch.commit();
         toast({ 
             title: 'Status Updated', 
@@ -230,7 +230,16 @@ export default function AllOrdersPage() {
             icon: <CheckCircle2 className="h-4 w-4 text-green-500" />
         });
     } catch (e: any) {
-        toast({ variant: 'destructive', title: 'Update Failed', description: 'Permission denied or database error.' });
+        console.error("Failed to update status:", e);
+        if (e.message?.includes('index')) {
+            toast({ 
+                variant: 'destructive', 
+                title: 'Index Building', 
+                description: 'The search index for syncing mobile orders is still building on Google\'s servers. Please try again in 5 minutes.' 
+            });
+        } else {
+            toast({ variant: 'destructive', title: 'Update Failed', description: 'Permission denied or database error.' });
+        }
     }
   }
 
