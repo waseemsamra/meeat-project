@@ -175,7 +175,7 @@ export default function AllOrdersPage() {
     const [rootSnap, subSnap, legacySnap] = await Promise.all([
         getDocs(qRoot),
         getDocs(qSub),
-        getDocs(legacySnap)
+        getDocs(qLegacy)
     ]);
 
     const batch = writeBatch(firestore);
