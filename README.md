@@ -1,3 +1,4 @@
+
 # PrimeCuts Hub - Me'Eat
 
 This is a NextJS-based e-commerce platform for premium meats, integrated with Firebase for data and authentication. It is designed to work seamlessly with a companion Android application.

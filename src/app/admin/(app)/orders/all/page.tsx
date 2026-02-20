@@ -50,7 +50,7 @@ import { Input } from '@/components/ui/input';
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { MoreHorizontal, AlertCircle } from "lucide-react"
+import { MoreHorizontal, AlertCircle, Loader2 } from "lucide-react"
 import { useCollection, useFirestore, errorEmitter, FirestorePermissionError } from "@/firebase";
 import { collection, query, orderBy, doc, deleteDoc, writeBatch, updateDoc, collectionGroup } from "firebase/firestore";
 import type { Order, User } from "@/lib/types";
@@ -97,6 +97,7 @@ export default function AllOrdersPage() {
   }, [allOrders, users]);
 
   const displayLoading = isLoadingOrders || (isLoadingUsers && !allOrders);
+  const isIndexError = ordersError?.message?.includes('index') || ordersError?.message?.includes('ready');
   
   const handleStatusUpdate = async (order: Order, status: string) => {
     if (!firestore || !order.__path) {
@@ -119,7 +120,7 @@ export default function AllOrdersPage() {
                 customerAddress: address ? `${address.street}, ${address.city}` : customer.deliveryAddress || 'N/A',
                 customerEmail: customer.email,
                 customerPhoneNumber: customer.telephone,
-                orderItemsText: order.orderItemIds.map(item => `${item.product?.name || 'Item'} x${item.quantity}`).join('\n'),
+                orderItemsText: order.orderItemIds.map(item => `${item.product?.name?.en || 'Item'} x${item.quantity}`).join('\n'),
                 total: order.total
             });
 
@@ -205,12 +206,16 @@ export default function AllOrdersPage() {
       <h1 className="text-3xl font-bold">All Orders</h1>
       
       {ordersError && (
-        <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Firestore Error</AlertTitle>
+        <Alert variant={isIndexError ? "default" : "destructive"}>
+            {isIndexError ? <Loader2 className="h-4 w-4 animate-spin" /> : <AlertCircle className="h-4 w-4" />}
+            <AlertTitle>{isIndexError ? "Database Index Building" : "Firestore Error"}</AlertTitle>
             <AlertDescription>
-                {ordersError.message}
-                {ordersError.message.includes('index') && (
+                {isIndexError ? (
+                    "Google's servers are currently building the search index for your orders. This usually takes 3-5 minutes. Please check back shortly."
+                ) : (
+                    ordersError.message
+                )}
+                {!isIndexError && ordersError.message.includes('index') && (
                     <div className="mt-2">
                         <strong>Note:</strong> CollectionGroup queries require indexes. Please run <code>npm run firebase:deploy</code> to apply them.
                     </div>
@@ -289,7 +294,9 @@ export default function AllOrdersPage() {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">No orders found.</TableCell>
+                  <TableCell colSpan={7} className="h-24 text-center">
+                    {isIndexError ? "Waiting for database index..." : "No orders found."}
+                  </TableCell>
                 </TableRow>
               )}
             </TableBody>
