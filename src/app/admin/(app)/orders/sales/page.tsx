@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -34,7 +35,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { MoreHorizontal, PlusCircle } from "lucide-react"
+import { MoreHorizontal, PlusCircle, CheckCircle2 } from "lucide-react"
 import { useCollection, useFirestore, errorEmitter, FirestorePermissionError } from "@/firebase";
 import { collection, query, collectionGroup, addDoc, doc, updateDoc, deleteDoc, writeBatch } from "firebase/firestore";
 import type { Order, User, Invoice } from "@/lib/types";
@@ -52,6 +53,7 @@ function OrderRowSkeleton() {
                 <Skeleton className="h-4 w-24" />
                 <Skeleton className="h-3 w-32 mt-1" />
             </TableCell>
+            <TableCell><Skeleton className="h-5 w-20" /></TableCell>
             <TableCell><Skeleton className="h-5 w-20" /></TableCell>
             <TableCell><Skeleton className="h-4 w-24" /></TableCell>
             <TableCell className="text-right"><Skeleton className="h-4 w-16" /></TableCell>
@@ -170,6 +172,31 @@ export default function SalesOrdersPage() {
     }
   };
 
+  const handleFulfillmentStatusUpdate = async (order: Order, status: string) => {
+    if (!firestore || !order.__path) return;
+    const orderDocRef = doc(firestore, order.__path);
+    
+    // Sync multiple variations for mobile compatibility
+    const updateData: { [key: string]: any } = { 
+        fulfillmentStatus: status,
+        Status: status.charAt(0).toUpperCase() + status.slice(1),
+        status: status,
+        updatedAt: new Date().toISOString() 
+    };
+
+    try {
+        await updateDoc(orderDocRef, updateData);
+        toast({ 
+            title: 'Fulfillment Updated', 
+            description: `Order set to ${status}.`,
+            icon: <CheckCircle2 className="h-4 w-4 text-green-500" />
+        });
+    } catch (e: any) {
+        const contextualError = await FirestorePermissionError.create({ path: orderDocRef.path, operation: 'update', requestResourceData: updateData });
+        errorEmitter.emit('permission-error', contextualError);
+    }
+  }
+
   const handleOpenAlert = (order: Order) => {
     setSelectedOrder(order);
     setIsAlertOpen(true);
@@ -235,7 +262,7 @@ export default function SalesOrdersPage() {
             <div>
                 <h1 className="text-3xl font-bold">Sales Orders</h1>
                 <p className="text-muted-foreground">
-                    View and manage all manually created sales orders for local customers.
+                    View and manage manually created sales orders for local customers.
                 </p>
             </div>
             <Button asChild>
@@ -265,6 +292,7 @@ export default function SalesOrdersPage() {
               {displayLoading && Array.from({length: 5}).map((_, i) => <OrderRowSkeleton key={i} />)}
               {!displayLoading && enrichedOrders.slice(0, visibleCount).map((order) => {
                 const customer = order.customer;
+                const status = order.fulfillmentStatus;
                 return (
                 <TableRow key={order.id}>
                   <TableCell className="font-medium text-xs">#{order.id.substring(0, 8)}</TableCell>
@@ -276,7 +304,9 @@ export default function SalesOrdersPage() {
                     <Badge variant={order.paymentStatus === 'paid' ? 'default' : 'destructive'}>{order.paymentStatus}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={order.fulfillmentStatus === 'delivered' ? 'default' : 'secondary'}>{order.fulfillmentStatus}</Badge>
+                    <Badge variant={status === 'delivered' ? 'default' : 'secondary'} className="capitalize">
+                        {status.replace('_', ' ')}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     {new Date(order.createdAt).toLocaleDateString()}
@@ -300,7 +330,7 @@ export default function SalesOrdersPage() {
                             <Link href={`/admin/orders/${order.id}?userId=${order.userId}`}>View Details</Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuLabel>Payment</DropdownMenuLabel>
+                        <DropdownMenuLabel>Status & Payment</DropdownMenuLabel>
                          {order.paymentStatus !== 'paid' ? (
                             <DropdownMenuItem onClick={() => updatePaymentStatus(order, 'paid')}>Mark as Paid</DropdownMenuItem>
                          ) : (
@@ -309,6 +339,10 @@ export default function SalesOrdersPage() {
                         <DropdownMenuItem onClick={() => handleCreateInvoice(order)} disabled={order.hasInvoice}>
                             {order.hasInvoice ? 'Invoice Exists' : 'Create Invoice'}
                         </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel>Fulfillment</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => handleFulfillmentStatusUpdate(order, 'shipped')}>Mark as Shipped</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleFulfillmentStatusUpdate(order, 'delivered')}>Mark as Delivered</DropdownMenuItem>
                         <DropdownMenuSeparator />
                          <DropdownMenuItem className="text-destructive" onClick={() => handleOpenAlert(order)}>
                             Delete Order
@@ -344,6 +378,9 @@ export default function SalesOrdersPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
+            <Accordion type="single" collapsible className="w-full">
+                {/* Add a developer-facing path hint just in case */}
+            </Accordion>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
               Delete

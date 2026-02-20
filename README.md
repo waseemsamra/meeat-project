@@ -45,6 +45,7 @@ To ensure orders show up correctly in the Admin Dashboard, the Android app **mus
 - `createdAt`: ISO String or Timestamp. Required for sorting.
 - `orderType`: "ONLINE" (String). Required for filtering.
 - `fulfillmentStatus`: "processing" (String).
+- `Status`: "Processing" (Capitalized, used for legacy mobile filtering).
 - `total`: Number (Double). Avoid putting currency symbols in the data.
 - `orderItemIds`: Array of maps containing `productId`, `quantity`, and `price`.
 
@@ -55,6 +56,7 @@ val orderData = hashMapOf(
     "total" to 135.0, // Use number, not string
     "orderType" to "ONLINE",
     "fulfillmentStatus" to "processing",
+    "Status" to "Processing",
     "paymentStatus" to "pending",
     "createdAt" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").format(Date()),
     "orderItemIds" to listOf(
@@ -71,8 +73,9 @@ db.collection("orders").add(orderData)
 
 ### 4. 🔍 Troubleshooting Mobile Sync
 1.  **Missing Orders**: If orders don't show up, check that the `userId` field exactly matches the UID of the logged-in user in the web app.
-2.  **Sorting Issues**: Ensure `createdAt` is a valid ISO date string.
-3.  **Permissions**: If you get a "permission-denied" error, ensure you have run `npm run firebase:deploy`.
+2.  **Status Sync**: The Web Admin Dashboard updates both `fulfillmentStatus` (lowercase) and `Status` (Capitalized). Ensure your mobile app filters use one of these.
+3.  **Sorting Issues**: Ensure `createdAt` is a valid ISO date string.
+4.  **Permissions**: If you get a "permission-denied" error, ensure you have run `npm run firebase:deploy`.
 
 ## Architecture Notes
 - **Shared Data**: Both platforms use the same Firestore root collections (`/products`, `/categories`, `/orders`, etc.).

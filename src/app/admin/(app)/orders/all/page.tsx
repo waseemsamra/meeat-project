@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -49,7 +50,7 @@ import { Input } from '@/components/ui/input';
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { MoreHorizontal, AlertCircle, Loader2 } from "lucide-react"
+import { MoreHorizontal, AlertCircle, Loader2, CheckCircle2 } from "lucide-react"
 import { useCollection, useFirestore, errorEmitter, FirestorePermissionError } from "@/firebase";
 import { collection, query, orderBy, doc, deleteDoc, writeBatch, updateDoc, collectionGroup } from "firebase/firestore";
 import type { Order, User } from "@/lib/types";
@@ -95,7 +96,7 @@ export default function AllOrdersPage() {
               if (!isNaN(parsed)) totalValue = parsed;
           }
 
-          // FIX: Prioritize web field 'fulfillmentStatus' if it exists
+          // Prioritize web field 'fulfillmentStatus' if it exists, fallback to mobile 'Status'
           let status = o.fulfillmentStatus;
           if (!status && o.Status && typeof o.Status === 'string') {
               status = o.Status.toLowerCase();
@@ -141,10 +142,12 @@ export default function AllOrdersPage() {
     }
     const orderDocRef = doc(firestore, order.__path);
     
-    // Sync both field names for mobile compatibility
+    // Sync EVERY possible variation of status fields to ensure mobile app sees the change
     const updateData: { [key: string]: any } = { 
-        fulfillmentStatus: status,
-        Status: status.charAt(0).toUpperCase() + status.slice(1),
+        fulfillmentStatus: status, // Web standard
+        Status: status.charAt(0).toUpperCase() + status.slice(1), // Mobile standard (e.g., "Delivered")
+        status: status, // Lowercase standard
+        orderStatus: status, // Common fallback
         updatedAt: new Date().toISOString() 
     };
 
@@ -173,7 +176,11 @@ export default function AllOrdersPage() {
 
     try {
         await updateDoc(orderDocRef, updateData);
-        toast({ title: 'Status Updated', description: `Order status updated to ${status}.` });
+        toast({ 
+            title: 'Status Updated', 
+            description: `Order status updated to ${status}. Changes synced for mobile.`,
+            icon: <CheckCircle2 className="h-4 w-4 text-green-500" />
+        });
     } catch (e: any) {
         const contextualError = await FirestorePermissionError.create({ path: orderDocRef.path, operation: 'update', requestResourceData: updateData });
         errorEmitter.emit('permission-error', contextualError);
@@ -261,7 +268,7 @@ export default function AllOrdersPage() {
         <CardHeader>
           <CardTitle>All Orders</CardTitle>
           <CardDescription>
-            View and manage all customer orders (including legacy subcollection orders).
+            View and manage all customer orders. Status changes here will sync to the mobile app.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -284,6 +291,7 @@ export default function AllOrdersPage() {
                 enrichedOrders.slice(0, visibleCount).map((order) => {
                     const customer = order.customer;
                     const orderIdDisplay = order.orderNumber || order.id.substring(0, 8);
+                    const status = order.fulfillmentStatus;
                     return (
                         <TableRow key={order.id}>
                         <TableCell className="font-medium text-xs">#{orderIdDisplay}</TableCell>
@@ -295,7 +303,9 @@ export default function AllOrdersPage() {
                             <Badge variant={order.orderType === 'ONLINE' ? 'outline' : 'secondary'}>{order.orderType || 'MOBILE'}</Badge>
                         </TableCell>
                         <TableCell>
-                            <Badge className="capitalize">{order.fulfillmentStatus}</Badge>
+                            <Badge className="capitalize" variant={status === 'delivered' ? 'default' : status === 'shipped' ? 'outline' : 'secondary'}>
+                                {status.replace('_', ' ')}
+                            </Badge>
                         </TableCell>
                         <TableCell>
                             {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
@@ -316,6 +326,7 @@ export default function AllOrdersPage() {
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuLabel>Fulfillment</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => handleStatusUpdate(order, 'processing')}>Mark as Processing</DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleStatusUpdate(order, 'shipped')}>Mark as Shipped</DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleStatusUpdate(order, 'delivered')}>Mark as Delivered</DropdownMenuItem>
                                 <DropdownMenuSeparator />
