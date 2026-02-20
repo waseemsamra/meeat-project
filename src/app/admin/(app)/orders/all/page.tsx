@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -49,7 +50,7 @@ import { Input } from '@/components/ui/input';
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { MoreHorizontal } from "lucide-react"
+import { MoreHorizontal, AlertCircle } from "lucide-react"
 import { useCollection, useFirestore, errorEmitter, FirestorePermissionError } from "@/firebase";
 import { collection, query, orderBy, doc, deleteDoc, writeBatch, updateDoc, collectionGroup } from "firebase/firestore";
 import type { Order, User } from "@/lib/types";
@@ -58,6 +59,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/hooks/useSettings";
 import { createShipdayOrder } from "@/ai/flows/create-shipday-order";
 import { OrderRowSkeleton } from "./OrderRowSkeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function AllOrdersPage() {
   const firestore = useFirestore();
@@ -77,25 +79,24 @@ export default function AllOrdersPage() {
   
   const allOrdersQuery = useMemo(() => {
     if (!firestore) return null;
-    // Use collectionGroup to find orders in both root and subcollections for visibility
+    // Querying all "orders" collections (root and subcollections)
     return query(collectionGroup(firestore, "orders"), orderBy("createdAt", "desc"));
   }, [firestore]);
+  
   const { data: allOrders, isLoading: isLoadingOrders, error: ordersError } = useCollection<Order>(allOrdersQuery);
   
   const enrichedOrders = useMemo(() => {
     if (allOrders && users) {
       const userMap = new Map(users.map(u => [u.id, u]));
-      const enriched = allOrders.map(order => ({
+      return allOrders.map(order => ({
           ...order,
           customer: userMap.get(order.userId),
       }));
-      return enriched;
     }
-    return [];
+    return allOrders || [];
   }, [allOrders, users]);
 
-
-  const displayLoading = isLoadingOrders || isLoadingUsers;
+  const displayLoading = isLoadingOrders || (isLoadingUsers && !allOrders);
   
   const handleStatusUpdate = async (order: Order, status: string) => {
     if (!firestore || !order.__path) {
@@ -118,25 +119,22 @@ export default function AllOrdersPage() {
                 customerAddress: address ? `${address.street}, ${address.city}` : customer.deliveryAddress || 'N/A',
                 customerEmail: customer.email,
                 customerPhoneNumber: customer.telephone,
-                orderItemsText: order.orderItemIds.map(item => `${item.product?.name} x${item.quantity}`).join('\n'),
+                orderItemsText: order.orderItemIds.map(item => `${item.product?.name || 'Item'} x${item.quantity}`).join('\n'),
                 total: order.total
             });
 
             if (shipdayResult.success && shipdayResult.shipdayOrderId) {
                 updateData.shipdayOrderId = shipdayResult.shipdayOrderId;
-                toast({ title: 'Shipday Order Created', description: `Order successfully dispatched to Shipday with ID: ${shipdayResult.shipdayOrderId}` });
+                toast({ title: 'Shipday Order Created', description: `Order successfully dispatched to Shipday ID: ${shipdayResult.shipdayOrderId}` });
             } else {
                  toast({ variant: 'destructive', title: 'Shipday Dispatch Failed', description: shipdayResult.errorMessage || 'An unknown error occurred.' });
             }
-        } else {
-             toast({ variant: 'destructive', title: 'Shipday Dispatch Failed', description: 'Could not find customer details for this order.' });
         }
     }
 
-
     try {
         await updateDoc(orderDocRef, updateData);
-        toast({ title: 'Status Updated', description: `Order #${order.id.substring(0,8)} status updated to ${status}.` });
+        toast({ title: 'Status Updated', description: `Order status updated to ${status}.` });
     } catch (e: any) {
         const contextualError = await FirestorePermissionError.create({ path: orderDocRef.path, operation: 'update', requestResourceData: updateData });
         errorEmitter.emit('permission-error', contextualError);
@@ -150,15 +148,12 @@ export default function AllOrdersPage() {
   
   const handleOpenLinkModal = (order: Order) => {
     setSelectedOrder(order);
-    setShipdayIdInput(""); // Clear previous input
+    setShipdayIdInput(""); 
     setIsLinkModalOpen(true);
   }
 
   const handleLinkShipdayOrder = async () => {
-    if (!firestore || !selectedOrder || !shipdayIdInput || !selectedOrder.__path) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Missing information to link order.' });
-        return;
-    }
+    if (!firestore || !selectedOrder || !shipdayIdInput || !selectedOrder.__path) return;
 
     const orderDocRef = doc(firestore, selectedOrder.__path);
     const shipdayOrderId = parseInt(shipdayIdInput, 10);
@@ -179,47 +174,24 @@ export default function AllOrdersPage() {
   }
 
   const handleDelete = async () => {
-    if (!firestore || !selectedOrder || !selectedOrder.__path) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Cannot delete order. Invalid data path.',
-      });
-      setIsAlertOpen(false);
-      return;
-    }
-
-    const orderToDelete = selectedOrder;
+    if (!firestore || !selectedOrder || !selectedOrder.__path) return;
 
     try {
       const batch = writeBatch(firestore);
+      batch.delete(doc(firestore, selectedOrder.__path));
       
-      const orderDocRef = doc(firestore, orderToDelete.__path);
-      batch.delete(orderDocRef);
-      
-      if (orderToDelete.orderItemIds && Array.isArray(orderToDelete.orderItemIds)) {
-        orderToDelete.orderItemIds.forEach(item => {
-          if (typeof item === 'object' && item.id) {
-            // We assume order items are in root /orders_items as per the new creation logic
-            const itemDocRef = doc(firestore, 'orders_items', item.id);
-            batch.delete(itemDocRef);
+      if (selectedOrder.orderItemIds) {
+        selectedOrder.orderItemIds.forEach(item => {
+          if (item.id) {
+            batch.delete(doc(firestore, 'orders_items', item.id));
           }
         });
       }
 
       await batch.commit();
-
-      toast({
-        title: 'Success',
-        description: `Order #${orderToDelete.id.substring(0, 8)} has been deleted.`,
-      });
-
+      toast({ title: 'Success', description: `Order deleted.` });
     } catch (error: any) {
-      console.error('Failed to delete order:', error);
-      const contextualError = await FirestorePermissionError.create({
-        path: orderToDelete.__path,
-        operation: 'delete',
-      });
+      const contextualError = await FirestorePermissionError.create({ path: selectedOrder.__path, operation: 'delete' });
       errorEmitter.emit('permission-error', contextualError);
     } finally {
       setIsAlertOpen(false);
@@ -227,16 +199,31 @@ export default function AllOrdersPage() {
     }
   };
 
-
   return (
     <>
     <div className="space-y-8">
       <h1 className="text-3xl font-bold">All Orders</h1>
+      
+      {ordersError && (
+        <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Firestore Error</AlertTitle>
+            <AlertDescription>
+                {ordersError.message}
+                {ordersError.message.includes('index') && (
+                    <div className="mt-2">
+                        <strong>Note:</strong> CollectionGroup queries require indexes. Please run <code>npm run firebase:deploy</code> to apply them.
+                    </div>
+                )}
+            </AlertDescription>
+        </Alert>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>All Orders</CardTitle>
           <CardDescription>
-            View and manage all customer orders across all channels.
+            View and manage all customer orders (including legacy subcollection orders).
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -249,101 +236,60 @@ export default function AllOrdersPage() {
                 <TableHead>Status</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
+                <TableHead><span className="sr-only">Actions</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {displayLoading && Array.from({length: 10}).map((_, i) => <OrderRowSkeleton key={i} />)}
-              {!displayLoading && enrichedOrders.slice(0, visibleCount).map((order) => {
-                const customer = order.customer;
-                let fulfillmentBadgeVariant: "default" | "secondary" | "outline" | "destructive" = "secondary";
-                if (order.fulfillmentStatus === 'shipped' || order.fulfillmentStatus === 'delivered' || order.fulfillmentStatus === 'ready_for_pickup') {
-                    fulfillmentBadgeVariant = 'default';
-                } else if (order.fulfillmentStatus === 'unfulfilled') {
-                    fulfillmentBadgeVariant = 'destructive';
-                }
-                
-                return (
-                <TableRow key={order.id}>
-                  <TableCell className="font-medium text-xs">#{order.id.substring(0, 8)}</TableCell>
-                  <TableCell>
-                    <div className="font-medium">{customer?.name || 'Guest'}</div>
-                    <div className="text-sm text-muted-foreground">{customer?.email || order.userId}</div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={order.orderType === 'ONLINE' ? 'outline' : 'secondary'}>{order.orderType}</Badge>
-                  </TableCell>
-                   <TableCell>
-                    <Badge variant={fulfillmentBadgeVariant}>{order.fulfillmentStatus}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    {new Date(order.createdAt).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="text-right">{currencySymbol}{order.total.toFixed(2)}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          aria-haspopup="true"
-                          size="icon"
-                          variant="ghost"
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem asChild>
-                            <Link href={`/admin/orders/${order.id}?userId=${order.userId}`}>View Details</Link>
-                        </DropdownMenuItem>
-                        {order.shipdayOrderId && (
-                            <DropdownMenuItem asChild>
-                                <Link href={`/admin/orders/${order.id}`}>View Shipping Details</Link>
-                            </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem onClick={() => handleOpenLinkModal(order)} disabled={!!order.shipdayOrderId}>
-                            Link Shipday ID
-                        </DropdownMenuItem>
-                        
-                        <DropdownMenuSeparator />
-                        <DropdownMenuLabel>Fulfillment</DropdownMenuLabel>
-                        
-                        <DropdownMenuItem 
-                            onClick={() => handleStatusUpdate(order, 'shipped')}
-                            disabled={order.fulfillmentStatus === 'shipped'}
-                        >
-                            Mark as Shipped
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                            onClick={() => handleStatusUpdate(order, 'ready_for_pickup')}
-                            disabled={order.fulfillmentStatus === 'ready_for_pickup'}
-                        >
-                            Ready for Pickup
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                            onClick={() => handleStatusUpdate(order, 'delivered')}
-                            disabled={order.fulfillmentStatus === 'delivered'}
-                        >
-                            Mark as Delivered
-                        </DropdownMenuItem>
-
-                         <DropdownMenuSeparator />
-                         <DropdownMenuItem className="text-destructive" onClick={() => handleOpenAlert(order)}>
-                            Delete Order
-                         </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              )})}
-               {!displayLoading && enrichedOrders.length === 0 && (
+              {displayLoading ? (
+                Array.from({length: 5}).map((_, i) => <OrderRowSkeleton key={i} />)
+              ) : enrichedOrders.length > 0 ? (
+                enrichedOrders.slice(0, visibleCount).map((order) => {
+                    const customer = order.customer;
+                    return (
+                        <TableRow key={order.id}>
+                        <TableCell className="font-medium text-xs">#{order.id.substring(0, 8)}</TableCell>
+                        <TableCell>
+                            <div className="font-medium">{customer?.name || 'Guest'}</div>
+                            <div className="text-sm text-muted-foreground">{customer?.email || order.userId}</div>
+                        </TableCell>
+                        <TableCell>
+                            <Badge variant={order.orderType === 'ONLINE' ? 'outline' : 'secondary'}>{order.orderType}</Badge>
+                        </TableCell>
+                        <TableCell>
+                            <Badge className="capitalize">{order.fulfillmentStatus}</Badge>
+                        </TableCell>
+                        <TableCell>
+                            {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
+                        </TableCell>
+                        <TableCell className="text-right">{currencySymbol}{order.total.toFixed(2)}</TableCell>
+                        <TableCell>
+                            <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button size="icon" variant="ghost"><MoreHorizontal className="h-4 w-4" /></Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuItem asChild>
+                                    <Link href={`/admin/orders/${order.id}?userId=${order.userId}`}>View Details</Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleOpenLinkModal(order)} disabled={!!order.shipdayOrderId}>
+                                    Link Shipday ID
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuLabel>Fulfillment</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => handleStatusUpdate(order, 'shipped')}>Mark as Shipped</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusUpdate(order, 'delivered')}>Mark as Delivered</DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="text-destructive" onClick={() => handleOpenAlert(order)}>Delete Order</DropdownMenuItem>
+                            </DropdownMenuContent>
+                            </DropdownMenu>
+                        </TableCell>
+                        </TableRow>
+                    )
+                })
+              ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
-                    {ordersError ? `Error: ${ordersError.message}` : 'No orders found.'}
-                  </TableCell>
+                  <TableCell colSpan={7} className="h-24 text-center">No orders found.</TableCell>
                 </TableRow>
               )}
             </TableBody>
@@ -356,23 +302,12 @@ export default function AllOrdersPage() {
         )}
       </Card>
     </div>
-     <Dialog open={isLinkModalOpen} onOpenChange={setIsLinkModalOpen}>
+    <Dialog open={isLinkModalOpen} onOpenChange={setIsLinkModalOpen}>
         <DialogContent>
-            <DialogHeader>
-                <DialogTitle>Link Shipday Order</DialogTitle>
-                <DialogDescription>
-                    Enter the numeric Shipday Order ID for order #{selectedOrder?.id.substring(0,8)}. You can find this in your Shipday dashboard.
-                </DialogDescription>
-            </DialogHeader>
+            <DialogHeader><DialogTitle>Link Shipday Order</DialogTitle></DialogHeader>
             <div className="py-4">
                 <Label htmlFor="shipday-id">Shipday Order ID</Label>
-                <Input 
-                    id="shipday-id" 
-                    value={shipdayIdInput}
-                    onChange={(e) => setShipdayIdInput(e.target.value)}
-                    placeholder="e.g., 12345678"
-                    type="number"
-                />
+                <Input id="shipday-id" value={shipdayIdInput} onChange={(e) => setShipdayIdInput(e.target.value)} placeholder="e.g., 12345678" type="number" />
             </div>
             <DialogFooter>
                 <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
@@ -384,15 +319,11 @@ export default function AllOrdersPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete order #{selectedOrder?.id.substring(0, 8)} and its related items.
-            </AlertDialogDescription>
+            <AlertDialogDescription>This will permanently delete the order and related items.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

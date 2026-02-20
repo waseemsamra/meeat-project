@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -36,15 +37,6 @@ export interface InternalQuery extends Query<DocumentData> {
 
 /**
  * React hook to subscribe to a Firestore collection or query in real-time.
- * Handles nullable references/queries.
- *
- * IMPORTANT! YOU MUST MEMOIZE the inputted memoizedTargetRefOrQuery or an infinite loop will occur.
- * Use useMemo to memoize it per React guidance.
- *
- * @template T Optional type for document data. Defaults to any.
- * @param {CollectionReference<DocumentData> | Query<DocumentData> | null | undefined} memoizedTargetRefOrQuery -
- * The Firestore CollectionReference or Query. It MUST be memoized.
- * @returns {UseCollectionResult<T>} Object with data, isLoading, error.
  */
 export function useCollection<T = any>(
   memoizedTargetRefOrQuery: CollectionReference<DocumentData> | Query<DocumentData> | null | undefined,
@@ -54,11 +46,9 @@ export function useCollection<T = any>(
 
   const [data, setData] = useState<StateDataType>(null);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
-  // isLoading is true initially, and whenever the query changes, until the first snapshot is received.
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // If the query is null/undefined, we are not loading and have no data.
     if (!memoizedTargetRefOrQuery) {
       setData(null);
       setError(null);
@@ -66,7 +56,6 @@ export function useCollection<T = any>(
       return;
     }
     
-    // A new, valid query has been provided. Start loading.
     setIsLoading(true);
 
     const unsubscribe = onSnapshot(
@@ -80,11 +69,11 @@ export function useCollection<T = any>(
         
         setData(results);
         setError(null);
-        // Once we get the first snapshot, we are no longer in the initial loading state.
         setIsLoading(false);
       },
       async (err: FirestoreError) => {
-        // This is the new error handling block.
+        console.error("Firestore useCollection Error:", err);
+        
         let path = '';
         try {
            path =
@@ -92,20 +81,18 @@ export function useCollection<T = any>(
               ? (memoizedTargetRefOrQuery as CollectionReference).path
               : (memoizedTargetRefOrQuery as unknown as InternalQuery)._query.path.toString()
         } catch (e) {
-            console.warn("Could not determine path for Firestore error", e);
+            // Path determination failed
         }
         
-        if (!path || path === '/') {
-            const genericError = new Error("Firestore permission error on an invalid path. This is often due to an uninitialized query.");
-            setError(genericError);
-        } else {
+        if (err.code === 'permission-denied') {
             const contextualError = await FirestorePermissionError.create({
               operation: 'list',
-              path: path,
+              path: path || 'unknown-collection',
             });
             setError(contextualError);
-            // We emit the error to be caught by the global error boundary.
             errorEmitter.emit('permission-error', contextualError);
+        } else {
+            setError(err);
         }
 
         setData(null);
@@ -113,9 +100,8 @@ export function useCollection<T = any>(
       }
     );
 
-    // Cleanup subscription on component unmount or when the query changes.
     return () => unsubscribe();
-  }, [memoizedTargetRefOrQuery]); // The effect re-runs ONLY when the memoized query object changes.
+  }, [memoizedTargetRefOrQuery]);
 
   return { data, isLoading, error };
 }
