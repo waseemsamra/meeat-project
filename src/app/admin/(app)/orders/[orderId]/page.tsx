@@ -186,7 +186,10 @@ export default function AdminOrderDetailsPage() {
 
   const o = order as any;
   const totalDisplay = typeof o.total === 'number' ? o.total : (o.Total ? parseFloat(o.Total.replace(/[^0-9.]/g, '')) : 0);
+  
+  // FIX: Prioritize 'fulfillmentStatus' over legacy mobile 'Status'
   const statusDisplay = o.fulfillmentStatus || (o.Status ? o.Status.toLowerCase() : 'processing');
+  
   const dateDisplay = o.createdAt || o.date || o.Date;
 
   return (

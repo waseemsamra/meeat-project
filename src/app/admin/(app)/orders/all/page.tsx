@@ -78,8 +78,6 @@ export default function AllOrdersPage() {
   
   const allOrdersQuery = useMemo(() => {
     if (!firestore) return null;
-    // Removing orderBy to allow documents missing 'createdAt' (like those from mobile) to appear.
-    // We will sort in-memory after normalization.
     return query(collectionGroup(firestore, "orders"));
   }, [firestore]);
   
@@ -97,10 +95,12 @@ export default function AllOrdersPage() {
               if (!isNaN(parsed)) totalValue = parsed;
           }
 
-          let status = o.fulfillmentStatus || 'processing';
-          if (o.Status && typeof o.Status === 'string') {
+          // FIX: Prioritize web field 'fulfillmentStatus' if it exists
+          let status = o.fulfillmentStatus;
+          if (!status && o.Status && typeof o.Status === 'string') {
               status = o.Status.toLowerCase();
           }
+          if (!status) status = 'processing';
 
           let created = o.createdAt;
           if (!created && (o.date || o.Date)) {
@@ -140,8 +140,11 @@ export default function AllOrdersPage() {
         return;
     }
     const orderDocRef = doc(firestore, order.__path);
+    
+    // Sync both field names for mobile compatibility
     const updateData: { [key: string]: any } = { 
         fulfillmentStatus: status,
+        Status: status.charAt(0).toUpperCase() + status.slice(1),
         updatedAt: new Date().toISOString() 
     };
 
