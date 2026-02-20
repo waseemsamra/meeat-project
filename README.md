@@ -10,6 +10,7 @@ Before your Android app or web app can access the latest structure and security,
 1.  **Login to Firebase**: `npx firebase login`
 2.  **Deploy Firestore**: `npm run firebase:deploy` 
     - *Note: If asked "Would you like to delete these indexes?", type **y** and press Enter.*
+3.  **Wait for Indexes**: After deployment, visit the [Firebase Console Indexes Page](https://console.firebase.google.com/project/studio-7561999182-35b19/firestore/indexes). Wait until `orderNumber` and `createdAt` show as **Active**. This takes 3-5 minutes.
 
 ---
 
