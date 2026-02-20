@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo } from 'react';
@@ -22,6 +23,7 @@ import {
   collection,
   query,
   orderBy,
+  collectionGroup,
 } from 'firebase/firestore';
 import type { Order, User, Product, InventoryLot } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -96,7 +98,8 @@ export default function AdminDashboard() {
   const usersQuery = useMemo(() => firestore ? collection(firestore, 'users') : null, [firestore]);
   const { data: users, isLoading: isLoadingUsers } = useCollection<User>(usersQuery);
 
-  const ordersQuery = useMemo(() => firestore ? query(collection(firestore, 'orders'), orderBy('createdAt', 'desc')) : null, [firestore]);
+  // Use collectionGroup to fetch all orders (root + legacy)
+  const ordersQuery = useMemo(() => firestore ? query(collectionGroup(firestore, 'orders'), orderBy('createdAt', 'desc')) : null, [firestore]);
   const { data: orders, isLoading: isLoadingOrders } = useCollection<Order>(ordersQuery);
 
   const productsQuery = useMemo(() => firestore ? collection(firestore, 'products') : null, [firestore]);
