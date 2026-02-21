@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { AttributeManagementPage } from '@/components/admin/AttributeManagementPage';
 import type { Notification, User } from '@/lib/types';
 import { z } from 'zod';
@@ -10,7 +10,7 @@ import { collection, query, orderBy } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Megaphone, User as UserIcon, Calendar, Clock, MoreHorizontal, Copy } from 'lucide-react';
-import { format, isValid } from 'date-fns';
+import { format, isValid, parseISO } from 'date-fns';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { useForm } from 'react-hook-form';
@@ -34,16 +34,33 @@ export default function AdminNotificationsPage() {
   const firestore = useFirestore();
   const { t } = useTranslation();
 
+  // Fetch users for the recipient lookup
   const usersQuery = useMemo(() => firestore ? collection(firestore, 'users') : null, [firestore]);
   const { data: users, isLoading: isLoadingUsers } = useCollection<User>(usersQuery);
 
+  // Explicitly fetch and sort notifications by createdAt to ensure new ones appear at the top
+  const notificationsQuery = useMemo(() => 
+    firestore ? query(collection(firestore, 'notifications'), orderBy('createdAt', 'desc')) : null
+  , [firestore]);
+  const { data: notifications, isLoading: isLoadingNotifications } = useCollection<Notification>(notificationsQuery);
+
   const columns: ColumnDef<Notification>[] = useMemo(() => [
+    {
+      accessorKey: 'createdAt',
+      header: 'Sent/Created',
+      cell: ({ row }) => {
+        const dateVal = row.original.createdAt;
+        const date = dateVal ? (typeof dateVal === 'string' ? parseISO(dateVal) : new Date(dateVal)) : null;
+        if (!date || !isValid(date)) return <span className="text-muted-foreground italic text-xs">N/A</span>;
+        return <span className="text-xs">{format(date, 'MMM d, h:mm a')}</span>;
+      }
+    },
     {
       accessorKey: 'scheduledAt',
       header: 'Scheduled For',
       cell: ({ row }) => {
-        const scheduledAtVal = row.original.scheduledAt;
-        const date = scheduledAtVal ? new Date(scheduledAtVal) : null;
+        const scheduledAtVal = row.original.scheduledAt || row.original.createdAt;
+        const date = scheduledAtVal ? (typeof scheduledAtVal === 'string' ? parseISO(scheduledAtVal) : new Date(scheduledAtVal)) : null;
         
         if (!date || !isValid(date)) {
             return <span className="text-muted-foreground italic text-xs">Immediate</span>;
@@ -87,7 +104,7 @@ export default function AdminNotificationsPage() {
                     <div className="text-xs text-muted-foreground truncate">{user.email}</div>
                 </div>
             </div>
-        ) : <span className="text-muted-foreground italic">Target: {userId}</span>;
+        ) : <span className="text-muted-foreground italic">ID: {userId?.substring(0,8)}...</span>;
       },
     },
     {
@@ -217,6 +234,8 @@ export default function AdminNotificationsPage() {
       columns={columns}
       formSchema={notificationSchema}
       formFields={formFields}
+      data={notifications}
+      isLoading={isLoadingNotifications}
       useCustomFormHook={useCustomFormHook}
     />
   );
