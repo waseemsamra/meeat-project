@@ -161,7 +161,7 @@ export default function AllOrdersPage() {
   const isIndexError = ordersError?.message?.includes('index') || ordersError?.message?.includes('ready');
   
   const handleStatusUpdate = async (order: Order, status: string) => {
-    if (!firestore) return;
+    if (!firestore || !status) return;
     
     try {
         const orderKey = order.orderNumber || (order as any).Order || order.id;
@@ -198,10 +198,11 @@ export default function AllOrdersPage() {
 
         // Sync with mobile notifications - Now includes scheduledAt to avoid crashes
         const notificationRef = doc(collection(firestore, 'notifications'));
+        const safeStatusLabel = (status || 'updated').replace('_', ' ');
         const notificationData: Omit<Notification, 'id'> = {
             userId: order.userId,
             title: "Order Updated",
-            body: `Your order #${orderKey} is now ${status.replace('_', ' ')}.`,
+            body: `Your order #${orderKey} is now ${safeStatusLabel}.`,
             type: 'order_update',
             relatedId: order.id,
             read: false,
@@ -236,7 +237,7 @@ export default function AllOrdersPage() {
         await batch.commit();
         toast({ 
             title: 'Status Updated', 
-            description: `Order status updated to ${status} and notification sent.`,
+            description: `Order status updated to ${safeStatusLabel} and notification sent.`,
             icon: <CheckCircle2 className="h-4 w-4 text-green-500" />
         });
     } catch (e: any) {
@@ -357,7 +358,7 @@ export default function AllOrdersPage() {
                 enrichedOrders.slice(0, visibleCount).map((order) => {
                     const customer = order.customer;
                     const orderIdDisplay = order.orderNumber || (order as any).Order || order.id.substring(0, 8);
-                    const status = order.fulfillmentStatus;
+                    const status = order.fulfillmentStatus || 'processing';
                     return (
                         <TableRow key={order.id}>
                         <TableCell className="font-medium text-xs">#{orderIdDisplay}</TableCell>
@@ -370,7 +371,7 @@ export default function AllOrdersPage() {
                         </TableCell>
                         <TableCell>
                             <Badge className="capitalize" variant={status === 'delivered' ? 'default' : status === 'shipped' ? 'outline' : 'secondary'}>
-                                {status.replace('_', ' ')}
+                                {(status || 'processing').replace(/_/g, ' ')}
                             </Badge>
                         </TableCell>
                         <TableCell>

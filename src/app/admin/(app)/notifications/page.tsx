@@ -13,6 +13,8 @@ import { Megaphone, User as UserIcon, Calendar, Clock, MoreHorizontal, Copy } fr
 import { format, isValid } from 'date-fns';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 const notificationSchema = z.object({
   userId: z.string().min(1, 'Target user is required.'),
@@ -25,6 +27,8 @@ const notificationSchema = z.object({
   scheduledAt: z.date({ required_error: 'Schedule date/time is required.' }),
   name: z.string().optional(), // For internal compatibility
 });
+
+type NotificationFormValues = z.infer<typeof notificationSchema>;
 
 export default function AdminNotificationsPage() {
   const firestore = useFirestore();
@@ -41,7 +45,6 @@ export default function AdminNotificationsPage() {
         const scheduledAtVal = row.original.scheduledAt;
         const date = scheduledAtVal ? new Date(scheduledAtVal) : null;
         
-        // Safety check to prevent "Invalid time value" crash
         if (!date || !isValid(date)) {
             return <span className="text-muted-foreground italic text-xs">Immediate</span>;
         }
@@ -97,7 +100,7 @@ export default function AdminNotificationsPage() {
       header: 'Type',
       cell: ({ row }) => (
         <Badge variant={row.original.type === 'promotion' ? 'default' : 'secondary'} className="capitalize text-[10px]">
-          {row.original.type.replace('_', ' ')}
+          {(row.original.type || 'system').replace('_', ' ')}
         </Badge>
       ),
     },
@@ -122,9 +125,7 @@ export default function AdminNotificationsPage() {
                   Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => {
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const { id, __path, createdAt, ...cloneData } = item as any;
-                    // Reset to a clean object for a new entry, with current time as default schedule
                     meta.handleOpenForm({ 
                         ...cloneData, 
                         scheduledAt: new Date() 
@@ -186,10 +187,7 @@ export default function AdminNotificationsPage() {
   }, [users, isLoadingUsers]);
 
   const useCustomFormHook = () => {
-    const { useForm } = require('react-hook-form');
-    const { zodResolver } = require('@hookform/resolvers/zod');
-    
-    const form = useForm({
+    const form = useForm<NotificationFormValues>({
       resolver: zodResolver(notificationSchema),
       defaultValues: {
         userId: 'ALL',
