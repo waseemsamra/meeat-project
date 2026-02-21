@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -48,19 +49,12 @@ function OrderRowSkeleton() {
     return (
         <TableRow>
             <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-            <TableCell>
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-3 w-32 mt-1" />
-            </TableCell>
+            <TableCell><Skeleton className="h-4 w-24" /></TableCell>
             <TableCell><Skeleton className="h-5 w-20" /></TableCell>
             <TableCell><Skeleton className="h-5 w-20" /></TableCell>
             <TableCell><Skeleton className="h-4 w-24" /></TableCell>
             <TableCell className="text-right"><Skeleton className="h-4 w-16" /></TableCell>
-            <TableCell>
-                <div className="flex justify-end">
-                    <Skeleton className="h-8 w-8" />
-                </div>
-            </TableCell>
+            <TableCell><div className="flex justify-end"><Skeleton className="h-8 w-8" /></div></TableCell>
         </TableRow>
     )
 }
@@ -76,33 +70,33 @@ export default function SalesOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [visibleCount, setVisibleCount] = useState(20);
 
-  // Fetch ALL orders using collectionGroup to find both root and legacy subcollection orders
-  const allOrdersQuery = useMemo(() => 
-    firestore ? query(collectionGroup(firestore, "orders")) : null
-  , [firestore]);
+  const allOrdersQuery = useMemo(() => firestore ? query(collectionGroup(firestore, "orders")) : null, [firestore]);
   const { data: allOrders, isLoading: isLoadingOrders } = useCollection<Order>(allOrdersQuery);
   
-  const usersQuery = useMemo(() => 
-    firestore ? collection(firestore, "users") : null
-  , [firestore]);
+  const usersQuery = useMemo(() => firestore ? collection(firestore, "users") : null, [firestore]);
   const { data: allUsers, isLoading: isLoadingUsers } = useCollection<User>(usersQuery);
   
-  const invoicesQuery = useMemo(() =>
-    firestore ? collection(firestore, 'invoices') : null
-  , [firestore]);
+  const invoicesQuery = useMemo(() => firestore ? collection(firestore, 'invoices') : null, [firestore]);
   const { data: allInvoices, isLoading: isLoadingInvoices } = useCollection<Invoice>(invoicesQuery);
 
   const enrichedOrders = useMemo(() => {
     if (allOrders && allUsers && allInvoices) {
       const customerMap = new Map(allUsers.map(u => [u.id, u]));
-      // Filter for LOCAL orders on the client
       const localOrders = allOrders.filter(order => order.orderType === 'LOCAL');
-      const enriched = localOrders.map(order => ({
-        ...order,
-        customer: customerMap.get(order.userId),
-        hasInvoice: allInvoices?.some(inv => inv.orderId === order.id)
-      }));
-      // Client-side sorting
+      const enriched = localOrders.map(order => {
+          const o = order as any;
+          let totalValue = typeof o.total === 'number' ? o.total : 0;
+          if (o.Total && typeof o.Total === 'string') {
+              const parsed = parseFloat(o.Total.replace(/[^0-9.]/g, ''));
+              if (!isNaN(parsed)) totalValue = parsed;
+          }
+          return {
+            ...order,
+            total: totalValue,
+            customer: customerMap.get(order.userId),
+            hasInvoice: allInvoices?.some(inv => inv.orderId === order.id)
+          }
+      });
       enriched.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       return enriched;
     }
@@ -112,72 +106,40 @@ export default function SalesOrdersPage() {
 
   const handleCreateInvoice = async (order: Order) => {
     if (!firestore) return;
-
     try {
         const dueDate = new Date();
-        dueDate.setDate(dueDate.getDate() + 30); // Due 30 days from now
-
+        dueDate.setDate(dueDate.getDate() + 30);
         const newInvoiceData: Omit<Invoice, 'id'> = {
             orderId: order.id,
             invoiceDate: new Date().toISOString(),
             dueDate: dueDate.toISOString(),
             totalAmount: order.total,
             status: 'unpaid',
-            name: order.id, // for compatibility
+            name: order.id,
         };
-
-        const invoiceRef = await addDoc(collection(firestore, 'invoices'), newInvoiceData).catch(async (e) => {
-            const contextualError = await FirestorePermissionError.create({ path: 'invoices', operation: 'create', requestResourceData: newInvoiceData });
-            errorEmitter.emit('permission-error', contextualError);
-            throw e;
-        });
-        
-        toast({
-            title: "Invoice Created",
-            description: `Invoice for order #${order.id.substring(0,8)} has been created.`,
-            action: (
-                <Button variant="outline" size="sm" onClick={() => router.push('/admin/invoices')}>
-                    View Invoices
-                </Button>
-            )
-        });
+        await addDoc(collection(firestore, 'invoices'), newInvoiceData);
+        toast({ title: "Invoice Created" });
     } catch (e) {
-        console.error("Failed to create invoice:", e);
+        console.error("Invoice error:", e);
     }
   }
   
   const updatePaymentStatus = async (order: Order, newStatus: 'paid' | 'unpaid') => {
     if (!firestore || !order.__path) return;
-
     const orderRef = doc(firestore, order.__path);
-    const updateData = { 
-        paymentStatus: newStatus,
-        updatedAt: new Date().toISOString(),
-    };
-
     try {
-        await updateDoc(orderRef, updateData).catch(async (e) => {
-            const contextualError = await FirestorePermissionError.create({ path: orderRef.path, operation: 'update', requestResourceData: updateData });
-            errorEmitter.emit('permission-error', contextualError);
-            throw e;
-        });
-        
-        toast({
-            title: "Order Updated",
-            description: `Order #${order.id.substring(0,8)} has been marked as ${newStatus}.`,
-        });
+        await updateDoc(orderRef, { paymentStatus: newStatus, updatedAt: new Date().toISOString() });
+        toast({ title: "Payment Status Updated" });
     } catch (e) {
-        console.error(`Failed to mark order as ${newStatus}:`, e);
+        console.error("Payment error:", e);
     }
   };
 
   const handleFulfillmentStatusUpdate = async (order: Order, status: string) => {
-    if (!firestore || !order.__path || !status) return;
+    if (!firestore || !status) return;
     
     try {
         const orderKey = order.orderNumber || (order as any).Order || order.id;
-        
-        // Find all matching documents
         const qRoot = query(collection(firestore, 'orders'), where('orderNumber', '==', orderKey));
         const qSub = query(collectionGroup(firestore, 'orders'), where('orderNumber', '==', orderKey));
         const qLegacy = query(collectionGroup(firestore, 'orders'), where('Order', '==', orderKey));
@@ -193,6 +155,7 @@ export default function SalesOrdersPage() {
             fulfillmentStatus: status,
             Status: status.charAt(0).toUpperCase() + status.slice(1),
             status: status,
+            orderStatus: status,
             updatedAt: new Date().toISOString() 
         };
 
@@ -202,11 +165,8 @@ export default function SalesOrdersPage() {
         subSnap.docs.forEach(d => pathsToUpdate.add(d.ref.path));
         legacySnap.docs.forEach(d => pathsToUpdate.add(d.ref.path));
 
-        pathsToUpdate.forEach(path => {
-            batch.update(doc(firestore, path), updateData);
-        });
+        pathsToUpdate.forEach(path => { batch.update(doc(firestore, path), updateData); });
 
-        // Add Notification - Now includes scheduledAt to avoid crashes
         const notificationRef = doc(collection(firestore, 'notifications'));
         const safeStatusLabel = (status || 'updated').replace(/_/g, ' ');
         const notificationData: Omit<Notification, 'id'> = {
@@ -222,14 +182,9 @@ export default function SalesOrdersPage() {
         batch.set(notificationRef, { ...notificationData, id: notificationRef.id });
 
         await batch.commit();
-        toast({ 
-            title: 'Fulfillment Updated', 
-            description: `Order set to ${safeStatusLabel} and notification sent.`,
-            icon: <CheckCircle2 className="h-4 w-4 text-green-500" />
-        });
+        toast({ title: 'Fulfillment Synced', icon: <CheckCircle2 className="h-4 w-4 text-green-500" /> });
     } catch (e: any) {
-        const contextualError = await FirestorePermissionError.create({ path: order.__path, operation: 'update' });
-        errorEmitter.emit('permission-error', contextualError);
+        toast({ variant: 'destructive', title: 'Sync Failed' });
     }
   }
 
@@ -239,55 +194,22 @@ export default function SalesOrdersPage() {
   };
 
   const handleDelete = async () => {
-    if (!firestore || !selectedOrder || !selectedOrder.__path) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Cannot delete order. Invalid data path.',
-      });
-      setIsAlertOpen(false);
-      return;
-    }
-
-    const orderToDelete = selectedOrder;
+    if (!firestore || !selectedOrder || !selectedOrder.__path) return;
     try {
       const batch = writeBatch(firestore);
-
-      // 1. Delete the order document itself using its full path
-      const orderDocRef = doc(firestore, orderToDelete.__path);
-      batch.delete(orderDocRef);
-      
-      // 2. Delete associated order items
-      if (orderToDelete.orderItemIds && Array.isArray(orderToDelete.orderItemIds)) {
-        orderToDelete.orderItemIds.forEach(item => {
-          if (typeof item === 'object' && item.id) {
-            const itemDocRef = doc(firestore, 'orders_items', item.id);
-            batch.delete(itemDocRef);
-          }
-        });
+      batch.delete(doc(firestore, selectedOrder.__path));
+      if (selectedOrder.orderItemIds) {
+        selectedOrder.orderItemIds.forEach(item => { if (typeof item === 'object' && item.id) batch.delete(doc(firestore, 'orders_items', item.id)); });
       }
-      
-      // 3. Commit the batch
       await batch.commit();
-
-      toast({
-        title: 'Success',
-        description: `Order #${orderToDelete.id.substring(0, 8)} has been deleted.`,
-      });
-
+      toast({ title: 'Success' });
     } catch (error) {
-      console.error('Failed to delete order:', error);
-      const contextualError = await FirestorePermissionError.create({
-        path: orderToDelete.__path,
-        operation: 'delete',
-      });
-      errorEmitter.emit('permission-error', contextualError);
+      console.error('Delete error:', error);
     } finally {
       setIsAlertOpen(false);
       setSelectedOrder(null);
     }
   };
-
 
   const displayLoading = isLoadingOrders || isLoadingUsers || isLoadingInvoices;
 
@@ -297,16 +219,9 @@ export default function SalesOrdersPage() {
         <div className="flex items-center justify-between">
             <div>
                 <h1 className="text-3xl font-bold">Sales Orders</h1>
-                <p className="text-muted-foreground">
-                    View and manage manually created sales orders for local customers.
-                </p>
+                <p className="text-muted-foreground">Manage local sales and mobile sync.</p>
             </div>
-            <Button asChild>
-                <Link href="/admin/orders/new">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    New Sales Order
-                </Link>
-            </Button>
+            <Button asChild><Link href="/admin/orders/new"><PlusCircle className="mr-2 h-4 w-4" /> New Order</Link></Button>
       </div>
       <Card>
         <CardContent className="pt-6">
@@ -315,13 +230,11 @@ export default function SalesOrdersPage() {
               <TableRow>
                 <TableHead>Order ID</TableHead>
                 <TableHead>Customer</TableHead>
-                <TableHead>Payment Status</TableHead>
+                <TableHead>Payment</TableHead>
                 <TableHead>Fulfillment</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
+                <TableHead><span className="sr-only">Actions</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -336,88 +249,49 @@ export default function SalesOrdersPage() {
                     <div className="font-medium">{customer?.name}</div>
                     <div className="text-sm text-muted-foreground">{customer?.email}</div>
                   </TableCell>
-                  <TableCell>
-                    <Badge variant={order.paymentStatus === 'paid' ? 'default' : 'destructive'}>{order.paymentStatus}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={status === 'delivered' ? 'default' : 'secondary'} className="capitalize">
-                        {(status || 'processing').replace(/_/g, ' ')}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {new Date(order.createdAt).toLocaleDateString()}
-                  </TableCell>
+                  <TableCell><Badge variant={order.paymentStatus === 'paid' ? 'default' : 'destructive'}>{order.paymentStatus}</Badge></TableCell>
+                  <TableCell><Badge variant={status === 'delivered' ? 'default' : 'secondary'} className="capitalize">{(status || 'processing').replace(/_/g, ' ')}</Badge></TableCell>
+                  <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell className="text-right">{currencySymbol}{order.total.toFixed(2)}</TableCell>
                   <TableCell>
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          aria-haspopup="true"
-                          size="icon"
-                          variant="ghost"
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
+                      <DropdownMenuTrigger asChild><Button size="icon" variant="ghost"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem asChild>
-                            <Link href={`/admin/orders/${order.id}?userId=${order.userId}`}>View Details</Link>
-                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild><Link href={`/admin/orders/${order.id}?userId=${order.userId}`}>View Details</Link></DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuLabel>Status & Payment</DropdownMenuLabel>
+                        <DropdownMenuLabel>Sync Status</DropdownMenuLabel>
                          {order.paymentStatus !== 'paid' ? (
-                            <DropdownMenuItem onClick={() => updatePaymentStatus(order, 'paid')}>Mark as Paid</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => updatePaymentStatus(order, 'paid')}>Mark Paid</DropdownMenuItem>
                          ) : (
-                            <DropdownMenuItem onClick={() => updatePaymentStatus(order, 'unpaid')}>Mark as Unpaid</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => updatePaymentStatus(order, 'unpaid')}>Mark Unpaid</DropdownMenuItem>
                          )}
-                        <DropdownMenuItem onClick={() => handleCreateInvoice(order)} disabled={order.hasInvoice}>
-                            {order.hasInvoice ? 'Invoice Exists' : 'Create Invoice'}
-                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleCreateInvoice(order)} disabled={order.hasInvoice}>Create Invoice</DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuLabel>Fulfillment</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => handleFulfillmentStatusUpdate(order, 'shipped')}>Mark as Shipped</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleFulfillmentStatusUpdate(order, 'delivered')}>Mark as Delivered</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleFulfillmentStatusUpdate(order, 'shipped')}>Mark Shipped</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleFulfillmentStatusUpdate(order, 'delivered')}>Mark Delivered</DropdownMenuItem>
                         <DropdownMenuSeparator />
-                         <DropdownMenuItem className="text-destructive" onClick={() => handleOpenAlert(order)}>
-                            Delete Order
-                         </DropdownMenuItem>
+                         <DropdownMenuItem className="text-destructive" onClick={() => handleOpenAlert(order)}>Delete</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
               )})}
-               {!displayLoading && (!enrichedOrders || enrichedOrders.length === 0) && (
-                <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
-                    No sales orders found.
-                  </TableCell>
-                </TableRow>
-              )}
             </TableBody>
           </Table>
         </CardContent>
         {!displayLoading && enrichedOrders.length > visibleCount && (
-            <CardFooter className="flex justify-center border-t pt-6">
-                <Button onClick={() => setVisibleCount(prev => prev + 20)}>View More</Button>
-            </CardFooter>
+            <CardFooter className="flex justify-center border-t pt-6"><Button onClick={() => setVisibleCount(prev => prev + 20)}>View More</Button></CardFooter>
         )}
       </Card>
     </div>
      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete order #{selectedOrder?.id.substring(0, 8)} and its related items.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+          <AlertDialogHeader><AlertDialogTitle>Confirm Delete</AlertDialogTitle></AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

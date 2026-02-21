@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -58,7 +59,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/hooks/useSettings";
 import { createShipdayOrder } from "@/ai/flows/create-shipday-order";
 import { OrderRowSkeleton } from "./OrderRowSkeleton";
-import { Alert, AlertDescription, AlertTitle } from "@/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function AllOrdersPage() {
   const firestore = useFirestore();
@@ -88,14 +89,12 @@ export default function AllOrdersPage() {
       const userMap = new Map(users.map(u => [u.id, u]));
       const normalized = allOrders.map(order => {
           const o = order as any;
-          // Normalization logic for mobile orders
           let totalValue = typeof o.total === 'number' ? o.total : 0;
           if (o.Total && typeof o.Total === 'string') {
               const parsed = parseFloat(o.Total.replace(/[^0-9.]/g, ''));
               if (!isNaN(parsed)) totalValue = parsed;
           }
 
-          // Prioritize web field 'fulfillmentStatus' if it exists, fallback to mobile 'Status'
           let status = o.fulfillmentStatus;
           if (!status && o.Status && typeof o.Status === 'string') {
               status = o.Status.toLowerCase();
@@ -120,7 +119,6 @@ export default function AllOrdersPage() {
           };
       });
 
-      // Deduplicate orders by orderNumber OR id (handling cases where mobile app writes to both root and subcollection)
       const deduplicated = new Map<string, any>();
       normalized.forEach(order => {
           const orderKey = order.orderNumber || (order as any).Order || order.id;
@@ -129,14 +127,12 @@ export default function AllOrdersPage() {
           if (!existing) {
               deduplicated.set(orderKey, order);
           } else {
-              // Prefer the one with more advanced status or the root document (shorter path)
               const existingPathLength = existing.__path?.split('/').length || 10;
               const currentPathLength = order.__path?.split('/').length || 10;
               
               if (currentPathLength < existingPathLength) {
                   deduplicated.set(orderKey, order);
               } else if (currentPathLength === existingPathLength) {
-                  // If same path depth, prefer newer update
                   const existingDate = new Date(existing.updatedAt || 0).getTime();
                   const currentDate = new Date(order.updatedAt || 0).getTime();
                   if (currentDate > existingDate) {
@@ -146,7 +142,6 @@ export default function AllOrdersPage() {
           }
       });
 
-      // Sort in memory by createdAt descending
       return Array.from(deduplicated.values()).sort((a, b) => {
           const dateA = new Date(a.createdAt).getTime();
           const dateB = new Date(b.createdAt).getTime();
@@ -157,7 +152,6 @@ export default function AllOrdersPage() {
   }, [allOrders, users]);
 
   const displayLoading = isLoadingOrders || (isLoadingUsers && !allOrders);
-  
   const isIndexError = ordersError?.message?.includes('index') || ordersError?.message?.includes('ready');
   
   const handleStatusUpdate = async (order: Order, status: string) => {
@@ -165,8 +159,6 @@ export default function AllOrdersPage() {
     
     try {
         const orderKey = order.orderNumber || (order as any).Order || order.id;
-        
-        // Find all documents across root and subcollections with this identifier
         const qRoot = query(collection(firestore, 'orders'), where('orderNumber', '==', orderKey));
         const qSub = query(collectionGroup(firestore, 'orders'), where('orderNumber', '==', orderKey));
         const qLegacy = query(collectionGroup(firestore, 'orders'), where('Order', '==', orderKey));
@@ -179,10 +171,10 @@ export default function AllOrdersPage() {
 
         const batch = writeBatch(firestore);
         const updateData: { [key: string]: any } = { 
-            fulfillmentStatus: status, // Web standard
-            Status: status.charAt(0).toUpperCase() + status.slice(1), // Mobile standard (e.g., "Delivered")
-            status: status, // Lowercase standard
-            orderStatus: status, // Common fallback
+            fulfillmentStatus: status,
+            Status: status.charAt(0).toUpperCase() + status.slice(1),
+            status: status,
+            orderStatus: status,
             updatedAt: new Date().toISOString() 
         };
 
@@ -196,9 +188,8 @@ export default function AllOrdersPage() {
             batch.update(doc(firestore, path), updateData);
         });
 
-        // Sync with mobile notifications - Now includes scheduledAt to avoid crashes
         const notificationRef = doc(collection(firestore, 'notifications'));
-        const safeStatusLabel = (status || 'updated').replace('_', ' ');
+        const safeStatusLabel = (status || 'updated').replace(/_/g, ' ');
         const notificationData: Omit<Notification, 'id'> = {
             userId: order.userId,
             title: "Order Updated",
@@ -229,28 +220,19 @@ export default function AllOrdersPage() {
                     pathsToUpdate.forEach(path => {
                         batch.update(doc(firestore, path), { shipdayOrderId: shipdayResult.shipdayOrderId });
                     });
-                    toast({ title: 'Shipday Order Created', description: `Order successfully dispatched to Shipday ID: ${shipdayResult.shipdayOrderId}` });
                 }
             }
         }
 
         await batch.commit();
         toast({ 
-            title: 'Status Updated', 
-            description: `Order status updated to ${safeStatusLabel} and notification sent.`,
+            title: 'Sync Complete', 
+            description: `Order #${orderKey} updated and user notified.`,
             icon: <CheckCircle2 className="h-4 w-4 text-green-500" />
         });
     } catch (e: any) {
-        console.error("Failed to update status:", e);
-        if (e.message?.includes('index') || e.message?.includes('ready')) {
-            toast({ 
-                variant: 'destructive', 
-                title: 'Index Building', 
-                description: 'The search index for syncing mobile orders is still building on Google\'s servers. Please try again in 5 minutes.' 
-            });
-        } else {
-            toast({ variant: 'destructive', title: 'Update Failed', description: 'Permission denied or database error.' });
-        }
+        console.error("Sync error:", e);
+        toast({ variant: 'destructive', title: 'Sync Failed', description: 'Permission denied or index building.' });
     }
   }
 
@@ -267,45 +249,33 @@ export default function AllOrdersPage() {
 
   const handleLinkShipdayOrder = async () => {
     if (!firestore || !selectedOrder || !shipdayIdInput || !selectedOrder.__path) return;
-
     const orderDocRef = doc(firestore, selectedOrder.__path);
     const shipdayOrderId = parseInt(shipdayIdInput, 10);
-
     if (isNaN(shipdayOrderId)) {
-        toast({ variant: 'destructive', title: 'Invalid ID', description: 'Shipday Order ID must be a number.' });
+        toast({ variant: 'destructive', title: 'Invalid ID' });
         return;
     }
-
     try {
         await updateDoc(orderDocRef, { shipdayOrderId });
-        toast({ title: 'Success', description: 'Shipday order linked successfully.' });
+        toast({ title: 'Success' });
         setIsLinkModalOpen(false);
     } catch (e: any) {
-        const contextualError = await FirestorePermissionError.create({ path: orderDocRef.path, operation: 'update', requestResourceData: { shipdayOrderId } });
-        errorEmitter.emit('permission-error', contextualError);
+        errorEmitter.emit('permission-error', await FirestorePermissionError.create({ path: orderDocRef.path, operation: 'update' }));
     }
   }
 
   const handleDelete = async () => {
     if (!firestore || !selectedOrder || !selectedOrder.__path) return;
-
     try {
       const batch = writeBatch(firestore);
       batch.delete(doc(firestore, selectedOrder.__path));
-      
       if (selectedOrder.orderItemIds) {
-        selectedOrder.orderItemIds.forEach(item => {
-          if (item.id) {
-            batch.delete(doc(firestore, 'orders_items', item.id));
-          }
-        });
+        selectedOrder.orderItemIds.forEach(item => { if (item.id) batch.delete(doc(firestore, 'orders_items', item.id)); });
       }
-
       await batch.commit();
-      toast({ title: 'Success', description: `Order deleted.` });
+      toast({ title: 'Success' });
     } catch (error: any) {
-      const contextualError = await FirestorePermissionError.create({ path: selectedOrder.__path, operation: 'delete' });
-      errorEmitter.emit('permission-error', contextualError);
+      errorEmitter.emit('permission-error', await FirestorePermissionError.create({ path: selectedOrder.__path, operation: 'delete' }));
     } finally {
       setIsAlertOpen(false);
       setSelectedOrder(null);
@@ -320,22 +290,18 @@ export default function AllOrdersPage() {
       {ordersError && (
         <Alert variant={isIndexError ? "default" : "destructive"}>
             {isIndexError ? <Loader2 className="h-4 w-4 animate-spin" /> : <AlertCircle className="h-4 w-4" />}
-            <AlertTitle>{isIndexError ? "Database Index Building" : "Firestore Error"}</AlertTitle>
+            <AlertTitle>{isIndexError ? "Sync Index Building" : "Connection Error"}</AlertTitle>
             <AlertDescription>
-                {isIndexError ? (
-                    "Google's servers are currently building the search index for your orders. This usually takes 3-5 minutes. Please check back shortly."
-                ) : (
-                    ordersError.message
-                )}
+                {isIndexError ? "Google is building the sync map. Try again in 5 minutes." : ordersError.message}
             </AlertDescription>
         </Alert>
       )}
 
       <Card>
         <CardHeader>
-          <CardTitle>All Orders</CardTitle>
+          <CardTitle>Global Order Sync</CardTitle>
           <CardDescription>
-            View and manage all customer orders. Status changes here will sync to the mobile app and send notifications.
+            Manage orders across root and subcollections. Status changes here sync to mobile instantly.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -392,12 +358,12 @@ export default function AllOrdersPage() {
                                     Link Shipday ID
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuLabel>Fulfillment</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={() => handleStatusUpdate(order, 'processing')}>Mark as Processing</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusUpdate(order, 'shipped')}>Mark as Shipped</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusUpdate(order, 'delivered')}>Mark as Delivered</DropdownMenuItem>
+                                <DropdownMenuLabel>Fulfillment Sync</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => handleStatusUpdate(order, 'processing')}>Mark Processing</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusUpdate(order, 'shipped')}>Mark Shipped</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusUpdate(order, 'delivered')}>Mark Delivered</DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-destructive" onClick={() => handleOpenAlert(order)}>Delete Order</DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive" onClick={() => handleOpenAlert(order)}>Delete</DropdownMenuItem>
                             </DropdownMenuContent>
                             </DropdownMenu>
                         </TableCell>
@@ -406,9 +372,7 @@ export default function AllOrdersPage() {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                    No orders found.
-                  </TableCell>
+                  <TableCell colSpan={7} className="h-24 text-center">No orders found.</TableCell>
                 </TableRow>
               )}
             </TableBody>
@@ -436,10 +400,7 @@ export default function AllOrdersPage() {
       </Dialog>
     <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>This action will permanently delete the order from the database.</AlertDialogDescription>
-          </AlertDialogHeader>
+          <AlertDialogHeader><AlertDialogTitle>Delete Order?</AlertDialogTitle></AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>

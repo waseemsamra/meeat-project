@@ -10,7 +10,7 @@ Before your Android app or web app can access the latest structure and security,
 1.  **Login to Firebase**: `npx firebase login`
 2.  **Deploy Firestore**: `npm run firebase:deploy` 
     - *Note: If asked "Would you like to delete these indexes?", type **y** and press Enter.*
-3.  **Wait for Indexes**: After deployment, visit the [Firebase Console Indexes Page](https://console.firebase.google.com/project/studio-7561999182-35b19/firestore/indexes). Wait until `orderNumber` and `createdAt` show as **Active**. This takes 3-5 minutes.
+3.  **Wait for Indexes**: After deployment, visit the [Firebase Console Indexes Page](https://console.firebase.google.com/project/studio-7561999182-35b19/firestore/indexes). Wait until `orderNumber`, `Order`, and `scheduledAt` show as **Active**. This takes 3-5 minutes.
 
 ---
 
@@ -21,14 +21,19 @@ Before your Android app or web app can access the latest structure and security,
 - Download `google-services.json` and place it in `app/`.
 
 ### 2. 🔔 Notification Synchronization
-To show notifications in your Android app, query the root `/notifications` collection.
+The web dashboard sends notifications to the root `/notifications` collection.
+
+**CRITICAL: Scheduling Filter**
+To support scheduled notifications, your Android app **MUST** filter by `scheduledAt`.
 
 **Kotlin Listener Example**:
 ```kotlin
-// Fetch both personal AND broadcast notifications
+val now = ISO8601Utils.format(Date()) // or your preferred ISO formatter
+
 db.collection("notifications")
     .whereIn("userId", listOf(currentUserId, "ALL"))
-    .orderBy("createdAt", Query.Direction.DESCENDING)
+    .whereLessThanOrEqualTo("scheduledAt", now) // Only show if time has passed
+    .orderBy("scheduledAt", Query.Direction.DESCENDING)
     .addSnapshotListener { snapshots, e ->
         // Update your UI tray
     }
@@ -42,10 +47,11 @@ The Android app should ONLY write to the top-level `/orders` collection. Do NOT 
 
 **CRITICAL FIELDS FOR MOBILE SYNC**:
 - `userId`: String (Firebase Auth UID). **REQUIRED** for dashboard lookup.
-- `createdAt`: ISO String or Timestamp.
+- `orderNumber`: String (e.g., "ORD-12345").
+- `createdAt`: ISO String.
 - `orderType`: "ONLINE" (String). 
 - `fulfillmentStatus`: "processing" (String, lowercase).
-- `Status`: "Processing" (String, Capitalized). **REQUIRED** for dashboard UI.
+- `Status`: "Processing" (String, Capitalized). **REQUIRED** for legacy dashboard UI.
 - `total`: Number (Double). Avoid currency symbols like "DH" in raw data.
 
 ---
