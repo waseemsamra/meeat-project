@@ -7,16 +7,26 @@ import type { Notification, User } from '@/lib/types';
 import { z } from 'zod';
 import { ColumnDef } from '@tanstack/react-table';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, query, orderBy, addDoc, doc, setDoc } from 'firebase/firestore';
+import { collection, query, orderBy, doc, setDoc } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from '@/hooks/useTranslation';
-import { Megaphone, User as UserIcon, Calendar, Clock, MoreHorizontal, Copy, RefreshCcw } from 'lucide-react';
+import { Megaphone, User as UserIcon, Calendar, Clock, MoreHorizontal, Copy, RefreshCcw, Eye, Info } from 'lucide-react';
 import { format, isValid, parseISO } from 'date-fns';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
 
 const notificationSchema = z.object({
   userId: z.string().min(1, 'Target user is required.'),
@@ -36,6 +46,9 @@ export default function AdminNotificationsPage() {
   const firestore = useFirestore();
   const { t } = useTranslation();
   const { toast } = useToast();
+
+  const [viewItem, setViewItem] = useState<Notification | null>(null);
+  const [isViewOpen, setIsViewOpen] = useState(false);
 
   // Fetch users for the recipient lookup
   const usersQuery = useMemo(() => firestore ? collection(firestore, 'users') : null, [firestore]);
@@ -67,6 +80,11 @@ export default function AdminNotificationsPage() {
         console.error("Resend error:", e);
         toast({ variant: 'destructive', title: 'Resend Failed', description: 'Could not resend notification.' });
     }
+  };
+
+  const handleOpenView = (notification: Notification) => {
+    setViewItem(notification);
+    setIsViewOpen(true);
   };
 
   const columns: ColumnDef<Notification>[] = useMemo(() => [
@@ -163,6 +181,10 @@ export default function AdminNotificationsPage() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => handleOpenView(item)}>
+                  <Eye className="mr-2 h-4 w-4" />
+                  View Details
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => meta.handleOpenForm(item)}>
                   Edit
                 </DropdownMenuItem>
@@ -255,17 +277,120 @@ export default function AdminNotificationsPage() {
     return form;
   };
 
+  const selectedUser = useMemo(() => {
+    if (!viewItem || viewItem.userId === 'ALL') return null;
+    return users?.find(u => u.id === viewItem.userId);
+  }, [viewItem, users]);
+
   return (
-    <AttributeManagementPage<Notification>
-      collectionName="notifications"
-      title="Notifications"
-      description="Manage automated order alerts and schedule manual broadcast or personal messages for the mobile app."
-      columns={columns}
-      formSchema={notificationSchema}
-      formFields={formFields}
-      data={notifications}
-      isLoading={isLoadingNotifications}
-      useCustomFormHook={useCustomFormHook}
-    />
+    <>
+      <AttributeManagementPage<Notification>
+        collectionName="notifications"
+        title="Notifications"
+        description="Manage automated order alerts and schedule manual broadcast or personal messages for the mobile app."
+        columns={columns}
+        formSchema={notificationSchema}
+        formFields={formFields}
+        data={notifications}
+        isLoading={isLoadingNotifications}
+        useCustomFormHook={useCustomFormHook}
+      />
+
+      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Info className="h-5 w-5 text-primary" />
+              Notification Details
+            </DialogTitle>
+            <DialogDescription>
+              Full record of the message sent to the mobile app.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {viewItem && (
+            <div className="space-y-6 pt-4">
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider">Title</Label>
+                <p className="text-lg font-bold font-headline">{viewItem.title}</p>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider">Message Body</Label>
+                <div className="p-4 bg-muted/50 rounded-lg text-sm whitespace-pre-wrap border leading-relaxed">
+                  {viewItem.body}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider">Category</Label>
+                  <div>
+                    <Badge variant={viewItem.type === 'promotion' ? 'default' : 'secondary'} className="capitalize">
+                      {viewItem.type.replace('_', ' ')}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="space-y-1 text-right">
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider">Recipient</Label>
+                  <div>
+                    {viewItem.userId === 'ALL' ? (
+                      <Badge variant="outline" className="border-primary text-primary font-bold">BROADCAST</Badge>
+                    ) : (
+                      <div className="text-sm font-medium">
+                        <p>{selectedUser?.name || 'Unknown User'}</p>
+                        <p className="text-xs text-muted-foreground">{selectedUser?.email || viewItem.userId}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                    <Calendar className="h-3 w-3" /> Scheduled At
+                  </Label>
+                  <p className="text-sm">
+                    {viewItem.scheduledAt ? format(parseISO(viewItem.scheduledAt as any), 'MMM d, yyyy h:mm a') : 'Immediate'}
+                  </p>
+                </div>
+                <div className="space-y-1 text-right">
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-1 justify-end">
+                    <Clock className="h-3 w-3" /> Created At
+                  </Label>
+                  <p className="text-sm">
+                    {viewItem.createdAt ? format(parseISO(viewItem.createdAt as any), 'MMM d, yyyy h:mm a') : 'N/A'}
+                  </p>
+                </div>
+              </div>
+
+              {viewItem.relatedId && (
+                <div className="space-y-1 pt-2">
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider">Related Reference</Label>
+                  <p className="text-xs font-mono bg-zinc-100 dark:bg-zinc-800 p-1 rounded inline-block">
+                    {viewItem.relatedId}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Close</Button>
+            </DialogClose>
+            {viewItem && (
+              <Button onClick={() => { handleResend(viewItem); setIsViewOpen(false); }}>
+                <RefreshCcw className="mr-2 h-4 w-4" />
+                Resend Now
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
