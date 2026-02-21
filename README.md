@@ -10,7 +10,7 @@ Before your Android app or web app can access the latest structure and security,
 1.  **Login to Firebase**: `npx firebase login`
 2.  **Deploy Firestore**: `npm run firebase:deploy` 
     - *Note: If asked "Would you like to delete these indexes?", type **y** and press Enter.*
-3.  **Wait for Indexes**: After deployment, visit the [Firebase Console Indexes Page](https://console.firebase.google.com/project/studio-7561999182-35b19/firestore/indexes). Wait until `orderNumber`, `Order`, and `scheduledAt` show as **Active**. This takes 3-5 minutes.
+3.  **Wait for Indexes**: After deployment, visit the [Firebase Console Indexes Page](https://console.firebase.google.com/project/studio-7561999182-35b19/firestore/indexes). Wait until all indexes (especially `orderNumber` and `notifications`) show as **Active**. This takes 3-5 minutes.
 
 ---
 
@@ -21,18 +21,18 @@ Before your Android app or web app can access the latest structure and security,
 - Download `google-services.json` and place it in `app/`.
 
 ### 2. 🔔 Notification Synchronization
-The web dashboard sends and monitors notifications in the root `/notifications` collection.
+The web dashboard sends and monitors notifications in the root `/notifications` collection. 
 
-**CRITICAL: Scheduling Filter**
-To support scheduled notifications, your Android app **MUST** filter by `scheduledAt`.
+**DATA TYPE WARNING**:
+The dashboard saves `scheduledAt` and `createdAt` as **ISO 8601 Strings** (e.g., `2023-10-27T10:00:00Z`). Ensure your Kotlin app performs string comparison or parses them accordingly.
 
 **Kotlin Listener Example**:
 ```kotlin
-val now = ISO8601Utils.format(Date()) // or your preferred ISO formatter
+val now = ISO8601Utils.format(Date()) // Use ISO format for string comparison
 
 db.collection("notifications")
-    .whereIn("userId", listOf(currentUserId, "ALL"))
-    .whereLessThanOrEqualTo("scheduledAt", now) // Only show if time has passed
+    .whereIn("userId", listOf(currentUserId, "ALL")) // Personal + Broadcast
+    .whereLessThanOrEqualTo("scheduledAt", now)      // Only show if time has passed
     .orderBy("scheduledAt", Query.Direction.DESCENDING)
     .addSnapshotListener { snapshots, e ->
         // Update your UI tray
@@ -55,7 +55,7 @@ The Android app should ONLY write to the top-level `/orders` collection. Do NOT 
 - `total`: Number (Double). Avoid currency symbols like "DH" in raw data.
 
 **🔔 IMPORTANT: MANUAL NOTIFICATIONS**
-If the Android app writes an order directly to Firestore (instead of using the web server action), it should also create a document in `/notifications` so the dashboard and user are alerted:
+If the Android app writes an order directly to Firestore, it should also create a document in `/notifications` so the dashboard and user are alerted:
 - `userId`: The user's UID
 - `title`: "Order Received"
 - `body`: "Your order #... has been received."
