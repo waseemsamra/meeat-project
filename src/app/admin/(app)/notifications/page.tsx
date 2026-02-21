@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useEffect } from 'react';
@@ -11,7 +10,7 @@ import { collection, query, orderBy } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Megaphone, User as UserIcon, Calendar, Clock } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 
 const notificationSchema = z.object({
   userId: z.string().min(1, 'Target user is required.'),
@@ -37,7 +36,14 @@ export default function AdminNotificationsPage() {
       accessorKey: 'scheduledAt',
       header: 'Scheduled For',
       cell: ({ row }) => {
-        const date = new Date(row.original.scheduledAt);
+        const scheduledAtVal = row.original.scheduledAt;
+        const date = scheduledAtVal ? new Date(scheduledAtVal) : null;
+        
+        // Safety check to prevent "Invalid time value" crash
+        if (!date || !isValid(date)) {
+            return <span className="text-muted-foreground italic text-xs">Immediate</span>;
+        }
+
         const isFuture = date > new Date();
         return (
             <div className="flex flex-col">

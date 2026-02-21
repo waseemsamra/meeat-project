@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -59,7 +58,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/hooks/useSettings";
 import { createShipdayOrder } from "@/ai/flows/create-shipday-order";
 import { OrderRowSkeleton } from "./OrderRowSkeleton";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/alert";
 
 export default function AllOrdersPage() {
   const firestore = useFirestore();
@@ -197,7 +196,7 @@ export default function AllOrdersPage() {
             batch.update(doc(firestore, path), updateData);
         });
 
-        // Sync with mobile notifications
+        // Sync with mobile notifications - Now includes scheduledAt to avoid crashes
         const notificationRef = doc(collection(firestore, 'notifications'));
         const notificationData: Omit<Notification, 'id'> = {
             userId: order.userId,
@@ -207,6 +206,7 @@ export default function AllOrdersPage() {
             relatedId: order.id,
             read: false,
             createdAt: new Date().toISOString(),
+            scheduledAt: new Date().toISOString(),
         };
         batch.set(notificationRef, { ...notificationData, id: notificationRef.id });
 

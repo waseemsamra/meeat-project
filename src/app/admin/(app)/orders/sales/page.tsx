@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -207,7 +206,7 @@ export default function SalesOrdersPage() {
             batch.update(doc(firestore, path), updateData);
         });
 
-        // Add Notification
+        // Add Notification - Now includes scheduledAt to avoid crashes
         const notificationRef = doc(collection(firestore, 'notifications'));
         const notificationData: Omit<Notification, 'id'> = {
             userId: order.userId,
@@ -217,6 +216,7 @@ export default function SalesOrdersPage() {
             relatedId: order.id,
             read: false,
             createdAt: new Date().toISOString(),
+            scheduledAt: new Date().toISOString(),
         };
         batch.set(notificationRef, { ...notificationData, id: notificationRef.id });
 
