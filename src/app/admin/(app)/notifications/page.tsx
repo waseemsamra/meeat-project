@@ -6,15 +6,16 @@ import type { Notification, User } from '@/lib/types';
 import { z } from 'zod';
 import { ColumnDef } from '@tanstack/react-table';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, addDoc, doc, setDoc } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from '@/hooks/useTranslation';
-import { Megaphone, User as UserIcon, Calendar, Clock, MoreHorizontal, Copy } from 'lucide-react';
+import { Megaphone, User as UserIcon, Calendar, Clock, MoreHorizontal, Copy, RefreshCcw } from 'lucide-react';
 import { format, isValid, parseISO } from 'date-fns';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useToast } from '@/hooks/use-toast';
 
 const notificationSchema = z.object({
   userId: z.string().min(1, 'Target user is required.'),
@@ -33,6 +34,7 @@ type NotificationFormValues = z.infer<typeof notificationSchema>;
 export default function AdminNotificationsPage() {
   const firestore = useFirestore();
   const { t } = useTranslation();
+  const { toast } = useToast();
 
   // Fetch users for the recipient lookup
   const usersQuery = useMemo(() => firestore ? collection(firestore, 'users') : null, [firestore]);
@@ -43,6 +45,28 @@ export default function AdminNotificationsPage() {
     firestore ? query(collection(firestore, 'notifications'), orderBy('createdAt', 'desc')) : null
   , [firestore]);
   const { data: notifications, isLoading: isLoadingNotifications } = useCollection<Notification>(notificationsQuery);
+
+  const handleResend = async (notification: Notification) => {
+    if (!firestore) return;
+    try {
+        const { id, __path, createdAt, scheduledAt, ...cloneData } = notification as any;
+        const resendData = {
+            ...cloneData,
+            createdAt: new Date().toISOString(),
+            scheduledAt: new Date().toISOString(),
+            read: false,
+        };
+        const docRef = doc(collection(firestore, 'notifications'));
+        await setDoc(docRef, { ...resendData, id: docRef.id });
+        toast({ 
+            title: 'Notification Resent', 
+            description: `"${notification.title}" has been sent again immediately.`,
+        });
+    } catch (e) {
+        console.error("Resend error:", e);
+        toast({ variant: 'destructive', title: 'Resend Failed', description: 'Could not resend notification.' });
+    }
+  };
 
   const columns: ColumnDef<Notification>[] = useMemo(() => [
     {
@@ -141,6 +165,10 @@ export default function AdminNotificationsPage() {
                 <DropdownMenuItem onClick={() => meta.handleOpenForm(item)}>
                   Edit
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleResend(item)}>
+                  <RefreshCcw className="mr-2 h-4 w-4" />
+                  Resend Now
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => {
                     const { id, __path, createdAt, ...cloneData } = item as any;
                     meta.handleOpenForm({ 
@@ -164,7 +192,7 @@ export default function AdminNotificationsPage() {
         );
       },
     },
-  ], [users]);
+  ], [users, firestore, toast]);
 
   const formFields = useMemo(() => {
     const userOptions = [
