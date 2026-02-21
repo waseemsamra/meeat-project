@@ -27,6 +27,7 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
 
 const notificationSchema = z.object({
   userId: z.string().min(1, 'Target user is required.'),
@@ -153,7 +154,14 @@ export default function AdminNotificationsPage() {
     {
       accessorKey: 'title',
       header: 'Title',
-      cell: ({ row }) => <div className="font-medium line-clamp-1">{row.original.title}</div>
+      cell: ({ row }) => (
+        <button 
+          onClick={() => handleOpenView(row.original)}
+          className="font-medium text-left hover:underline hover:text-primary transition-colors line-clamp-1"
+        >
+          {row.original.title}
+        </button>
+      )
     },
     {
       accessorKey: 'type',

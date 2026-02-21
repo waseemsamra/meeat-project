@@ -1,23 +1,39 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, query, where, orderBy } from 'firebase/firestore';
+import { collection, query, where, orderBy, doc, setDoc } from 'firebase/firestore';
 import type { Notification, User } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Search, User as UserIcon, Bell, Calendar, Clock, Megaphone } from 'lucide-react';
-import { format, isValid } from 'date-fns';
+import { Search, User as UserIcon, Bell, Calendar, Clock, Megaphone, Info, RefreshCcw } from 'lucide-react';
+import { format, isValid, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
 
 export default function NotificationSearchPage() {
   const firestore = useFirestore();
+  const { toast } = useToast();
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  
+  const [viewItem, setViewItem] = useState<Notification | null>(null);
+  const [isViewOpen, setIsViewOpen] = useState(false);
 
   // Fetch users for the search dropdown
   const usersQuery = useMemo(() => firestore ? collection(firestore, 'users') : null, [firestore]);
@@ -46,6 +62,33 @@ export default function NotificationSearchPage() {
   const handleSelectUser = (user: User) => {
     setSelectedUser(user);
     setUserSearchQuery('');
+  };
+
+  const handleOpenView = (notification: Notification) => {
+    setViewItem(notification);
+    setIsViewOpen(true);
+  };
+
+  const handleResend = async (notification: Notification) => {
+    if (!firestore) return;
+    try {
+        const { id, __path, createdAt, scheduledAt, ...cloneData } = notification as any;
+        const resendData = {
+            ...cloneData,
+            createdAt: new Date().toISOString(),
+            scheduledAt: new Date().toISOString(),
+            read: false,
+        };
+        const docRef = doc(collection(firestore, 'notifications'));
+        await setDoc(docRef, { ...resendData, id: docRef.id });
+        toast({ 
+            title: 'Notification Resent', 
+            description: `"${notification.title}" has been sent again immediately.`,
+        });
+    } catch (e) {
+        console.error("Resend error:", e);
+        toast({ variant: 'destructive', title: 'Resend Failed', description: 'Could not resend notification.' });
+    }
   };
 
   return (
@@ -130,14 +173,16 @@ export default function NotificationSearchPage() {
             ) : notifications && notifications.length > 0 ? (
               <div className="space-y-4">
                 {notifications.map(notification => {
-                  const date = notification.scheduledAt ? new Date(notification.scheduledAt) : null;
+                  const dateVal = notification.scheduledAt;
+                  const date = dateVal ? (typeof dateVal === 'string' ? parseISO(dateVal) : new Date(dateVal)) : null;
                   const isBroadcast = notification.userId === 'ALL';
                   
                   return (
                     <div 
                       key={notification.id} 
-                      className={`p-4 rounded-lg border flex flex-col md:flex-row gap-4 transition-colors ${
-                        isBroadcast ? 'bg-primary/5 border-primary/20' : 'bg-background'
+                      onClick={() => handleOpenView(notification)}
+                      className={`p-4 rounded-lg border flex flex-col md:flex-row gap-4 transition-all cursor-pointer hover:shadow-md ${
+                        isBroadcast ? 'bg-primary/5 border-primary/20' : 'bg-background hover:bg-accent/50'
                       }`}
                     >
                       <div className="flex-shrink-0">
@@ -159,7 +204,7 @@ export default function NotificationSearchPage() {
                             </Badge>
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
+                        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
                           {notification.body}
                         </p>
                       </div>
@@ -186,6 +231,93 @@ export default function NotificationSearchPage() {
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Info className="h-5 w-5 text-primary" />
+              Notification Details
+            </DialogTitle>
+            <DialogDescription>
+              Full record of the message sent to the mobile app.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {viewItem && (
+            <div className="space-y-6 pt-4">
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider">Title</Label>
+                <p className="text-lg font-bold font-headline">{viewItem.title}</p>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider">Message Body</Label>
+                <div className="p-4 bg-muted/50 rounded-lg text-sm whitespace-pre-wrap border leading-relaxed">
+                  {viewItem.body}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider">Category</Label>
+                  <div>
+                    <Badge variant={viewItem.type === 'promotion' ? 'default' : 'secondary'} className="capitalize">
+                      {viewItem.type.replace('_', ' ')}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="space-y-1 text-right">
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider">Recipient</Label>
+                  <div>
+                    {viewItem.userId === 'ALL' ? (
+                      <Badge variant="outline" className="border-primary text-primary font-bold">BROADCAST</Badge>
+                    ) : (
+                      <div className="text-sm font-medium">
+                        <p>{selectedUser?.name || 'User'}</p>
+                        <p className="text-xs text-muted-foreground">{selectedUser?.email || viewItem.userId}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                    <Calendar className="h-3 w-3" /> Scheduled At
+                  </Label>
+                  <p className="text-sm">
+                    {viewItem.scheduledAt ? format(parseISO(viewItem.scheduledAt as any), 'MMM d, yyyy h:mm a') : 'Immediate'}
+                  </p>
+                </div>
+                <div className="space-y-1 text-right">
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-1 justify-end">
+                    <Clock className="h-3 w-3" /> Created At
+                  </Label>
+                  <p className="text-sm">
+                    {viewItem.createdAt ? format(parseISO(viewItem.createdAt as any), 'MMM d, yyyy h:mm a') : 'N/A'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Close</Button>
+            </DialogClose>
+            {viewItem && (
+              <Button onClick={() => { handleResend(viewItem); setIsViewOpen(false); }}>
+                <RefreshCcw className="mr-2 h-4 w-4" />
+                Resend Now
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
