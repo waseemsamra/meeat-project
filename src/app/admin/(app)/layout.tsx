@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -25,6 +24,7 @@ import {
   BarChart,
   Ruler,
   Bell,
+  Search,
 } from 'lucide-react';
 
 import {
@@ -110,9 +110,12 @@ const navLinks = [
     ],
   },
   {
-    href: '/admin/notifications',
     icon: Bell,
     label: 'Notifications',
+    subLinks: [
+      { href: '/admin/notifications', label: 'All Notifications', icon: Bell },
+      { href: '/admin/notifications/search', label: 'Notification Search', icon: Search },
+    ],
   },
    {
     href: '/admin/reporting',
