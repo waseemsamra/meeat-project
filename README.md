@@ -42,13 +42,12 @@ db.collection("notifications")
 ### 3. 📦 Orders (Mobile Synchronization Checklist)
 The Android app **must** follow this schema to sync with the Admin Dashboard.
 
-**CRITICAL: STOP WRITING TO SUBCOLLECTIONS**
-The Android app should ONLY write to the top-level `/orders` collection. Do NOT write to `/users/{userId}/orders`.
+**COLLECTION NAME**: Ensure you are writing to the lower-case `orders` collection.
 
 **CRITICAL FIELDS FOR MOBILE SYNC**:
 - `userId`: String (Firebase Auth UID). **REQUIRED** for dashboard lookup.
 - `orderNumber`: String (e.g., "ORD-12345").
-- `createdAt`: ISO String.
+- `createdAt`: ISO 8601 String OR Firestore Timestamp. (ISO String preferred).
 - `orderType`: "ONLINE" (String). 
 - `fulfillmentStatus`: "processing" (String, lowercase).
 - `Status`: "Processing" (String, Capitalized). **REQUIRED** for legacy dashboard UI.

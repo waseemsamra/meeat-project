@@ -44,6 +44,21 @@ import { format, parseISO, isValid } from 'date-fns';
 import { useSettings } from '@/hooks/useSettings';
 import { useTranslation } from '@/hooks/useTranslation';
 
+// Robust date parsing helper
+function parseSyncDate(date: any): string {
+    if (!date) return new Date().toISOString();
+    if (typeof date === 'string') return date;
+    if (date.toISOString) return date.toISOString();
+    if (date.toDate && typeof date.toDate === 'function') return date.toDate().toISOString();
+    if (date.seconds) return new Date(date.seconds * 1000).toISOString();
+    try {
+        const d = new Date(date);
+        return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+    } catch (e) {
+        return new Date().toISOString();
+    }
+}
+
 function StatCardSkeleton() {
   return (
     <Card>
@@ -98,7 +113,6 @@ export default function AdminDashboard() {
   const usersQuery = useMemo(() => firestore ? collection(firestore, 'users') : null, [firestore]);
   const { data: users, isLoading: isLoadingUsers } = useCollection<User>(usersQuery);
 
-  // Use collectionGroup to fetch all orders (root + legacy subcollections)
   const ordersQuery = useMemo(() => firestore ? query(collectionGroup(firestore, 'orders')) : null, [firestore]);
   const { data: rawOrders, isLoading: isLoadingOrders } = useCollection<Order>(ordersQuery);
 
@@ -121,6 +135,8 @@ export default function AdminDashboard() {
       return {
         ...order,
         total: totalValue,
+        createdAt: parseSyncDate(o.createdAt || o.date || o.Date),
+        updatedAt: parseSyncDate(o.updatedAt || o.createdAt || o.date || o.Date),
       };
     });
   }, [rawOrders]);
@@ -143,17 +159,16 @@ export default function AdminDashboard() {
   const recentOrders = useMemo(() => {
     if (!orders) return [];
     
-    // Deduplicate orders by ID
     const deduplicated = new Map<string, Order>();
     orders.forEach(order => {
         const existing = deduplicated.get(order.id);
-        if (!existing || (new Date(order.updatedAt || 0).getTime() > new Date(existing.updatedAt || 0).getTime())) {
+        if (!existing || (new Date(order.updatedAt).getTime() > new Date(existing.updatedAt).getTime())) {
             deduplicated.set(order.id, order);
         }
     });
 
     return Array.from(deduplicated.values())
-        .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 5);
   }, [orders]);
 
@@ -161,17 +176,15 @@ export default function AdminDashboard() {
     if (!orders) return [];
     const monthlyRevenue: { [key: string]: number } = {};
 
-    // Use deduplicated orders for chart to avoid double counting
     const deduplicated = new Map<string, Order>();
     orders.forEach(order => {
         const existing = deduplicated.get(order.id);
-        if (!existing || (new Date(order.updatedAt || 0).getTime() > new Date(existing.updatedAt || 0).getTime())) {
+        if (!existing || (new Date(order.updatedAt).getTime() > new Date(existing.updatedAt).getTime())) {
             deduplicated.set(order.id, order);
         }
     });
 
     deduplicated.forEach(order => {
-        if (!order.createdAt) return;
         try {
             const date = parseISO(order.createdAt);
             if (!isValid(date)) return;
@@ -197,12 +210,11 @@ export default function AdminDashboard() {
 
   const isLoading = isLoadingUsers || isLoadingOrders || isLoadingProducts || isLoadingLots;
 
-  // Deduplicate for summary stats
   const deduplicatedOrdersForStats = useMemo(() => {
       const map = new Map<string, Order>();
       orders?.forEach(o => {
           const existing = map.get(o.id);
-          if (!existing || (new Date(o.updatedAt || 0).getTime() > new Date(existing.updatedAt || 0).getTime())) {
+          if (!existing || (new Date(o.updatedAt).getTime() > new Date(existing.updatedAt).getTime())) {
               map.set(o.id, o);
           }
       });

@@ -61,6 +61,21 @@ import { createShipdayOrder } from "@/ai/flows/create-shipday-order";
 import { OrderRowSkeleton } from "./OrderRowSkeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
+// Robust date parsing for mobile sync (Handles Timestamps, Strings, and Objects)
+function parseSyncDate(date: any): string {
+    if (!date) return new Date().toISOString();
+    if (typeof date === 'string') return date;
+    if (date.toISOString) return date.toISOString();
+    if (date.toDate && typeof date.toDate === 'function') return date.toDate().toISOString();
+    if (date.seconds) return new Date(date.seconds * 1000).toISOString();
+    try {
+        const d = new Date(date);
+        return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+    } catch (e) {
+        return new Date().toISOString();
+    }
+}
+
 export default function AllOrdersPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -77,6 +92,7 @@ export default function AllOrdersPage() {
   const usersQuery = useMemo(() => firestore ? collection(firestore, "users") : null, [firestore]);
   const { data: users, isLoading: isLoadingUsers } = useCollection<User>(usersQuery);
   
+  // Real-time listener for all orders across all collection paths
   const allOrdersQuery = useMemo(() => {
     if (!firestore) return null;
     return query(collectionGroup(firestore, "orders"));
@@ -87,38 +103,39 @@ export default function AllOrdersPage() {
   const enrichedOrders = useMemo(() => {
     if (allOrders && users) {
       const userMap = new Map(users.map(u => [u.id, u]));
+      
       const normalized = allOrders.map(order => {
           const o = order as any;
+          
+          // Handle Total (Mobile often sends as string like "50.00 DH")
           let totalValue = typeof o.total === 'number' ? o.total : 0;
           if (o.Total && typeof o.Total === 'string') {
               const parsed = parseFloat(o.Total.replace(/[^0-9.]/g, ''));
               if (!isNaN(parsed)) totalValue = parsed;
           }
 
+          // Handle Status synchronization
           let status = o.fulfillmentStatus;
           if (!status && o.Status && typeof o.Status === 'string') {
               status = o.Status.toLowerCase();
           }
           if (!status) status = 'processing';
 
-          let created = o.createdAt;
-          if (!created && (o.date || o.Date)) {
-              try {
-                  created = new Date(o.date || o.Date).toISOString();
-              } catch (e) {
-                  created = new Date().toISOString();
-              }
-          }
+          // Robust Date Synchronization
+          const createdAt = parseSyncDate(o.createdAt || o.date || o.Date);
+          const updatedAt = parseSyncDate(o.updatedAt || o.createdAt || o.date || o.Date);
 
           return {
               ...order,
               total: totalValue,
               fulfillmentStatus: status,
-              createdAt: created || new Date(0).toISOString(),
+              createdAt,
+              updatedAt,
               customer: userMap.get(order.userId),
           };
       });
 
+      // Group and Deduplicate (Mobile app might write to both root and subcollection)
       const deduplicated = new Map<string, any>();
       normalized.forEach(order => {
           const orderKey = order.orderNumber || (order as any).Order || order.id;
@@ -127,17 +144,12 @@ export default function AllOrdersPage() {
           if (!existing) {
               deduplicated.set(orderKey, order);
           } else {
-              const existingPathLength = existing.__path?.split('/').length || 10;
-              const currentPathLength = order.__path?.split('/').length || 10;
+              // Priority: Choose the one with the latest update or the root path
+              const existingDate = new Date(existing.updatedAt).getTime();
+              const currentDate = new Date(order.updatedAt).getTime();
               
-              if (currentPathLength < existingPathLength) {
+              if (currentDate > existingDate) {
                   deduplicated.set(orderKey, order);
-              } else if (currentPathLength === existingPathLength) {
-                  const existingDate = new Date(existing.updatedAt || 0).getTime();
-                  const currentDate = new Date(order.updatedAt || 0).getTime();
-                  if (currentDate > existingDate) {
-                      deduplicated.set(orderKey, order);
-                  }
               }
           }
       });
@@ -152,7 +164,6 @@ export default function AllOrdersPage() {
   }, [allOrders, users]);
 
   const displayLoading = isLoadingOrders || (isLoadingUsers && !allOrders);
-  const isIndexError = ordersError?.message?.includes('index') || ordersError?.message?.includes('ready');
   
   const handleStatusUpdate = async (order: Order, status: string) => {
     if (!firestore || !status) return;
@@ -188,6 +199,7 @@ export default function AllOrdersPage() {
             batch.update(doc(firestore, path), updateData);
         });
 
+        // Sync Notification to Mobile Tray
         const notificationRef = doc(collection(firestore, 'notifications'));
         const safeStatusLabel = (status || 'updated').replace(/_/g, ' ');
         const notificationData: Omit<Notification, 'id'> = {
@@ -202,37 +214,15 @@ export default function AllOrdersPage() {
         };
         batch.set(notificationRef, { ...notificationData, id: notificationRef.id });
 
-        if (status === 'shipped' || status === 'ready_for_pickup') {
-            const customer = users?.find(u => u.id === order.userId);
-            const address = order.shippingAddress;
-            if (customer) {
-                const shipdayResult = await createShipdayOrder({
-                    orderId: order.id,
-                    customerName: customer.name || 'N/A',
-                    customerAddress: address ? `${address.street}, ${address.city}` : customer.deliveryAddress || 'N/A',
-                    customerEmail: customer.email,
-                    customerPhoneNumber: customer.telephone,
-                    orderItemsText: (order.orderItemIds || []).map(item => `${item.product?.name?.en || 'Item'} x${item.quantity}`).join('\n'),
-                    total: order.total
-                });
-
-                if (shipdayResult.success && shipdayResult.shipdayOrderId) {
-                    pathsToUpdate.forEach(path => {
-                        batch.update(doc(firestore, path), { shipdayOrderId: shipdayResult.shipdayOrderId });
-                    });
-                }
-            }
-        }
-
         await batch.commit();
         toast({ 
-            title: 'Sync Complete', 
-            description: `Order #${orderKey} updated and user notified.`,
+            title: 'Order Synced', 
+            description: `Order #${orderKey} updated across all mobile devices.`,
             icon: <CheckCircle2 className="h-4 w-4 text-green-500" />
         });
     } catch (e: any) {
         console.error("Sync error:", e);
-        toast({ variant: 'destructive', title: 'Sync Failed', description: 'Permission denied or index building.' });
+        toast({ variant: 'destructive', title: 'Sync Failed' });
     }
   }
 
@@ -288,20 +278,18 @@ export default function AllOrdersPage() {
       <h1 className="text-3xl font-bold">All Orders</h1>
       
       {ordersError && (
-        <Alert variant={isIndexError ? "default" : "destructive"}>
-            {isIndexError ? <Loader2 className="h-4 w-4 animate-spin" /> : <AlertCircle className="h-4 w-4" />}
-            <AlertTitle>{isIndexError ? "Sync Index Building" : "Connection Error"}</AlertTitle>
-            <AlertDescription>
-                {isIndexError ? "Google is building the sync map. Try again in 5 minutes." : ordersError.message}
-            </AlertDescription>
+        <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Connection Error</AlertTitle>
+            <AlertDescription>{ordersError.message}</AlertDescription>
         </Alert>
       )}
 
       <Card>
         <CardHeader>
-          <CardTitle>Global Order Sync</CardTitle>
+          <CardTitle>Global Live Sync</CardTitle>
           <CardDescription>
-            Manage orders across root and subcollections. Status changes here sync to mobile instantly.
+            Orders from both the web shop and mobile app are synced here in real-time.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -341,7 +329,7 @@ export default function AllOrdersPage() {
                             </Badge>
                         </TableCell>
                         <TableCell>
-                            {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
+                            {new Date(order.createdAt).toLocaleDateString()}
                         </TableCell>
                         <TableCell className="text-right">{currencySymbol}{(order.total || 0).toFixed(2)}</TableCell>
                         <TableCell>
@@ -358,7 +346,7 @@ export default function AllOrdersPage() {
                                     Link Shipday ID
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuLabel>Fulfillment Sync</DropdownMenuLabel>
+                                <DropdownMenuLabel>Sync Status</DropdownMenuLabel>
                                 <DropdownMenuItem onClick={() => handleStatusUpdate(order, 'processing')}>Mark Processing</DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleStatusUpdate(order, 'shipped')}>Mark Shipped</DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleStatusUpdate(order, 'delivered')}>Mark Delivered</DropdownMenuItem>
