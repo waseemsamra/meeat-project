@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useEffect } from 'react';
@@ -9,7 +10,8 @@ import { useCollection, useFirestore } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from '@/hooks/useTranslation';
-import { Megaphone, User as UserIcon } from 'lucide-react';
+import { Megaphone, User as UserIcon, Calendar, Clock } from 'lucide-react';
+import { format } from 'date-fns';
 
 const notificationSchema = z.object({
   userId: z.string().min(1, 'Target user is required.'),
@@ -19,6 +21,7 @@ const notificationSchema = z.object({
   relatedId: z.string().optional(),
   read: z.boolean().default(false),
   createdAt: z.date().optional().default(() => new Date()),
+  scheduledAt: z.date({ required_error: 'Schedule date/time is required.' }),
   name: z.string().optional(), // For internal compatibility
 });
 
@@ -29,16 +32,27 @@ export default function AdminNotificationsPage() {
   const usersQuery = useMemo(() => firestore ? collection(firestore, 'users') : null, [firestore]);
   const { data: users, isLoading: isLoadingUsers } = useCollection<User>(usersQuery);
 
-  const notificationsQuery = useMemo(() => 
-    firestore ? query(collection(firestore, 'notifications'), orderBy('createdAt', 'desc')) : null, 
-    [firestore]
-  );
-
   const columns: ColumnDef<Notification>[] = useMemo(() => [
     {
-      accessorKey: 'createdAt',
-      header: 'Sent On',
-      cell: ({ row }) => new Date(row.original.createdAt).toLocaleString(),
+      accessorKey: 'scheduledAt',
+      header: 'Scheduled For',
+      cell: ({ row }) => {
+        const date = new Date(row.original.scheduledAt);
+        const isFuture = date > new Date();
+        return (
+            <div className="flex flex-col">
+                <div className="flex items-center gap-1 text-sm">
+                    <Calendar className="h-3 w-3" />
+                    {format(date, 'MMM d, yyyy')}
+                </div>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Clock className="h-3 w-3" />
+                    {format(date, 'h:mm a')}
+                    {isFuture && <Badge variant="outline" className="ml-2 text-[10px] h-4">Pending</Badge>}
+                </div>
+            </div>
+        );
+      },
     },
     {
       id: 'targetUser',
@@ -49,7 +63,7 @@ export default function AdminNotificationsPage() {
             return (
                 <div className="flex items-center gap-2 text-primary font-bold">
                     <Megaphone className="h-4 w-4" />
-                    <span>App-Wide Broadcast</span>
+                    <span>Broadcast</span>
                 </div>
             );
         }
@@ -57,9 +71,9 @@ export default function AdminNotificationsPage() {
         return user ? (
             <div className="flex items-center gap-2">
                 <UserIcon className="h-4 w-4 text-muted-foreground" />
-                <div>
-                    <div className="font-medium">{user.name}</div>
-                    <div className="text-xs text-muted-foreground">{user.email}</div>
+                <div className="truncate max-w-[150px]">
+                    <div className="font-medium text-sm truncate">{user.name}</div>
+                    <div className="text-xs text-muted-foreground truncate">{user.email}</div>
                 </div>
             </div>
         ) : <span className="text-muted-foreground italic">Target: {userId}</span>;
@@ -68,22 +82,23 @@ export default function AdminNotificationsPage() {
     {
       accessorKey: 'title',
       header: 'Title',
+      cell: ({ row }) => <div className="font-medium line-clamp-1">{row.original.title}</div>
     },
     {
       accessorKey: 'type',
       header: 'Type',
       cell: ({ row }) => (
-        <Badge variant={row.original.type === 'promotion' ? 'default' : 'secondary'} className="capitalize">
+        <Badge variant={row.original.type === 'promotion' ? 'default' : 'secondary'} className="capitalize text-[10px]">
           {row.original.type.replace('_', ' ')}
         </Badge>
       ),
     },
     {
       id: 'status',
-      header: 'Sync Status',
+      header: 'Sync',
       cell: ({ row }) => (
-        <Badge variant={row.original.read ? 'outline' : 'secondary'}>
-          {row.original.userId === 'ALL' ? 'Broadcast' : (row.original.read ? 'Read' : 'Delivered')}
+        <Badge variant={row.original.read ? 'outline' : 'secondary'} className="text-[10px]">
+          {row.original.userId === 'ALL' ? 'Global' : (row.original.read ? 'Read' : 'Unread')}
         </Badge>
       ),
     },
@@ -118,6 +133,7 @@ export default function AdminNotificationsPage() {
             { value: 'system', label: 'System Announcement' },
           ],
         },
+        { name: 'scheduledAt' as const, label: 'Schedule Date & Time', placeholder: 'Select date and time', type: 'date' as const },
         { name: 'title' as const, label: 'Message Title', placeholder: 'e.g., Weekly Special: 15% Off!' },
         { name: 'body' as const, label: 'Short Description', placeholder: 'Enter the notification message here...' },
         { name: 'relatedId' as const, label: 'Link to Entity ID (Optional)', placeholder: 'e.g., Order ID or Product ID' },
@@ -126,8 +142,11 @@ export default function AdminNotificationsPage() {
   }, [users, isLoadingUsers]);
 
   const useCustomFormHook = () => {
-    const form = require('react-hook-form').useForm({
-      resolver: require('@hookform/resolvers/zod').zodResolver(notificationSchema),
+    const { useForm } = require('react-hook-form');
+    const { zodResolver } = require('@hookform/resolvers/zod');
+    
+    const form = useForm({
+      resolver: zodResolver(notificationSchema),
       defaultValues: {
         userId: 'ALL',
         title: '',
@@ -136,6 +155,7 @@ export default function AdminNotificationsPage() {
         relatedId: '',
         read: false,
         name: '',
+        scheduledAt: new Date(),
       }
     });
 
@@ -151,7 +171,7 @@ export default function AdminNotificationsPage() {
     <AttributeManagementPage<Notification>
       collectionName="notifications"
       title="Notifications"
-      description="Manage automated order alerts and send manual broadcast or personal messages to the mobile app."
+      description="Manage automated order alerts and schedule manual broadcast or personal messages for the mobile app."
       columns={columns}
       formSchema={notificationSchema}
       formFields={formFields}

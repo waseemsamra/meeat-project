@@ -1,5 +1,4 @@
 
-
 {
   "entities": {
     "User": {
@@ -103,6 +102,24 @@
         "email",
         "customerType"
       ]
+    },
+    "Notification": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Notification",
+      "type": "object",
+      "description": "A notification sent to a user, visible in the mobile app.",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string", "description": "The UID of the target user or 'ALL' for broadcast." },
+        "title": { "type": "string" },
+        "body": { "type": "string" },
+        "type": { "type": "string", "enum": ["order_update", "promotion", "system"] },
+        "relatedId": { "type": "string", "description": "Optional ID of a related entity, like an orderId." },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "scheduledAt": { "type": "string", "format": "date-time", "description": "The time the notification should become visible." }
+      },
+      "required": ["id", "userId", "title", "body", "type", "read", "createdAt", "scheduledAt"]
     },
     "Group": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -314,6 +331,10 @@
           "type": "string",
           "description": "Stripe Payment Intent ID associated with the order."
         },
+        "shipdayOrderId": {
+            "type": "number",
+            "description": "The ID of the order in the Shipday system."
+        },
         "createdAt": {
           "type": "string",
           "description": "Timestamp indicating when the order was placed.",
@@ -357,6 +378,10 @@
           "type": "string",
           "description": "Reference to Order. (Relationship: Order 1:N OrderItem)"
         },
+        "userId": {
+          "type": "string",
+          "description": "The UID of the user who owns this order item. Facilitates Authorization Independence."
+        },
         "productId": {
           "type": "string",
           "description": "Reference to Product. (Relationship: Product 1:N OrderItem)"
@@ -377,6 +402,7 @@
       "required": [
         "id",
         "orderId",
+        "userId",
         "productId",
         "quantity",
         "price"
@@ -928,7 +954,7 @@
           "schema": {
             "$ref": "#/backend/entities/OrderItem"
           },
-          "description": "Stores order items, related to orders and products.  This could be nested under the order, but kept at the top level for scalability, given the potential number of order items per order.",
+          "description": "Stores order items, related to orders and products. Accessible to the user who owns the order and admins.",
           "params": [
             {
               "name": "orderItemId",
@@ -1172,8 +1198,17 @@
           "description": "Stores items for the 'Explore the Range' homepage section.",
           "params": [{ "name": "itemId", "description": "The unique identifier for the item." }]
         }
+      },
+      {
+        "path": "/notifications/{notificationId}",
+        "definition": {
+          "entityName": "Notification",
+          "schema": { "$ref": "#/backend/entities/Notification" },
+          "description": "Stores notifications for users. Mobile app watches this for updates.",
+          "params": [{ "name": "notificationId", "description": "Unique identifier for the notification." }]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support the PrimeCuts Hub e-commerce application, focusing on secure user authentication, product catalog management, order processing, and role-based access control (RBAC). The structure prioritizes authorization independence to ensure scalable and maintainable security rules. Private user data is stored in hierarchical paths under `/users/{userId}`, and collaborative data patterns, like membership maps, are employed where appropriate.\\n\\nAuthorization Independence is achieved through denormalization. For instance, the `userId` field in the `/orders` and `/addresses` collections duplicates data, but this allows security rules to validate ownership without complex `get()` calls.  User roles are also stored directly on the User document.\\n\\nQAPs (Rules are not Filters) are supported through structural segregation and path-based ownership. For example, user profiles are stored under `/users/{userId}`, ensuring that listing users does not expose private data to unauthorized users.  Products are in a top-level `/products` collection. Order data is similarly segregated under `/users/{userId}/orders/{orderId}` to ensure that only the user or an admin can access order details."
+    "reasoning": "The Firestore structure supports sync between web and mobile. Added a top-level /notifications collection for cross-platform alerts."
   }
 }

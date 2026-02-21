@@ -34,6 +34,7 @@ export type Notification = {
   relatedId?: string;
   read: boolean;
   createdAt: string;
+  scheduledAt: string;
   __path?: string;
 };
 
@@ -298,6 +299,16 @@ export interface Payment {
     payeeName?: string;
     bankName?: string;
     chequeNumber?: string;
+    __path?: string;
+}
+
+export interface CreditNote {
+    id: string;
+    userId: string;
+    amount: number;
+    reason: string;
+    issueDate: string;
+    name?: string; // For compatibility
     __path?: string;
 }
 
