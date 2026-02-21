@@ -24,46 +24,37 @@ Before your Android app or web app can access the latest structure and security,
 To show both personal messages and app-wide broadcasts, your mobile app **must** query the root `/notifications` collection.
 
 **CRITICAL SYNC LOGIC**:
-- **Personal Messages**: Document has `userId == currentUserId`.
-- **Broadcast Messages**: Document has `userId == "ALL"` (Exact, uppercase string).
-- **Scheduled Time**: The dashboard saves `scheduledAt` as an **ISO 8601 String**.
+- **Collection**: Always use the root `/notifications` collection.
+- **Broadcast Filter**: Document has `userId == "all"` (lowercase) or `userId == "broadcast"`.
+- **Unique IDs**: Web-generated broadcasts use the prefix `broadcast_`.
+- **Field Mapping**: The dashboard sends `title` AND `name`, and `body` AND `info`.
+- **Scheduled Time**: Saved as an **ISO 8601 String**.
 
 **Kotlin Listener Example**:
 ```kotlin
-val now = ISO8601Utils.format(Date()) // Format current time as ISO 8601 string
+val now = ISO8601Utils.format(Date()) 
 
 db.collection("notifications")
-    .whereIn("userId", listOf(currentUserId, "ALL")) // Fetch user-specific AND broadcast messages
-    .whereLessThanOrEqualTo("scheduledAt", now)      // Only show if the scheduled time has arrived/passed
+    .whereIn("userId", listOf(currentUserId, "all", "broadcast")) 
+    .whereLessThanOrEqualTo("scheduledAt", now)      
     .orderBy("scheduledAt", Query.Direction.DESCENDING)
     .addSnapshotListener { snapshots, e ->
-        if (e != null) {
-            Log.w("NotificationSync", "Listen failed.", e)
-            return@addSnapshotListener
-        }
-        // Update your notification tray UI
+        if (e != null) return@addSnapshotListener
+        // Map fields 'name' or 'title' for heading
+        // Map fields 'info' or 'body' for content
     }
 ```
 
 ### 3. 📦 Orders (Mobile Synchronization Checklist)
-The Android app **must** follow this schema to sync with the Admin Dashboard.
-
 **COLLECTION NAME**: Ensure you are writing to the lower-case `orders` collection.
 
-**CRITICAL FIELDS FOR MOBILE SYNC**:
-- `userId`: String (Firebase Auth UID). **REQUIRED** for dashboard lookup.
-- `orderNumber`: String (e.g., "ORD-12345").
-- `createdAt`: ISO 8601 String OR Firestore Timestamp. (ISO String preferred).
-- `orderType`: "ONLINE" (String). 
-- `fulfillmentStatus`: "processing" (String, lowercase).
-- `Status`: "Processing" (String, Capitalized). **REQUIRED** for legacy dashboard UI.
-- `total`: Number (Double). Avoid currency symbols like "DH" in raw data.
-
 **🔔 IMPORTANT: MANUAL NOTIFICATIONS**
-If the Android app writes an order directly to Firestore, it should also create a document in `/notifications` so the dashboard and user are alerted:
+If the Android app writes an order directly to Firestore, it should also create a document in the root `/notifications` collection:
 - `userId`: The user's UID
 - `title`: "Order Received"
+- `name`: "Order Received" (for legacy sync)
 - `body`: "Your order #... has been received."
+- `info`: "Your order #... has been received." (for legacy sync)
 - `type`: "order_update"
 - `createdAt`: current ISO timestamp
 - `scheduledAt`: current ISO timestamp
@@ -72,5 +63,5 @@ If the Android app writes an order directly to Firestore, it should also create 
 ---
 
 ## Architecture Notes
-- **Broadcast System**: Notifications with `userId == "ALL"` are global announcements.
-- **Multi-Field Sync**: The dashboard updates `Status`, `status`, and `fulfillmentStatus` simultaneously to ensure compatibility with all mobile filter versions.
+- **Broadcast System**: Use `userId == "all"` for global announcements.
+- **Multi-Field Sync**: The dashboard updates `Status`, `status`, and `fulfillmentStatus` simultaneously.

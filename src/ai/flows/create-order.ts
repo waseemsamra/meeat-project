@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A server-side flow for creating customer orders and dispatching to Shipday.
@@ -102,7 +103,7 @@ const createOrderFlow = ai.defineFlow(
         const newOrderItem: Omit<OrderItem, 'product'> = {
             id: orderItemId,
             orderId: orderId,
-            userId: userId, // Added for mobile security and parity
+            userId: userId, 
             productId: cartItem.isBox ? cartItem.id : regularItem!.product.id,
             quantity: cartItem.quantity,
             price: cartItem.price,
@@ -111,10 +112,8 @@ const createOrderFlow = ai.defineFlow(
             selectedRub: isRegularItem ? (regularItem?.selectedRub || null) : null,
         };
         
-        // Add the OrderItem document to the batch
         batch.set(orderItemRef, newOrderItem);
 
-        // Prepare the reference object for the main Order document, ensuring no undefined fields.
         orderItemReferencesForOrderDoc.push({
             id: newOrderItem.id,
             productId: newOrderItem.productId,
@@ -129,7 +128,6 @@ const createOrderFlow = ai.defineFlow(
         });
     }
     
-    // 3. Construct the main Order document
     const orderData: Omit<Order, 'id'> = {
       userId: userId,
       orderType: 'ONLINE',
@@ -145,15 +143,19 @@ const createOrderFlow = ai.defineFlow(
       description: orderNotes || null,
     };
     
-    // 4. Add the Order document to the batch in root collection
     batch.set(orderRef, { ...orderData, id: orderId });
 
-    // 5. Create a notification for the user about their new order
+    // 5. Create a notification for the user (standardized for mobile parity)
     const notificationRef = doc(collection(firestore, 'notifications'));
-    const notificationData: Omit<Notification, 'id'> = {
+    const title = "Order Received";
+    const body = `Thank you! Your order #${orderId.substring(0, 8)} has been received.`;
+    
+    const notificationData = {
         userId: userId,
-        title: "Order Received",
-        body: `Thank you! Your order #${orderId.substring(0, 8)} has been received and is being processed.`,
+        title: title,
+        name: title, // Parity field
+        body: body,
+        info: body, // Parity field
         type: 'order_update',
         relatedId: orderId,
         read: false,
@@ -162,7 +164,6 @@ const createOrderFlow = ai.defineFlow(
     };
     batch.set(notificationRef, { ...notificationData, id: notificationRef.id });
     
-    // 6. Atomically commit all writes
     await batch.commit();
 
     return { orderId };

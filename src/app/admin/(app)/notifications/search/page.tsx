@@ -35,7 +35,6 @@ export default function NotificationSearchPage() {
   const [viewItem, setViewItem] = useState<Notification | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
 
-  // Fetch users for the search dropdown
   const usersQuery = useMemo(() => firestore ? collection(firestore, 'users') : null, [firestore]);
   const { data: users, isLoading: isLoadingUsers } = useCollection<User>(usersQuery);
 
@@ -47,12 +46,11 @@ export default function NotificationSearchPage() {
     ).slice(0, 5);
   }, [users, userSearchQuery]);
 
-  // Fetch notifications for the selected user OR broadcast notifications
   const notificationsQuery = useMemo(() => {
     if (!firestore || !selectedUser) return null;
     return query(
       collection(firestore, 'notifications'),
-      where('userId', 'in', [selectedUser.id, 'ALL']),
+      where('userId', 'in', [selectedUser.id, 'all', 'broadcast']),
       orderBy('scheduledAt', 'desc')
     );
   }, [firestore, selectedUser]);
@@ -73,21 +71,21 @@ export default function NotificationSearchPage() {
     if (!firestore) return;
     try {
         const { id, __path, createdAt, scheduledAt, ...cloneData } = notification as any;
+        const isBroadcast = cloneData.userId === 'all' || cloneData.userId === 'broadcast';
+        const newId = isBroadcast ? `broadcast_${Date.now()}` : doc(collection(firestore, 'notifications')).id;
+        
         const resendData = {
             ...cloneData,
             createdAt: new Date().toISOString(),
             scheduledAt: new Date().toISOString(),
             read: false,
+            name: cloneData.title,
+            info: cloneData.body,
         };
-        const docRef = doc(collection(firestore, 'notifications'));
-        await setDoc(docRef, { ...resendData, id: docRef.id });
-        toast({ 
-            title: 'Notification Resent', 
-            description: `"${notification.title}" has been sent again immediately.`,
-        });
+        await setDoc(doc(firestore, 'notifications', newId), { ...resendData, id: newId });
+        toast({ title: 'Notification Resent' });
     } catch (e) {
-        console.error("Resend error:", e);
-        toast({ variant: 'destructive', title: 'Resend Failed', description: 'Could not resend notification.' });
+        toast({ variant: 'destructive', title: 'Resend Failed' });
     }
   };
 
@@ -137,16 +135,12 @@ export default function NotificationSearchPage() {
 
           {selectedUser && (
             <div className="mt-6 flex items-center gap-4 p-4 rounded-lg bg-primary/5 border border-primary/20 animate-in fade-in slide-in-from-top-2">
-              <div className="h-12 w-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xl">
-                {selectedUser.name?.charAt(0) || '?'}
-              </div>
+              <div className="h-12 w-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xl">{selectedUser.name?.charAt(0) || '?'}</div>
               <div className="flex-grow">
                 <h3 className="font-bold text-lg">{selectedUser.name}</h3>
                 <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => setSelectedUser(null)}>
-                Clear
-              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setSelectedUser(null)}>Clear</Button>
             </div>
           )}
         </CardContent>
@@ -155,68 +149,41 @@ export default function NotificationSearchPage() {
       {selectedUser && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5 text-primary" />
-              Notification History
-            </CardTitle>
-            <CardDescription>
-              Personal updates and broadcast messages for {selectedUser.name}.
-            </CardDescription>
+            <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5 text-primary" />Notification History</CardTitle>
+            <CardDescription>Personal updates and broadcast messages for {selectedUser.name}.</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoadingNotifications ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map(i => (
-                  <Skeleton key={i} className="h-20 w-full rounded-md" />
-                ))}
-              </div>
+              <div className="space-y-4">{[1, 2, 3].map(i => <Skeleton key={i} className="h-20 w-full rounded-md" />)}</div>
             ) : notifications && notifications.length > 0 ? (
               <div className="space-y-4">
                 {notifications.map(notification => {
                   const dateVal = notification.scheduledAt;
                   const date = dateVal ? (typeof dateVal === 'string' ? parseISO(dateVal) : new Date(dateVal)) : null;
-                  const isBroadcast = notification.userId === 'ALL';
+                  const isBroadcast = notification.userId === 'all' || notification.userId === 'broadcast';
                   
                   return (
                     <div 
                       key={notification.id} 
                       onClick={() => handleOpenView(notification)}
-                      className={`p-4 rounded-lg border flex flex-col md:flex-row gap-4 transition-all cursor-pointer hover:shadow-md ${
-                        isBroadcast ? 'bg-primary/5 border-primary/20' : 'bg-background hover:bg-accent/50'
-                      }`}
+                      className={`p-4 rounded-lg border flex flex-col md:flex-row gap-4 transition-all cursor-pointer hover:shadow-md ${isBroadcast ? 'bg-primary/5 border-primary/20' : 'bg-background hover:bg-accent/50'}`}
                     >
                       <div className="flex-shrink-0">
-                        <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
-                          isBroadcast ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                        }`}>
+                        <div className={`h-10 w-10 rounded-full flex items-center justify-center ${isBroadcast ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
                           {isBroadcast ? <Megaphone className="h-5 w-5" /> : <Bell className="h-5 w-5" />}
                         </div>
                       </div>
                       <div className="flex-grow space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h4 className="font-bold text-sm">{notification.title}</h4>
-                          <Badge variant={notification.type === 'promotion' ? 'default' : 'secondary'} className="text-[10px] h-4">
-                            {notification.type.replace('_', ' ')}
-                          </Badge>
-                          {isBroadcast && (
-                            <Badge variant="outline" className="text-[10px] h-4 border-primary text-primary font-bold">
-                              BROADCAST
-                            </Badge>
-                          )}
+                          <Badge variant={notification.type === 'promotion' ? 'default' : 'secondary'} className="text-[10px] h-4">{(notification.type || '').replace('_', ' ')}</Badge>
+                          {isBroadcast && <Badge variant="outline" className="text-[10px] h-4 border-primary text-primary font-bold">BROADCAST</Badge>}
                         </div>
-                        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
-                          {notification.body}
-                        </p>
+                        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">{notification.body}</p>
                       </div>
                       <div className="flex-shrink-0 flex flex-col items-start md:items-end gap-1 border-t md:border-t-0 pt-2 md:pt-0">
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Calendar className="h-3 w-3" />
-                          {date && isValid(date) ? format(date, 'MMM d, yyyy') : 'N/A'}
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          {date && isValid(date) ? format(date, 'h:mm a') : 'N/A'}
-                        </div>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground"><Calendar className="h-3 w-3" />{date && isValid(date) ? format(date, 'MMM d, yyyy') : 'N/A'}</div>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground"><Clock className="h-3 w-3" />{date && isValid(date) ? format(date, 'h:mm a') : 'N/A'}</div>
                       </div>
                     </div>
                   );
@@ -235,86 +202,27 @@ export default function NotificationSearchPage() {
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Info className="h-5 w-5 text-primary" />
-              Notification Details
-            </DialogTitle>
-            <DialogDescription>
-              Full record of the message sent to the mobile app.
-            </DialogDescription>
+            <DialogTitle className="flex items-center gap-2"><Info className="h-5 w-5 text-primary" />Notification Details</DialogTitle>
+            <DialogDescription>Full record of the message sent to the mobile app.</DialogDescription>
           </DialogHeader>
-          
           {viewItem && (
             <div className="space-y-6 pt-4">
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground uppercase tracking-wider">Title</Label>
-                <p className="text-lg font-bold font-headline">{viewItem.title}</p>
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground uppercase tracking-wider">Message Body</Label>
-                <div className="p-4 bg-muted/50 rounded-lg text-sm whitespace-pre-wrap border leading-relaxed">
-                  {viewItem.body}
-                </div>
-              </div>
-
+              <div className="space-y-1"><Label className="text-xs text-muted-foreground uppercase">Title</Label><p className="text-lg font-bold font-headline">{viewItem.title}</p></div>
+              <div className="space-y-1"><Label className="text-xs text-muted-foreground uppercase">Message Body</Label><div className="p-4 bg-muted/50 rounded-lg text-sm border leading-relaxed">{viewItem.body}</div></div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wider">Category</Label>
-                  <div>
-                    <Badge variant={viewItem.type === 'promotion' ? 'default' : 'secondary'} className="capitalize">
-                      {viewItem.type.replace('_', ' ')}
-                    </Badge>
-                  </div>
-                </div>
-                <div className="space-y-1 text-right">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wider">Recipient</Label>
-                  <div>
-                    {viewItem.userId === 'ALL' ? (
-                      <Badge variant="outline" className="border-primary text-primary font-bold">BROADCAST</Badge>
-                    ) : (
-                      <div className="text-sm font-medium">
-                        <p>{selectedUser?.name || 'User'}</p>
-                        <p className="text-xs text-muted-foreground">{selectedUser?.email || viewItem.userId}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <div className="space-y-1"><Label className="text-xs text-muted-foreground uppercase">Category</Label><div><Badge variant={viewItem.type === 'promotion' ? 'default' : 'secondary'} className="capitalize">{viewItem.type.replace('_', ' ')}</Badge></div></div>
+                <div className="space-y-1 text-right"><Label className="text-xs text-muted-foreground uppercase">Recipient</Label><div>{viewItem.userId === 'all' || viewItem.userId === 'broadcast' ? <Badge variant="outline" className="border-primary text-primary font-bold">BROADCAST</Badge> : <div className="text-sm font-medium"><p>{selectedUser?.name || 'User'}</p><p className="text-xs text-muted-foreground">{selectedUser?.email || viewItem.userId}</p></div>}</div></div>
               </div>
-
               <Separator />
-
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-                    <Calendar className="h-3 w-3" /> Scheduled At
-                  </Label>
-                  <p className="text-sm">
-                    {viewItem.scheduledAt ? format(parseISO(viewItem.scheduledAt as any), 'MMM d, yyyy h:mm a') : 'Immediate'}
-                  </p>
-                </div>
-                <div className="space-y-1 text-right">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-1 justify-end">
-                    <Clock className="h-3 w-3" /> Created At
-                  </Label>
-                  <p className="text-sm">
-                    {viewItem.createdAt ? format(parseISO(viewItem.createdAt as any), 'MMM d, yyyy h:mm a') : 'N/A'}
-                  </p>
-                </div>
+                <div className="space-y-1"><Label className="text-xs text-muted-foreground uppercase flex items-center gap-1"><Calendar className="h-3 w-3" /> Scheduled At</Label><p className="text-sm">{viewItem.scheduledAt ? format(parseISO(viewItem.scheduledAt as any), 'MMM d, yyyy h:mm a') : 'Immediate'}</p></div>
+                <div className="space-y-1 text-right"><Label className="text-xs text-muted-foreground uppercase flex items-center gap-1 justify-end"><Clock className="h-3 w-3" /> Created At</Label><p className="text-sm">{viewItem.createdAt ? format(parseISO(viewItem.createdAt as any), 'MMM d, yyyy h:mm a') : 'N/A'}</p></div>
               </div>
             </div>
           )}
-
           <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Close</Button>
-            </DialogClose>
-            {viewItem && (
-              <Button onClick={() => { handleResend(viewItem); setIsViewOpen(false); }}>
-                <RefreshCcw className="mr-2 h-4 w-4" />
-                Resend Now
-              </Button>
-            )}
+            <DialogClose asChild><Button variant="outline">Close</Button></DialogClose>
+            {viewItem && <Button onClick={() => { handleResend(viewItem); setIsViewOpen(false); }}><RefreshCcw className="mr-2 h-4 w-4" />Resend Now</Button>}
           </DialogFooter>
         </DialogContent>
       </Dialog>
