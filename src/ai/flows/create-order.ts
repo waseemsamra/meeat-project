@@ -10,7 +10,7 @@ import { z } from 'genkit';
 import { getFirestore, Timestamp } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
 import { doc, getDoc, writeBatch, collection, updateDoc } from 'firebase/firestore';
-import type { Order, OrderItem, Address, Product, User } from '@/lib/types';
+import type { Order, OrderItem, Address, Product, User, Notification } from '@/lib/types';
 
 
 // Schemas remain in the server file, but are not exported.
@@ -147,8 +147,22 @@ const createOrderFlow = ai.defineFlow(
     
     // 4. Add the Order document to the batch in root collection
     batch.set(orderRef, { ...orderData, id: orderId });
+
+    // 5. Create a notification for the user about their new order
+    const notificationRef = doc(collection(firestore, 'notifications'));
+    const notificationData: Omit<Notification, 'id'> = {
+        userId: userId,
+        title: "Order Received",
+        body: `Thank you! Your order #${orderId.substring(0, 8)} has been received and is being processed.`,
+        type: 'order_update',
+        relatedId: orderId,
+        read: false,
+        createdAt: new Date().toISOString(),
+        scheduledAt: new Date().toISOString(),
+    };
+    batch.set(notificationRef, { ...notificationData, id: notificationRef.id });
     
-    // 5. Atomically commit all writes
+    // 6. Atomically commit all writes
     await batch.commit();
 
     return { orderId };

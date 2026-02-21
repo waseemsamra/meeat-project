@@ -21,7 +21,7 @@ Before your Android app or web app can access the latest structure and security,
 - Download `google-services.json` and place it in `app/`.
 
 ### 2. 🔔 Notification Synchronization
-The web dashboard sends notifications to the root `/notifications` collection.
+The web dashboard sends and monitors notifications in the root `/notifications` collection.
 
 **CRITICAL: Scheduling Filter**
 To support scheduled notifications, your Android app **MUST** filter by `scheduledAt`.
@@ -53,6 +53,16 @@ The Android app should ONLY write to the top-level `/orders` collection. Do NOT 
 - `fulfillmentStatus`: "processing" (String, lowercase).
 - `Status`: "Processing" (String, Capitalized). **REQUIRED** for legacy dashboard UI.
 - `total`: Number (Double). Avoid currency symbols like "DH" in raw data.
+
+**🔔 IMPORTANT: MANUAL NOTIFICATIONS**
+If the Android app writes an order directly to Firestore (instead of using the web server action), it should also create a document in `/notifications` so the dashboard and user are alerted:
+- `userId`: The user's UID
+- `title`: "Order Received"
+- `body`: "Your order #... has been received."
+- `type`: "order_update"
+- `createdAt`: current ISO timestamp
+- `scheduledAt`: current ISO timestamp
+- `read`: false
 
 ---
 
