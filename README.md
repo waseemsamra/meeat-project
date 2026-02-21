@@ -20,22 +20,28 @@ Before your Android app or web app can access the latest structure and security,
 - Select your project: `studio-7561999182-35b19`.
 - Download `google-services.json` and place it in `app/`.
 
-### 2. 🔔 Notification Synchronization
-The web dashboard sends and monitors notifications in the root `/notifications` collection. 
+### 2. 🔔 Notification Synchronization (Personal + Broadcast)
+To show both personal messages and app-wide broadcasts, your mobile app **must** query the root `/notifications` collection.
 
-**DATA TYPE WARNING**:
-The dashboard saves `scheduledAt` and `createdAt` as **ISO 8601 Strings** (e.g., `2023-10-27T10:00:00Z`). Ensure your Kotlin app performs string comparison or parses them accordingly.
+**CRITICAL SYNC LOGIC**:
+- **Personal Messages**: Document has `userId == currentUserId`.
+- **Broadcast Messages**: Document has `userId == "ALL"` (Exact, uppercase string).
+- **Scheduled Time**: The dashboard saves `scheduledAt` as an **ISO 8601 String**.
 
 **Kotlin Listener Example**:
 ```kotlin
-val now = ISO8601Utils.format(Date()) // Use ISO format for string comparison
+val now = ISO8601Utils.format(Date()) // Format current time as ISO 8601 string
 
 db.collection("notifications")
-    .whereIn("userId", listOf(currentUserId, "ALL")) // Personal + Broadcast
-    .whereLessThanOrEqualTo("scheduledAt", now)      // Only show if time has passed
+    .whereIn("userId", listOf(currentUserId, "ALL")) // Fetch user-specific AND broadcast messages
+    .whereLessThanOrEqualTo("scheduledAt", now)      // Only show if the scheduled time has arrived/passed
     .orderBy("scheduledAt", Query.Direction.DESCENDING)
     .addSnapshotListener { snapshots, e ->
-        // Update your UI tray
+        if (e != null) {
+            Log.w("NotificationSync", "Listen failed.", e)
+            return@addSnapshotListener
+        }
+        // Update your notification tray UI
     }
 ```
 
