@@ -53,7 +53,7 @@ import { Button } from "@/components/ui/button"
 import { MoreHorizontal, AlertCircle, Loader2, CheckCircle2 } from "lucide-react"
 import { useCollection, useFirestore, errorEmitter, FirestorePermissionError } from "@/firebase";
 import { collection, query, orderBy, doc, deleteDoc, writeBatch, updateDoc, collectionGroup, getDocs, where } from "firebase/firestore";
-import type { Order, User } from "@/lib/types";
+import type { Order, User, Notification } from "@/lib/types";
 import { useMemo, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/hooks/useSettings";
@@ -197,6 +197,19 @@ export default function AllOrdersPage() {
             batch.update(doc(firestore, path), updateData);
         });
 
+        // Sync with mobile notifications
+        const notificationRef = doc(collection(firestore, 'notifications'));
+        const notificationData: Omit<Notification, 'id'> = {
+            userId: order.userId,
+            title: "Order Updated",
+            body: `Your order #${orderKey} is now ${status.replace('_', ' ')}.`,
+            type: 'order_update',
+            relatedId: order.id,
+            read: false,
+            createdAt: new Date().toISOString(),
+        };
+        batch.set(notificationRef, { ...notificationData, id: notificationRef.id });
+
         if (status === 'shipped' || status === 'ready_for_pickup') {
             const customer = users?.find(u => u.id === order.userId);
             const address = order.shippingAddress;
@@ -223,7 +236,7 @@ export default function AllOrdersPage() {
         await batch.commit();
         toast({ 
             title: 'Status Updated', 
-            description: `Order status updated to ${status} across ${pathsToUpdate.size} records.`,
+            description: `Order status updated to ${status} and notification sent.`,
             icon: <CheckCircle2 className="h-4 w-4 text-green-500" />
         });
     } catch (e: any) {
@@ -321,7 +334,7 @@ export default function AllOrdersPage() {
         <CardHeader>
           <CardTitle>All Orders</CardTitle>
           <CardDescription>
-            View and manage all customer orders. Status changes here will sync to the mobile app.
+            View and manage all customer orders. Status changes here will sync to the mobile app and send notifications.
           </CardDescription>
         </CardHeader>
         <CardContent>

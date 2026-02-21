@@ -37,8 +37,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { MoreHorizontal, PlusCircle, CheckCircle2 } from "lucide-react"
 import { useCollection, useFirestore, errorEmitter, FirestorePermissionError } from "@/firebase";
-import { collection, query, collectionGroup, addDoc, doc, updateDoc, deleteDoc, writeBatch } from "firebase/firestore";
-import type { Order, User, Invoice } from "@/lib/types";
+import { collection, query, collectionGroup, addDoc, doc, updateDoc, deleteDoc, writeBatch, where, getDocs } from "firebase/firestore";
+import type { Order, User, Invoice, Notification } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -174,25 +174,60 @@ export default function SalesOrdersPage() {
 
   const handleFulfillmentStatusUpdate = async (order: Order, status: string) => {
     if (!firestore || !order.__path) return;
-    const orderDocRef = doc(firestore, order.__path);
     
-    // Sync multiple variations for mobile compatibility
-    const updateData: { [key: string]: any } = { 
-        fulfillmentStatus: status,
-        Status: status.charAt(0).toUpperCase() + status.slice(1),
-        status: status,
-        updatedAt: new Date().toISOString() 
-    };
-
     try {
-        await updateDoc(orderDocRef, updateData);
+        const orderKey = order.orderNumber || (order as any).Order || order.id;
+        
+        // Find all matching documents
+        const qRoot = query(collection(firestore, 'orders'), where('orderNumber', '==', orderKey));
+        const qSub = query(collectionGroup(firestore, 'orders'), where('orderNumber', '==', orderKey));
+        const qLegacy = query(collectionGroup(firestore, 'orders'), where('Order', '==', orderKey));
+        
+        const [rootSnap, subSnap, legacySnap] = await Promise.all([
+            getDocs(qRoot),
+            getDocs(qSub),
+            getDocs(qLegacy)
+        ]);
+
+        const batch = writeBatch(firestore);
+        const updateData: { [key: string]: any } = { 
+            fulfillmentStatus: status,
+            Status: status.charAt(0).toUpperCase() + status.slice(1),
+            status: status,
+            updatedAt: new Date().toISOString() 
+        };
+
+        const pathsToUpdate = new Set<string>();
+        if (order.__path) pathsToUpdate.add(order.__path);
+        rootSnap.docs.forEach(d => pathsToUpdate.add(d.ref.path));
+        subSnap.docs.forEach(d => pathsToUpdate.add(d.ref.path));
+        legacySnap.docs.forEach(d => pathsToUpdate.add(d.ref.path));
+
+        pathsToUpdate.forEach(path => {
+            batch.update(doc(firestore, path), updateData);
+        });
+
+        // Add Notification
+        const notificationRef = doc(collection(firestore, 'notifications'));
+        const notificationData: Omit<Notification, 'id'> = {
+            userId: order.userId,
+            title: "Order Updated",
+            body: `Your order #${orderKey} is now ${status.replace('_', ' ')}.`,
+            type: 'order_update',
+            relatedId: order.id,
+            read: false,
+            createdAt: new Date().toISOString(),
+        };
+        batch.set(notificationRef, { ...notificationData, id: notificationRef.id });
+
+        await batch.commit();
         toast({ 
             title: 'Fulfillment Updated', 
-            description: `Order set to ${status}.`,
+            description: `Order set to ${status} and notification sent.`,
             icon: <CheckCircle2 className="h-4 w-4 text-green-500" />
         });
     } catch (e: any) {
-        const contextualError = await FirestorePermissionError.create({ path: orderDocRef.path, operation: 'update', requestResourceData: updateData });
+        const contextualError = await FirestorePermissionError.create({ path: order.__path, operation: 'update' });
         errorEmitter.emit('permission-error', contextualError);
     }
   }
@@ -378,9 +413,6 @@ export default function SalesOrdersPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <Accordion type="single" collapsible className="w-full">
-                {/* Add a developer-facing path hint just in case */}
-            </Accordion>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
               Delete

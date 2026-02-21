@@ -1,3 +1,4 @@
+
 export type Role = 'CUSTOMER' | 'CONTENT_MANAGER' | 'ADMIN' | 'STAFF' | 'ACCOUNTANT';
 
 export type User = {
@@ -21,6 +22,18 @@ export type User = {
   // Denormalized for convenience
   groups?: Group[];
   roles?: Role[];
+  __path?: string;
+};
+
+export type Notification = {
+  id: string;
+  userId: string;
+  title: string;
+  body: string;
+  type: 'order_update' | 'promotion' | 'system';
+  relatedId?: string;
+  read: boolean;
+  createdAt: string;
   __path?: string;
 };
 

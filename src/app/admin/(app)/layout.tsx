@@ -24,6 +24,7 @@ import {
   Star,
   BarChart,
   Ruler,
+  Bell,
 } from 'lucide-react';
 
 import {
@@ -107,6 +108,11 @@ const navLinks = [
       { href: '/admin/users/online', label: 'Online Customers' },
       { href: '/admin/users/local', label: 'Local Customers' },
     ],
+  },
+  {
+    href: '/admin/notifications',
+    icon: Bell,
+    label: 'Notifications',
   },
    {
     href: '/admin/reporting',
@@ -373,4 +379,3 @@ export default function AdminLayout({
     </div>
   );
 }
-  

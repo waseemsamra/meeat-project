@@ -103,6 +103,23 @@
         "customerType"
       ]
     },
+    "Notification": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Notification",
+      "type": "object",
+      "description": "A notification sent to a user, visible in the mobile app.",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string", "description": "The UID of the target user." },
+        "title": { "type": "string" },
+        "body": { "type": "string" },
+        "type": { "type": "string", "enum": ["order_update", "promotion", "system"] },
+        "relatedId": { "type": "string", "description": "Optional ID of a related entity, like an orderId." },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "title", "body", "type", "read", "createdAt"]
+    },
     "Group": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Group",
@@ -851,16 +868,6 @@
         "link": { "type": "string", "format": "uri" }
       },
       "required": ["id", "order", "name", "imageUrl", "link"]
-    },
-    "MeasuringGuideSettings": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "MeasuringGuideSettings",
-      "description": "Settings for the meat measuring guide.",
-      "type": "object",
-      "properties": {
-        "imageUrl": { "type": "string", "description": "Path to the measuring guide image." },
-        "description": { "$ref": "#/entities/LocalizedString" }
-      }
     }
   },
   "auth": {
@@ -1147,15 +1154,6 @@
         }
       },
       {
-        "path": "/settings/measuringGuide",
-        "definition": {
-          "entityName": "MeasuringGuideSettings",
-          "schema": { "$ref": "#/entities/MeasuringGuideSettings" },
-          "description": "Stores settings for the meat measuring guide.",
-          "params": []
-        }
-      },
-      {
         "path": "/boxOptions/{boxId}",
         "definition": {
           "entityName": "BoxOption",
@@ -1199,8 +1197,17 @@
           "description": "Stores items for the 'Explore the Range' homepage section.",
           "params": [{ "name": "itemId", "description": "The unique identifier for the item." }]
         }
+      },
+      {
+        "path": "/notifications/{notificationId}",
+        "definition": {
+          "entityName": "Notification",
+          "schema": { "$ref": "#/backend/entities/Notification" },
+          "description": "Stores notifications for users. Mobile app watches this for updates.",
+          "params": [{ "name": "notificationId", "description": "Unique identifier for the notification." }]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support the PrimeCuts Hub e-commerce application across both web and mobile (Android) platforms. It focuses on secure user authentication, product catalog management, order processing, and role-based access control (RBAC).\n\nAuthorization Independence is achieved through denormalization. For instance, the `userId` field in the `/orders`, `/addresses`, and `/orders_items` collections duplicates data, but this allows security rules to validate ownership without complex `get()` calls. This is particularly beneficial for mobile clients, reducing the number of round-trips needed for data verification.\n\nQAPs (Rules are not Filters) are supported through structural segregation and path-based ownership. User profiles and private data are stored under `/users/{userId}`, ensuring that only the owner or an admin can access them. Products, categories, and other shared resources are in top-level collections with public read access, making them easy to consume by both the web and Android apps."
+    "reasoning": "The Firestore structure supports sync between web and mobile. Added a top-level /notifications collection for cross-platform alerts."
   }
 }
