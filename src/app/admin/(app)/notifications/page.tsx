@@ -9,8 +9,10 @@ import { useCollection, useFirestore } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from '@/hooks/useTranslation';
-import { Megaphone, User as UserIcon, Calendar, Clock } from 'lucide-react';
+import { Megaphone, User as UserIcon, Calendar, Clock, MoreHorizontal, Copy } from 'lucide-react';
 import { format, isValid } from 'date-fns';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 
 const notificationSchema = z.object({
   userId: z.string().min(1, 'Target user is required.'),
@@ -100,13 +102,49 @@ export default function AdminNotificationsPage() {
       ),
     },
     {
-      id: 'status',
-      header: 'Sync',
-      cell: ({ row }) => (
-        <Badge variant={row.original.read ? 'outline' : 'secondary'} className="text-[10px]">
-          {row.original.userId === 'ALL' ? 'Global' : (row.original.read ? 'Read' : 'Unread')}
-        </Badge>
-      ),
+      id: 'actions',
+      header: () => <div className="text-right">Actions</div>,
+      cell: ({ row, table }) => {
+        const item = row.original;
+        const meta = table.options.meta as any;
+        
+        return (
+          <div className="text-right">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => meta.handleOpenForm(item)}>
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const { id, __path, createdAt, ...cloneData } = item as any;
+                    // Reset to a clean object for a new entry, with current time as default schedule
+                    meta.handleOpenForm({ 
+                        ...cloneData, 
+                        scheduledAt: new Date() 
+                    });
+                }}>
+                  <Copy className="mr-2 h-4 w-4" />
+                  Clone
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={() => meta.handleOpenAlert(item)} 
+                  className="text-destructive"
+                >
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        );
+      },
     },
   ], [users]);
 
