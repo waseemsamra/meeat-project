@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -16,6 +15,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { PrintableReport } from '../PrintableReport';
 import { ColumnDef } from '@tanstack/react-table';
 import printJS from 'print-js';
+import { useTranslation } from '@/hooks/useTranslation';
 
 
 const convertToKg = (quantity: number, unit: string): number => {
@@ -35,6 +35,7 @@ const convertToKg = (quantity: number, unit: string): number => {
 
 export default function StockStatusReportPage() {
   const firestore = useFirestore();
+  const { t } = useTranslation();
   const [date, setDate] = useState<DateRange | undefined>({
     from: startOfDay(addDays(new Date(), -7)),
     to: endOfDay(new Date()),
@@ -122,7 +123,7 @@ export default function StockStatusReportPage() {
     });
 
     const formattedData = Array.from(reportMap.values()).map(entry => ({
-      productName: entry.product.name,
+      productName: t(entry.product.name), // Properly translated string
       openingNo: entry.openingNo.toFixed(0),
       openingKg: entry.openingKg.toFixed(2),
       inNo: entry.inNo.toFixed(0),

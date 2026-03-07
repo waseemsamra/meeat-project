@@ -21,11 +21,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import printJS from 'print-js';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function ProductsReportPage() {
   const firestore = useFirestore();
   const { defaultCurrency } = useSettings();
   const currencySymbol = defaultCurrency?.symbol || '$';
+  const { t } = useTranslation();
 
   // Filter states
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -64,10 +66,6 @@ export default function ProductsReportPage() {
     const startDate = startOfDay(date.from);
     const endDate = date.to ? endOfDay(date.to) : endOfDay(new Date());
 
-    const categoryIdMap = new Map(categories?.map(c => [c.name, c.id]));
-    const cutTypeIdMap = new Map(cutTypes?.map(ct => [ct.name, ct.id]));
-    const gradeIdMap = new Map(grades?.map(g => [g.name, g.id]));
-
     const filtered = products.filter(p => {
         const productDate = new Date(p.createdAt);
         const dateMatch = productDate >= startDate && productDate <= endDate;
@@ -80,6 +78,7 @@ export default function ProductsReportPage() {
         return dateMatch && categoryMatch && cutTypeMatch && gradeMatch && countryMatch && temperatureMatch;
     }).map(p => ({
         ...p,
+        name: t(p.name), // Ensure it's a string
         price: `${currencySymbol}${p.price.toFixed(2)}`,
         createdAt: format(new Date(p.createdAt), "LLL dd, y"),
     }));
@@ -115,7 +114,7 @@ export default function ProductsReportPage() {
 
     try {
         const canvas = await html2canvas(reportElement, {
-            scale: 2, // Increase resolution
+            scale: 2,
             useCORS: true,
             backgroundColor: '#ffffff'
         });
@@ -172,23 +171,23 @@ export default function ProductsReportPage() {
               <div className="flex items-center gap-2 flex-wrap">
                 <Select value={selectedCategory} onValueChange={setSelectedCategory} disabled={isLoadingCategories}>
                   <SelectTrigger className="w-full sm:w-auto min-w-[150px]"><SelectValue placeholder="Category" /></SelectTrigger>
-                  <SelectContent><SelectItem value="all">All Categories</SelectItem>{categories?.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent>
+                  <SelectContent><SelectItem value="all">All Categories</SelectItem>{categories?.map(c => <SelectItem key={c.id} value={c.name.en!}>{t(c.name)}</SelectItem>)}</SelectContent>
                 </Select>
                 <Select value={selectedCutType} onValueChange={setSelectedCutType} disabled={isLoadingCutTypes}>
                   <SelectTrigger className="w-full sm:w-auto min-w-[150px]"><SelectValue placeholder="Cut Type" /></SelectTrigger>
-                  <SelectContent><SelectItem value="all">All Cut Types</SelectItem>{cutTypes?.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                  <SelectContent><SelectItem value="all">All Cut Types</SelectItem>{cutTypes?.map(c => <SelectItem key={c.id} value={c.id}>{t(c.name)}</SelectItem>)}</SelectContent>
                 </Select>
                 <Select value={selectedGrade} onValueChange={setSelectedGrade} disabled={isLoadingGrades}>
                   <SelectTrigger className="w-full sm:w-auto min-w-[150px]"><SelectValue placeholder="Grade" /></SelectTrigger>
-                  <SelectContent><SelectItem value="all">All Grades</SelectItem>{grades?.map(g => <SelectItem key={g.id} value={g.name}>{g.name}</SelectItem>)}</SelectContent>
+                  <SelectContent><SelectItem value="all">All Grades</SelectItem>{grades?.map(g => <SelectItem key={g.id} value={g.name.en!}>{t(g.name)}</SelectItem>)}</SelectContent>
                 </Select>
                 <Select value={selectedCountry} onValueChange={setSelectedCountry} disabled={isLoadingCountries}>
                   <SelectTrigger className="w-full sm:w-auto min-w-[150px]"><SelectValue placeholder="Country" /></SelectTrigger>
-                  <SelectContent><SelectItem value="all">All Countries</SelectItem>{countries?.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent>
+                  <SelectContent><SelectItem value="all">All Countries</SelectItem>{countries?.map(c => <SelectItem key={c.id} value={c.name.en!}>{t(c.name)}</SelectItem>)}</SelectContent>
                 </Select>
                 <Select value={selectedTemperature} onValueChange={setSelectedTemperature} disabled={isLoadingTemperatures}>
                   <SelectTrigger className="w-full sm:w-auto min-w-[150px]"><SelectValue placeholder="Temperature" /></SelectTrigger>
-                  <SelectContent><SelectItem value="all">All Temps</SelectItem>{temperatures?.map(t => <SelectItem key={t.id} value={t.name}>{t.name}</SelectItem>)}</SelectContent>
+                  <SelectContent><SelectItem value="all">All Temps</SelectItem>{temperatures?.map(temp => <SelectItem key={temp.id} value={temp.name.en!}>{t(temp.name)}</SelectItem>)}</SelectContent>
                 </Select>
                 <Popover>
                   <PopoverTrigger asChild>

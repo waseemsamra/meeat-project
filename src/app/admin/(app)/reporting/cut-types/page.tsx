@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -19,10 +18,12 @@ import { cn } from '@/lib/utils';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import printJS from 'print-js';
+import { useTranslation } from '@/hooks/useTranslation';
 
 
 export default function CutTypesReportPage() {
   const firestore = useFirestore();
+  const { t } = useTranslation();
 
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedCountry, setSelectedCountry] = useState('all');
@@ -65,7 +66,7 @@ export default function CutTypesReportPage() {
     });
 
     if (selectedCountry !== 'all') {
-        const countryName = countries?.find(c => c.id === selectedCountry)?.name;
+        const countryName = countries?.find(c => c.id === selectedCountry)?.name.en;
         if (countryName) {
             filteredProducts = filteredProducts.filter(p => p.countryOfOrigin === countryName);
         }
@@ -80,9 +81,9 @@ export default function CutTypesReportPage() {
     }
     
     const data = filteredCutTypes.map(ct => ({
-        name: ct.name,
-        category: categories?.find(c => c.id === ct.categoryId)?.name || 'N/A',
-        description: ct.description,
+        name: t(ct.name), // String translation
+        category: t(categories?.find(c => c.id === ct.categoryId)?.name || 'N/A'), // String translation
+        description: t(ct.description), // String translation
         slug: ct.slug,
     }));
 
@@ -128,7 +129,7 @@ export default function CutTypesReportPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
-                    {categories?.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                    {categories?.map(c => <SelectItem key={c.id} value={c.id}>{t(c.name)}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <Select value={selectedCountry} onValueChange={setSelectedCountry} disabled={isLoadingCountries}>
@@ -137,7 +138,7 @@ export default function CutTypesReportPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Countries</SelectItem>
-                    {countries?.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                    {countries?.map(c => <SelectItem key={c.id} value={c.id}>{t(c.name)}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <Popover>
