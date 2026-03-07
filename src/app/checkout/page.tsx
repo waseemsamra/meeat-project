@@ -91,11 +91,11 @@ export default function CheckoutPage() {
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
       email: user?.email || '',
-      firstName: user?.name?.split(' ')[0] || '',
-      lastName: user?.name?.split(' ').slice(1).join(' ') || '',
-      phone: '',
+      firstName: user?.name ? user.name.split(' ')[0] : '',
+      lastName: user?.name ? user.name.split(' ').slice(1).join(' ') : '',
+      phone: user?.telephone || '',
       billingAddress: {
-        fullName: '',
+        fullName: user?.name || '',
         street: '',
         city: 'Dubai',
         apartment: '',
@@ -123,10 +123,11 @@ export default function CheckoutPage() {
     }
     if (user) {
       setValue('email', user.email || '');
-      const nameParts = user.name?.split(' ') || [];
+      const nameParts = user.name ? user.name.split(' ') : [];
       setValue('firstName', nameParts[0] || '');
       setValue('lastName', nameParts.slice(1).join(' ') || '');
       setValue('billingAddress.fullName', user.name || '');
+      if (user.telephone) setValue('phone', user.telephone);
     }
   }, [user, isUserLoading, router, setValue]);
   
@@ -434,7 +435,7 @@ export default function CheckoutPage() {
                         </p>
                       ) : (
                         <p className="truncate pr-2">
-                          {(item as CartItem).product.name} ({(item as CartItem).selectedUnit}) &times;{' '}
+                          {(item as CartItem).product.name.en} ({(item as CartItem).selectedUnit}) &times;{' '}
                           {item.quantity}
                         </p>
                       )}
