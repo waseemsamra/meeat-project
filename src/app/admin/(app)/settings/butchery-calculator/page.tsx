@@ -5,7 +5,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Save, Download, Printer, Target, DollarSign, 
   Package, Activity, Trash2, Eye,
-  RotateCcw, TrendingUp, FileText, ShoppingBag, Loader2, Calculator, Map, Maximize2, Minimize2
+  RotateCcw, TrendingUp, FileText, ShoppingBag, Loader2, Calculator, Map, Maximize2, Minimize2, RefreshCcw
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,7 @@ import { useCollection, useFirestore } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { Currency } from '@/lib/types';
 import { ReportHeader } from '../../reporting/ReportHeader';
+import { cn } from '@/lib/utils';
 
 
 const lambCuts = [
@@ -136,7 +137,7 @@ const CarcassDiagram = ({ hoveredCut, onCutHover, cuts, currencySymbol, carcassT
     const getSectionValue = (section: string) => {
       const cutNames = cutSections[carcassType as keyof typeof cutSections][section as any];
       if (!cutNames) return 0;
-      const matchingCuts = cuts.filter((c: any) => cutNames.includes(c.name));
+      const matchingCuts = cuts.filter((sum: any, cut: any) => cutNames.includes(cut.name));
       const totalValue = matchingCuts.reduce((sum: number, cut: any) => sum + (parseFloat(cut.weight) * parseFloat(cut.pricePerKg)), 0);
       return totalValue;
     };
@@ -430,7 +431,10 @@ export default function ButcheryCalculatorPage() {
   const [carcassType, setCarcassType] = useState<CarcassType>('Lamb');
   const [carcassWeight, setCarcassWeight] = useState("20");
   const [costDetails, setCostDetails] = useState({ carcassCost: "100", laborCost: "20", packagingCost: "8", overheadCost: "12", otherCosts: "5" });
-  const [cuts, setCuts] = useState(cutsData[carcassType].map(c => ({...c, weight: "0", pricePerKg: c.pricePerKg.toString()})));
+  
+  // Use empty string for weight to signify "Auto-calculate"
+  const [cuts, setCuts] = useState(cutsData[carcassType].map(c => ({...c, weight: "", pricePerKg: c.pricePerKg.toString()})));
+  
   const [hoveredCut, setHoveredCut] = useState(null);
   const [scenarios, setScenarios] = useState<any[]>([]);
   const [currentScenario, setCurrentScenario] = useState('Default');
@@ -477,19 +481,26 @@ export default function ButcheryCalculatorPage() {
   const totalCost = useMemo(() => Object.values(costDetails).reduce((sum, val) => sum + (parseFloat(val) || 0), 0), [costDetails]);
   
   const calculatedData = useMemo(() => {
-    const totalDefaultPercent = cuts.reduce((sum, cut) => sum + cut.defaultPercent, 0);
+    const activeCutsData = cutsData[carcassType];
+    const totalDefaultPercent = activeCutsData.reduce((sum, cut) => sum + cut.defaultPercent, 0);
     const scaleFactor = 95 / totalDefaultPercent;
     
     const parsedCarcassWeight = parseFloat(carcassWeight) || 0;
 
-    const updatedCuts = cuts.map(cut => {
-        const calculatedWeight = parseFloat(((parsedCarcassWeight * cut.defaultPercent * scaleFactor) / 100).toFixed(2));
-        const finalWeight = cut.weight !== "0" && cut.weight !== "" ? parseFloat(cut.weight) : calculatedWeight;
-        const finalPrice = parseFloat(cut.pricePerKg) || 0;
+    const updatedCuts = cuts.map(cutState => {
+        const baseCut = activeCutsData.find(c => c.id === cutState.id) || cutState;
+        const calculatedWeight = parseFloat(((parsedCarcassWeight * baseCut.defaultPercent * scaleFactor) / 100).toFixed(2));
+        
+        // If the weight in state is empty or "0", treat it as auto-calculated
+        const isAuto = cutState.weight === "" || cutState.weight === "0";
+        const finalWeight = isAuto ? calculatedWeight : (parseFloat(cutState.weight) || 0);
+        const finalPrice = parseFloat(cutState.pricePerKg) || 0;
         
         return {
-            ...cut,
+            ...cutState,
             weight: finalWeight,
+            displayWeight: isAuto ? calculatedWeight.toString() : cutState.weight,
+            isOverride: !isAuto,
             pricePerKg: finalPrice
         };
     });
@@ -502,7 +513,7 @@ export default function ButcheryCalculatorPage() {
     const yieldPercentage = parsedCarcassWeight > 0 ? (totalSaleableWeight / parsedCarcassWeight) * 100 : 0;
 
     return { cuts: updatedCuts, totalSaleableWeight, totalRevenue, totalCost, grossProfit, profitMargin, wasteWeight, yieldPercentage };
-  }, [carcassWeight, cuts, totalCost]);
+  }, [carcassWeight, cuts, totalCost, carcassType]);
 
   const handlePriceChange = (id: number, newPrice: string) => setCuts(cuts.map(cut => cut.id === id ? { ...cut, pricePerKg: newPrice } : cut));
   const handleWeightOverride = (id: number, newWeight: string) => setCuts(cuts.map(cut => cut.id === id ? { ...cut, weight: newWeight } : cut));
@@ -515,7 +526,7 @@ export default function ButcheryCalculatorPage() {
         carcassType, 
         carcassWeight, 
         costDetails, 
-        cuts: cuts.map(c => ({ name: c.name, pricePerKg: c.pricePerKg, weight: c.weight })) 
+        cuts: cuts.map(c => ({ id: c.id, name: c.name, pricePerKg: c.pricePerKg, weight: c.weight })) 
     };
     const updatedScenarios = [...scenarios.filter(s => s.name !== name), scenario];
     setScenarios(updatedScenarios);
@@ -532,8 +543,8 @@ export default function ButcheryCalculatorPage() {
     const baseCuts = cutsData[scenario.carcassType as CarcassType] || cutsData['Lamb'];
 
     setCuts(baseCuts.map(cut => {
-      const savedCut = scenario.cuts.find((c: any) => c.name === cut.name);
-      return savedCut ? { ...cut, pricePerKg: savedCut.pricePerKg, weight: savedCut.weight } : { ...cut, weight: "0", pricePerKg: cut.pricePerKg.toString() };
+      const savedCut = scenario.cuts.find((c: any) => c.name === cut.name || c.id === cut.id);
+      return savedCut ? { ...cut, pricePerKg: savedCut.pricePerKg, weight: savedCut.weight } : { ...cut, weight: "", pricePerKg: cut.pricePerKg.toString() };
     }));
     setCurrentScenario(scenario.name);
     toast({ title: "Scenario Loaded", description: `Scenario "${scenario.name}" has been loaded.`});
@@ -677,10 +688,15 @@ PrintableReportComponent.displayName = 'PrintableReportComponent';
       overheadCost: "12",
       otherCosts: "5"
     });
-    setCuts(cutsData[carcassType].map(c => ({...c, weight: "0", pricePerKg: c.pricePerKg.toString()})));
+    setCuts(cutsData[carcassType].map(c => ({...c, weight: "", pricePerKg: c.pricePerKg.toString()})));
     setCurrentScenario('Default');
     toast({ title: "Reset to Defaults", description: "All calculator inputs have been reset to their default values." });
   };
+
+  const clearOverrides = () => {
+    setCuts(cuts.map(cut => ({ ...cut, weight: "" })));
+    toast({ title: "Overrides Cleared", description: "All weights are now calculated by carcass distribution." });
+  }
 
 
   return (
@@ -716,6 +732,9 @@ PrintableReportComponent.displayName = 'PrintableReportComponent';
                         <Label htmlFor="show-solver" className="text-sm font-medium">Show Profit Solver</Label>
                         <Switch id="show-solver" checked={showSolver} onCheckedChange={setShowSolver} />
                     </div>
+                    <Button variant="outline" size="sm" className="w-full mt-4" onClick={clearOverrides}>
+                        <RefreshCcw size={14} className="mr-2" /> Reset All Overrides
+                    </Button>
                 </CardContent>
             </Card>
         </aside>
@@ -825,7 +844,15 @@ PrintableReportComponent.displayName = 'PrintableReportComponent';
                                 <TableRow key={cut.id} onMouseEnter={() => setHoveredCut(cut.name)} onMouseLeave={() => setHoveredCut(null)} className={hoveredCut === cut.name ? 'bg-blue-100/50 dark:bg-blue-900/20' : ''}>
                                 <TableCell className="font-medium">{cut.name}</TableCell>
                                 <TableCell><Badge variant={cut.type === 'premium' ? 'default' : cut.type === 'middle' ? 'secondary' : 'outline'}>{getTypeLabel(cut.type)}</Badge></TableCell>
-                                <TableCell><Input type="text" inputMode="decimal" value={cuts.find(c => c.id === cut.id)?.weight} onChange={(e) => handleWeightOverride(cut.id, e.target.value)} className="w-24"/></TableCell>
+                                <TableCell>
+                                    <Input 
+                                        type="text" 
+                                        inputMode="decimal" 
+                                        value={cut.displayWeight} 
+                                        onChange={(e) => handleWeightOverride(cut.id, e.target.value)} 
+                                        className={cn("w-24", cut.isOverride && "border-primary ring-1 ring-primary/20")}
+                                    />
+                                </TableCell>
                                 <TableCell><Input type="text" inputMode="decimal" value={cuts.find(c => c.id === cut.id)?.pricePerKg} onChange={(e) => handlePriceChange(cut.id, e.target.value)} className="w-24" /></TableCell>
                                 <TableCell className="font-semibold">{currencySymbol}{(cut.weight * cut.pricePerKg).toFixed(2)}</TableCell>
                                 <TableCell>{(parseFloat(carcassWeight) > 0 ? ((cut.weight / parseFloat(carcassWeight)) * 100).toFixed(1) : '0.0')}%</TableCell>
